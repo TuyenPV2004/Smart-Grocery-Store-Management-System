@@ -220,12 +220,32 @@ public class InventoryService {
             // Create export detail
             InventoryNoteDetail detail = new InventoryNoteDetail();
             detail.setProduct(product);
-            detail.setQuantity(item.getQuantity());
+
+            // --- SỬA LỖI: Cập nhật đầy đủ các trường dữ liệu cho Excel ---
+            detail.setQuantity(item.getQuantity()); // Số lượng cơ sở (để tính toán kho)
+
+            // 1. Gán số lượng hiển thị (với Export, mặc định coi như đơn vị cơ bản)
+            detail.setQuantityInImportUnit(item.getQuantity());
+
+            // 2. Gán hệ số quy đổi là 1 (để phép nhân trong Excel không bị về 0)
+            detail.setConversionRate(1);
+
+            // 3. Lấy đơn vị tính từ sản phẩm
+            detail.setImportUnit(product.getUnit());
+
+            // 4. Lấy ngày SX và HSD từ Lô hàng (Batch)
+            detail.setManufacturingDate(batch.getManufacturingDate());
+            detail.setExpiryDate(batch.getExpiryDate());
+            // -------------------------------------------------------------
+
             detail.setBatchCode(item.getBatchCode()); // Store user-selected batch code
 
             // Use export price from request (or product selling price as fallback)
             BigDecimal exportPrice = item.getImportPrice() != null ? item.getImportPrice() : product.getSellPrice();
             detail.setImportPrice(exportPrice);
+
+            // Set actual price giống import price cho đồng bộ
+            detail.setActualPrice(exportPrice);
 
             detail.setInventoryNote(note);
 
@@ -237,6 +257,8 @@ public class InventoryService {
 
         note.setDetails(details);
         note.setTotalAmount(totalAmount);
+        // Set luôn final amount
+        note.setFinalAmount(totalAmount);
 
         return inventoryNoteRepository.save(note);
     }
