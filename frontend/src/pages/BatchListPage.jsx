@@ -234,7 +234,6 @@ const BatchListPage = () => {
         <div className="flex justify-between items-center mb-4">
           <div>
             <h1 className="text-2xl font-medium text-slate-900 flex items-center">
-              <Package className="mr-3 text-indigo-600" size={28} />
               Danh sách lô hàng
             </h1>
             <p className="text-sm text-slate-500 mt-1">

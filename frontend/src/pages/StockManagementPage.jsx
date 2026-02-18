@@ -37,7 +37,7 @@ const BatchExpiryTab = () => {
     if (status === "EXPIRED") {
       return (
         <div className="flex items-center gap-2">
-          <span className="px-3 py-1 rounded-full text-xs font-bold bg-red-100 text-red-700 border-2 border-red-300">
+          <span className="px-3 py-1 rounded-full text-xs font-bold bg-red-400 text-white">
             Đã hết hạn
           </span>
           <span className="text-xs text-red-600 font-medium">
@@ -48,7 +48,7 @@ const BatchExpiryTab = () => {
     } else if (status === "EXPIRING_SOON") {
       return (
         <div className="flex items-center gap-2">
-          <span className="px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-700 border-2 border-amber-300">
+          <span className="px-3 py-1 rounded-full text-xs font-bold bg-amber-400 text-white">
             Sắp hết hạn
           </span>
           <span className="text-xs text-amber-600 font-medium">
@@ -58,7 +58,7 @@ const BatchExpiryTab = () => {
       );
     } else {
       return (
-        <span className="px-3 py-1 rounded-full text-xs font-bold bg-green-100 text-green-700 border-2 border-green-300">
+        <span className="px-3 py-1 rounded-full text-xs font-bold bg-green-400 text-white">
           An toàn
         </span>
       );
@@ -183,9 +183,7 @@ const BatchExpiryTab = () => {
                   <td className="px-6 py-4 text-sm text-slate-600">
                     {batch.supplierName || "---"}
                   </td>
-                  <td className="px-6 py-4 text-center">
-                      {batch.quantity}
-                  </td>
+                  <td className="px-6 py-4 text-center">{batch.quantity}</td>
                   <td className="px-6 py-4 text-center text-sm text-slate-900">
                     {batch.manufacturingDate
                       ? new Date(batch.manufacturingDate).toLocaleDateString(
@@ -486,26 +484,26 @@ const StockManagementPage = () => {
   const getStatusBadge = (status) => {
     const badges = {
       OUT_OF_STOCK: {
-        bg: "bg-red-50",
-        text: "text-red-700",
+        bg: "bg-red-400",
+        text: "text-white",
         label: "Hết hàng",
         icon: "",
       },
       LOW_STOCK: {
-        bg: "bg-orange-50",
-        text: "text-orange-700",
+        bg: "bg-orange-400",
+        text: "text-white",
         label: "Sắp hết",
         icon: "",
       },
       NEAR_EXPIRY: {
-        bg: "bg-amber-50",
-        text: "text-amber-700",
+        bg: "bg-amber-400",
+        text: "text-white",
         label: "Cần xả",
         icon: "",
       },
       NORMAL: {
-        bg: "bg-green-50",
-        text: "text-green-700",
+        bg: "bg-green-400",
+        text: "text-white",
         label: "Bình thường",
         icon: "",
       },
@@ -531,9 +529,6 @@ const StockManagementPage = () => {
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-3xl font-medium text-slate-900 flex items-center gap-3">
-          <div className="p-3 bg-indigo-50 rounded-xl">
-            <Package className="text-indigo-600" size={32} />
-          </div>
           Quản lý tồn kho
         </h1>
         <p className="text-slate-600 mt-2 text-lg">
@@ -720,16 +715,16 @@ const StockManagementPage = () => {
                             {item.sku}
                           </td>
                           <td className="px-6 py-4 text-center">
-                              {item.conversionRate || 1}
+                            {item.conversionRate || 1}
                           </td>
                           <td className="px-6 py-4 text-center">
-                              {item.totalImported || 0}
+                            {item.totalImported || 0}
                           </td>
                           <td className="px-6 py-4 text-center">
-                              {item.totalExported || 0}
+                            {item.totalExported || 0}
                           </td>
                           <td className="px-6 py-4 text-center">
-                              {item.totalQuantity}
+                            {item.totalQuantity}
                           </td>
                           <td className="px-6 py-4 text-right font-medium text-slate-900">
                             {item.stockValue.toLocaleString()}

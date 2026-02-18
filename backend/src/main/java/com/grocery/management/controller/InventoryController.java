@@ -38,12 +38,12 @@ public class InventoryController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<InventoryNote> getNoteDetail(@PathVariable Long id) {
+    public ResponseEntity<InventoryNote> getNoteDetail(@PathVariable long id) {
         return ResponseEntity.ok(inventoryService.getNoteById(id));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteNote(@PathVariable Long id) {
+    public ResponseEntity<?> deleteNote(@PathVariable long id) {
         try {
             inventoryService.deleteNote(id);
             return ResponseEntity.ok("Xóa phiếu thành công");
@@ -51,11 +51,16 @@ public class InventoryController {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
+
     @GetMapping("/{id}/export")
-    public ResponseEntity<InputStreamResource> exportExcel(@PathVariable Long id) throws IOException {
+    public ResponseEntity<InputStreamResource> exportExcel(@PathVariable long id) throws IOException {
         InventoryNote note = inventoryService.getNoteById(id);
-        String fileName = note.getCode() + ".xlsx"; 
+        String fileName = note.getCode() + ".xlsx";
         ByteArrayInputStream in = inventoryService.exportToExcel(id);
+
+        if (in == null) {
+            throw new IOException("Failed to generate Excel file");
+        }
 
         HttpHeaders headers = new HttpHeaders();
         headers.add("Content-Disposition", "attachment; filename=" + fileName);
@@ -67,6 +72,7 @@ public class InventoryController {
                         MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
                 .body(new InputStreamResource(in));
     }
+
     @PostMapping("/export")
     public ResponseEntity<?> createExportNote(@RequestBody InventoryNoteRequest request) {
         try {

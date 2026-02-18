@@ -1018,9 +1018,6 @@ const InventoryExportPage = () => {
       <div className="flex justify-between items-end mb-6">
         <div>
           <h2 className="text-2xl font-medium text-slate-900 flex items-center gap-3">
-            <div className="p-2 bg-white rounded-xl shadow-sm border border-slate-100">
-              <Package className="text-rose-600" size={24} />
-            </div>
             Xuất kho hàng hóa
           </h2>
           <p className="text-slate-500 mt-2 font-medium text-lg">

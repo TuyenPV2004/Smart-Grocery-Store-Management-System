@@ -260,8 +260,7 @@ const InventoryListPage = () => {
       <div className="max-w-[1400px] mx-auto flex justify-between items-center mb-6">
         <div>
           <h1 className="text-2xl font-medium text-slate-900 flex items-center">
-            <ClipboardList className="mr-3 text-indigo-600" size={28} />
-            Danh sách phiếu nhập kho
+            Danh sách phiếu nhập xuất kho 
           </h1>
         </div>
         <button

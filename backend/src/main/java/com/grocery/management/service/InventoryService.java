@@ -49,12 +49,14 @@ public class InventoryService {
         note.setNote(request.getNote());
 
         // --- SỬA ĐỔI: Bắt lỗi nếu frontend không gửi ID nhà cung cấp ---
-        if (request.getSupplierId() == null) {
+        // --- SỬA ĐỔI: Bắt lỗi nếu frontend không gửi ID nhà cung cấp ---
+        Long supplierId = request.getSupplierId();
+        if (supplierId == null) {
             throw new RuntimeException("Phải chọn Nhà cung cấp cho phiếu Nhập kho (Dữ liệu Nhà cung cấp bị thiếu)");
         }
-        Supplier supplier = supplierRepository.findById(request.getSupplierId())
+        Supplier supplier = supplierRepository.findById(supplierId)
                 .orElseThrow(
-                        () -> new RuntimeException("Không tìm thấy Nhà cung cấp với ID: " + request.getSupplierId()));
+                        () -> new RuntimeException("Không tìm thấy Nhà cung cấp với ID: " + supplierId));
         note.setSupplier(supplier);
         // -------------------------------------------------------------
         User createdBy = userRepository.findByUsername(username)
@@ -413,7 +415,7 @@ public class InventoryService {
         return String.format("%s_%s_%s_%03d", prefix, datePart, timePart, randomSuffix);
     }
 
-    public ByteArrayInputStream exportToExcel(Long noteId) throws IOException {
+    public ByteArrayInputStream exportToExcel(long noteId) throws IOException {
         InventoryNote note = inventoryNoteRepository.findById(noteId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy phiếu nhập: " + noteId));
 
@@ -556,13 +558,13 @@ public class InventoryService {
         return inventoryNoteRepository.findAll(Sort.by(Sort.Direction.DESC, "createdAt"));
     }
 
-    public InventoryNote getNoteById(Long id) {
+    public InventoryNote getNoteById(long id) {
         return inventoryNoteRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy phiếu: " + id));
     }
 
     @Transactional
-    public void deleteNote(Long id) {
+    public void deleteNote(long id) {
         if (!inventoryNoteRepository.existsById(id)) {
             throw new RuntimeException("Phiếu không tồn tại: " + id);
         }

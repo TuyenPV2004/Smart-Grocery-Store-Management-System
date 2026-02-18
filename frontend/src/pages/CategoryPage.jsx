@@ -229,9 +229,6 @@ const CategoryPage = () => {
         <div className="flex justify-between items-center mb-6">
           <div>
             <h1 className="text-2xl font-medium text-slate-900 flex items-center gap-3">
-              <div className="p-2 bg-white rounded-xl shadow-sm border border-slate-100">
-                <Layers className="text-indigo-600" size={24} />
-              </div>
               Quản lý danh mục sản phẩm
             </h1>
             <p className="text-[14px] text-slate-500 mt-1 font-medium">

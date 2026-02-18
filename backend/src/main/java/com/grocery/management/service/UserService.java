@@ -46,13 +46,13 @@ public class UserService {
     // ADMIN TẠO TÀI KHOẢN NHÂN VIÊN
     public User createUser(User user) {
         user.setPassword(passwordEncoder.encode(user.getPassword()));
-        user.setRole(Role.STAFF); 
+        user.setRole(Role.STAFF);
         user.setStatus(Status.ACTIVE);
         user.setEnabled(true);
-        
+
         // Gọi hàm sinh mã nhân viên
         user.setStaffCode(generateUniqueStaffCode());
-        
+
         return userRepository.save(user);
     }
 
@@ -73,8 +73,8 @@ public class UserService {
         currentUser.setFullName(updatedInfo.getFullName());
         currentUser.setEmail(updatedInfo.getEmail());
         currentUser.setPhone(updatedInfo.getPhone());
-        currentUser.setAddress(updatedInfo.getAddress()); 
-        
+        currentUser.setAddress(updatedInfo.getAddress());
+
         return userRepository.save(currentUser);
     }
 
@@ -105,8 +105,8 @@ public class UserService {
     }
 
     public String uploadAvatar(MultipartFile file) throws IOException {
-        User user = getCurrentUser(); 
-        
+        User user = getCurrentUser();
+
         String uploadDir = "user-photos/" + user.getId();
         Path uploadPath = Paths.get(uploadDir);
 
@@ -114,14 +114,14 @@ public class UserService {
             Files.createDirectories(uploadPath);
         }
         String fileName = user.getId() + "_" + System.currentTimeMillis() + "_" + file.getOriginalFilename();
-        
+
         try (InputStream inputStream = file.getInputStream()) {
             Path filePath = uploadPath.resolve(fileName);
             Files.copy(inputStream, filePath, StandardCopyOption.REPLACE_EXISTING);
             String fileUrl = "user-photos/" + user.getId() + "/" + fileName;
             user.setAvatarUrl(fileUrl);
             userRepository.save(user);
-            
+
             return fileUrl;
         } catch (IOException ioe) {
             throw new IOException("Could not save image file: " + fileName, ioe);
@@ -136,7 +136,7 @@ public class UserService {
         }
 
         user.setPassword(passwordEncoder.encode(user.getPassword()));
-        user.setRole(Role.CUSTOMER); 
+        user.setRole(Role.CUSTOMER);
         user.setStatus(Status.ACTIVE);
         user.setEnabled(false); // Đợi xác thực OTP
 
@@ -144,20 +144,20 @@ public class UserService {
         user.setStaffCode(generateUniqueStaffCode());
 
         // Sinh OTP
-        String otp = String.valueOf(new Random().nextInt(900000) + 100000); 
+        String otp = String.valueOf(new Random().nextInt(900000) + 100000);
         user.setVerificationCode(otp);
         user.setVerificationExpiration(LocalDateTime.now().plusMinutes(5));
 
         User savedUser = userRepository.save(user);
-        
+
         // Gửi Mail OTP
         emailService.sendOtpEmail(user.getEmail(), otp);
-        
+
         return savedUser;
     }
 
     public void verifyOtp(String email, String otp) {
-        User user = userRepository.findByEmail(email) 
+        User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy user"));
 
         if (user.isEnabled()) {
@@ -184,16 +184,19 @@ public class UserService {
         String otp = String.valueOf(new Random().nextInt(900000) + 100000);
         user.setVerificationCode(otp);
         user.setVerificationExpiration(LocalDateTime.now().plusMinutes(5));
-        
+
         userRepository.save(user);
-        emailService.sendPasswordResetOtp(user.getEmail(), otp);
+        if (user.getEmail() != null) {
+            emailService.sendPasswordResetOtp(user.getEmail(), otp);
+        }
     }
 
     public void completePasswordReset(String email, String otp, String newPassword) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Người dùng không tồn tại"));
 
-        if (user.getVerificationExpiration() == null || user.getVerificationExpiration().isBefore(LocalDateTime.now())) {
+        if (user.getVerificationExpiration() == null
+                || user.getVerificationExpiration().isBefore(LocalDateTime.now())) {
             throw new RuntimeException("Mã OTP đã hết hạn");
         }
         if (!otp.equals(user.getVerificationCode())) {
@@ -203,7 +206,7 @@ public class UserService {
         user.setPassword(passwordEncoder.encode(newPassword));
         user.setVerificationCode(null);
         user.setVerificationExpiration(null);
-        
+
         userRepository.save(user);
     }
 
@@ -218,19 +221,23 @@ public class UserService {
         targetUser.setRole(newRole);
         return userRepository.save(targetUser);
     }
-    
+
     public void resendOtp(String email) {
         User user = userRepository.findByEmail(email)
-             .orElseThrow(() -> new RuntimeException("User not found"));
-        
-        if (user.isEnabled()) return;
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        if (user.isEnabled())
+            return;
 
         String otp = String.valueOf(new Random().nextInt(900000) + 100000);
         user.setVerificationCode(otp);
         user.setVerificationExpiration(LocalDateTime.now().plusMinutes(5));
         userRepository.save(user);
-        emailService.sendOtpEmail(user.getEmail(), otp);
+        if (user.getEmail() != null) {
+            emailService.sendOtpEmail(user.getEmail(), otp);
+        }
     }
+
     public User getUserByStaffCode(String staffCode) {
         return userRepository.findByStaffCode(staffCode)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy nhân viên với mã: " + staffCode));

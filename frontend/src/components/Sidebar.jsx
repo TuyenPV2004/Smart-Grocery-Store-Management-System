@@ -64,7 +64,7 @@ const Sidebar = ({ isCollapsed, onToggle }) => {
       children: [
         { title: "Quản lý nhập kho", path: "/inventory/entry", icon: Download },
         {
-          title: "Danh sách phiếu nhập",
+          title: "Danh sách phiếu",
           path: "/inventory/list",
           icon: ClipboardList,
         },
@@ -159,12 +159,6 @@ const Sidebar = ({ isCollapsed, onToggle }) => {
 
         {/* Menu */}
         <nav className="flex-1 px-4 space-y-1.5 overflow-y-auto custom-scrollbar overflow-x-hidden">
-          {!isCollapsed && (
-            <p className="px-4 text-[11px] font-medium text-slate-400 uppercase tracking-[2px] mb-4">
-              Menu chính
-            </p>
-          )}
-
           {menuItems.map((item, index) => {
             if (!item.roles.includes(user?.role)) return null;
 
@@ -305,10 +299,6 @@ const Sidebar = ({ isCollapsed, onToggle }) => {
                 />
                 {!isCollapsed && (
                   <span className="text-[15px]">{item.label}</span>
-                )}
-
-                {isActive(item.path) && !isCollapsed && (
-                  <div className="ml-auto w-1.5 h-1.5 bg-indigo-600 rounded-full"></div>
                 )}
               </Link>
             );

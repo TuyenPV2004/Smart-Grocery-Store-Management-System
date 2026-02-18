@@ -52,9 +52,6 @@ const DashboardPage = () => {
         <div className="flex justify-between items-center mb-8">
           <div>
             <h2 className="text-2xl font-medium text-slate-900 flex items-center gap-3">
-              <div className="p-2 bg-white rounded-xl shadow-sm border border-slate-100">
-                <LayoutDashboard className="text-indigo-600" size={24} />
-              </div>
               Tổng quan hệ thống
             </h2>
             <p className="text-[14px] text-slate-500 mt-1 font-medium">

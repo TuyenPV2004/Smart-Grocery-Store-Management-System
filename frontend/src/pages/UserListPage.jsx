@@ -143,9 +143,6 @@ const UserListPage = () => {
         <div className="flex justify-between items-center mb-6">
           <div>
             <h2 className="text-2xl font-medium text-slate-900 flex items-center gap-3">
-              <div className="p-2 bg-white rounded-xl shadow-sm border border-slate-100">
-                <UserCircle className="text-indigo-600" size={24} />
-              </div>
               Quản lý nhân sự
             </h2>
             <p className="text-sm text-slate-500 mt-1 font-medium">

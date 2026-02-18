@@ -115,8 +115,9 @@ public class ProductService {
         Product product = new Product();
         product.setName(request.getName());
         product.setBarcode(request.getBarcode());
-        if (request.getSupplierId() != null) {
-            product.setSupplier(supplierRepository.findById(request.getSupplierId()).orElse(null));
+        Long supplierId = request.getSupplierId();
+        if (supplierId != null) {
+            product.setSupplier(supplierRepository.findById(supplierId).orElse(null));
         }
         String sku;
         if (request.getSku() != null && !request.getSku().isEmpty()) {

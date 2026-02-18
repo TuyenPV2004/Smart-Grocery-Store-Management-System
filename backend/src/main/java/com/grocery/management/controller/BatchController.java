@@ -85,7 +85,7 @@ public class BatchController {
      * Get batch by ID
      */
     @GetMapping("/{id}")
-    public ResponseEntity<ProductBatch> getBatchById(@PathVariable Long id) {
+    public ResponseEntity<ProductBatch> getBatchById(@PathVariable long id) {
         Optional<ProductBatch> batchOpt = productBatchRepository.findById(id);
         if (batchOpt.isPresent()) {
             ProductBatch batch = batchOpt.get();
@@ -126,7 +126,7 @@ public class BatchController {
      * Delete batch by ID
      */
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteBatch(@PathVariable Long id) {
+    public ResponseEntity<?> deleteBatch(@PathVariable long id) {
         try {
             if (!productBatchRepository.existsById(id)) {
                 return ResponseEntity.notFound().build();

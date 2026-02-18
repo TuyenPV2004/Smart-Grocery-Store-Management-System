@@ -107,9 +107,6 @@ const SupplierPage = () => {
       <div className="max-w-[1400px] mx-auto">
         <div className="flex justify-between items-center mb-6">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-indigo-50 rounded-xl text-indigo-600">
-              <Truck size={24} />
-            </div>
             <div>
               <h2 className="text-2xl font-medium text-slate-900 leading-none">
                 Quản lý nhà cung cấp
