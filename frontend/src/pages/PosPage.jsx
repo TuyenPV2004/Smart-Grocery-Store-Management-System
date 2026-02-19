@@ -8,6 +8,7 @@ import {
   CreditCard,
   Banknote,
   User,
+  ChevronRight,
 } from "lucide-react";
 import productService from "../services/productService";
 import orderService from "../services/orderService";
@@ -17,6 +18,7 @@ const PosPage = () => {
   const [cart, setCart] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(false);
+  const [isCartOpen, setIsCartOpen] = useState(true);
 
   // Form khách hàng
   const [customerName, setCustomerName] = useState("Khách lẻ");
@@ -118,9 +120,9 @@ const PosPage = () => {
   return (
     <div className="flex h-screen bg-gray-100 overflow-hidden">
       {/* CỘT TRÁI: DANH SÁCH SẢN PHẨM */}
-      <div className="flex-1 flex flex-col p-4 pr-2">
-        <div className="bg-white p-4 rounded-xl shadow-sm mb-4">
-          <div className="relative">
+      <div className="flex-1 flex flex-col p-4 pr-2 transition-all duration-300">
+        <div className="bg-white p-4 rounded-xl shadow-sm mb-4 flex gap-3">
+          <div className="relative flex-1">
             <Search className="absolute left-3 top-2.5 text-gray-400 w-5 h-5" />
             <input
               className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
@@ -130,6 +132,17 @@ const PosPage = () => {
               autoFocus
             />
           </div>
+          {!isCartOpen && (
+            <button
+              onClick={() => setIsCartOpen(true)}
+              className="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-blue-700 transition-colors shadow-sm"
+            >
+              <ShoppingCart size={20} />
+              <span className="font-bold">
+                {cart.reduce((sum, item) => sum + item.cartQty, 0)}
+              </span>
+            </button>
+          )}
         </div>
 
         <div className="flex-1 overflow-y-auto grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 pb-20">
@@ -169,11 +182,21 @@ const PosPage = () => {
       </div>
 
       {/* CỘT PHẢI: GIỎ HÀNG & THANH TOÁN */}
-      <div className="w-[400px] bg-white shadow-2xl flex flex-col h-full border-l border-gray-200">
-        <div className="p-5 border-b bg-blue-50">
+      <div
+        className={`${
+          isCartOpen ? "w-[400px] border-l" : "w-0 overflow-hidden border-none"
+        } bg-white shadow-2xl flex flex-col h-full transition-all duration-300`}
+      >
+        <div className="p-5 border-b bg-blue-50 flex justify-between items-center">
           <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
             <ShoppingCart className="w-5 h-5" /> Giỏ hàng
           </h2>
+          <button
+            onClick={() => setIsCartOpen(false)}
+            className="p-1 hover:bg-blue-100 rounded-full text-gray-500 transition-colors"
+          >
+            <ChevronRight size={24} />
+          </button>
         </div>
 
         {/* Thông tin khách */}
@@ -189,7 +212,7 @@ const PosPage = () => {
           </div>
           <input
             className="w-full bg-gray-50 p-2 rounded border outline-none text-sm"
-            placeholder="Số điện thoại (tùy chọn)"
+            placeholder="Số điện thoại"
             value={customerPhone}
             onChange={(e) => setCustomerPhone(e.target.value)}
           />
@@ -256,13 +279,13 @@ const PosPage = () => {
               onClick={() => setPaymentMethod("CASH")}
               className={`flex justify-center gap-2 py-2 rounded border ${paymentMethod === "CASH" ? "bg-blue-100 border-blue-500 text-blue-700" : "bg-white"}`}
             >
-              <Banknote className="w-4 h-4" /> Tiền mặt
+            Tiền mặt
             </button>
             <button
               onClick={() => setPaymentMethod("TRANSFER")}
               className={`flex justify-center gap-2 py-2 rounded border ${paymentMethod === "TRANSFER" ? "bg-blue-100 border-blue-500 text-blue-700" : "bg-white"}`}
             >
-              <CreditCard className="w-4 h-4" /> CK
+            Chuyển khoản
             </button>
           </div>
 

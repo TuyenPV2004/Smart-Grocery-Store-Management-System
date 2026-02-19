@@ -51,7 +51,7 @@ const HistoryModal = ({ history, onClose }) => {
                 <Clock size={40} className="text-slate-300" />
               </div>
               <p className="text-slate-400 font-medium text-[15px]">
-                Chưa có dữ liệu lịch sử cho mục này.
+                Chưa có dữ liệu lịch sử cho mục này
               </p>
             </div>
           ) : (

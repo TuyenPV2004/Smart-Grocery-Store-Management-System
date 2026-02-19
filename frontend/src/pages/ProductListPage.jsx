@@ -504,16 +504,10 @@ const ProductListPage = () => {
                   <span className="block">Giá nhập</span>
                 </div>
               </th>
-              <th className="px-4 py-4 text-center text-[13px] font-medium text-slate-900 uppercase tracking-wider w-[100px]">
-                Biến động
-              </th>
               <th className="px-4 py-4 text-right text-[13px] font-medium text-slate-900 uppercase tracking-wider">
                 <div className="flex flex-col items-center ml-auto w-fit">
                   <span className="block">Giá bán</span>
                 </div>
-              </th>
-              <th className="px-4 py-4 text-center text-[13px] font-medium text-slate-900 uppercase tracking-wider w-[100px]">
-                Biến động
               </th>
               <th className="px-6 py-4 text-[13px] font-medium text-slate-900 uppercase tracking-wider">
                 Trạng thái
@@ -564,58 +558,16 @@ const ProductListPage = () => {
                       {p.barcode}
                     </div>
                   </td>
-                  <td className="px-4 py-4 text-right whitespace-nowrap text-[14px] font-medium text-slate-500">
-                    {p.importPrice?.toLocaleString()} ₫
-                  </td>
-                  <td className="px-4 py-4 text-center whitespace-nowrap">
-                    {p.importPriceChangePercent !== undefined &&
-                    p.importPriceChangePercent !== null ? (
-                      <span
-                        className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-bold ${
-                          p.importPriceChangePercent > 0
-                            ? "bg-rose-50 text-rose-600"
-                            : p.importPriceChangePercent < 0
-                              ? "bg-emerald-50 text-emerald-600"
-                              : "bg-slate-50 text-slate-500"
-                        }`}
-                      >
-                        {p.importPriceChangePercent > 0 ? (
-                          <TrendingUp size={14} />
-                        ) : p.importPriceChangePercent < 0 ? (
-                          <TrendingDown size={14} />
-                        ) : null}
-                        {Math.abs(p.importPriceChangePercent).toFixed(1)}%
-                      </span>
-                    ) : (
-                      <span className="text-slate-300 text-xs">---</span>
-                    )}
+                  <td className="px-4 py-4 text-right whitespace-nowrap">
+                    <div className="text-[14px] font-medium text-slate-500">
+                      {p.importPrice?.toLocaleString()} ₫
+                    </div>
                   </td>
 
-                  <td className="px-4 py-4 text-right whitespace-nowrap text-[14px] font-medium text-emerald-600">
-                    {p.sellPrice?.toLocaleString()} ₫
-                  </td>
-                  <td className="px-4 py-4 text-center whitespace-nowrap">
-                    {p.sellPriceChangePercent !== undefined &&
-                    p.sellPriceChangePercent !== null ? (
-                      <span
-                        className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-bold ${
-                          p.sellPriceChangePercent > 0
-                            ? "bg-emerald-50 text-emerald-600"
-                            : p.sellPriceChangePercent < 0
-                              ? "bg-rose-50 text-rose-600"
-                              : "bg-slate-50 text-slate-500"
-                        }`}
-                      >
-                        {p.sellPriceChangePercent > 0 ? (
-                          <TrendingUp size={14} />
-                        ) : p.sellPriceChangePercent < 0 ? (
-                          <TrendingDown size={14} />
-                        ) : null}
-                        {Math.abs(p.sellPriceChangePercent).toFixed(1)}%
-                      </span>
-                    ) : (
-                      <span className="text-slate-300 text-xs">---</span>
-                    )}
+                  <td className="px-4 py-4 text-right whitespace-nowrap">
+                    <div className="text-[14px] font-medium text-emerald-600">
+                      {p.sellPrice?.toLocaleString()} ₫
+                    </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span

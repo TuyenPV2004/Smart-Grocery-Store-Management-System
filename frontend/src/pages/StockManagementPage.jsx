@@ -7,8 +7,11 @@ import {
   Search,
   Filter,
   Clock,
+  Trash2,
+  Info,
 } from "lucide-react";
 import stockService from "../services/stockService";
+import productService from "../services/productService";
 
 // ===== BATCH EXPIRY TAB COMPONENT =====
 const BatchExpiryTab = () => {
@@ -219,15 +222,22 @@ const BatchExpiryTab = () => {
 };
 
 // ===== STOCK CARD TAB COMPONENT =====
-const StockCardTab = () => {
+const StockCardTab = ({ selectedProduct, onSelectProduct }) => {
   const [products, setProducts] = useState([]);
-  const [selectedProduct, setSelectedProduct] = useState("");
   const [stockHistory, setStockHistory] = useState([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     fetchProducts();
   }, []);
+
+  useEffect(() => {
+    if (selectedProduct) {
+      fetchStockHistory(selectedProduct);
+    } else {
+      setStockHistory([]);
+    }
+  }, [selectedProduct]);
 
   const fetchProducts = async () => {
     try {
@@ -253,13 +263,7 @@ const StockCardTab = () => {
   };
 
   const handleProductChange = (e) => {
-    const productId = e.target.value;
-    setSelectedProduct(productId);
-    if (productId) {
-      fetchStockHistory(productId);
-    } else {
-      setStockHistory([]);
-    }
+    onSelectProduct(e.target.value);
   };
 
   const getTransactionBadge = (type) => {
@@ -454,6 +458,7 @@ const StockManagementPage = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [selectedProductForCard, setSelectedProductForCard] = useState("");
 
   useEffect(() => {
     fetchDashboardStats();
@@ -479,6 +484,29 @@ const StockManagementPage = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleDeleteProduct = async (product) => {
+    if (
+      !window.confirm(
+        `Bạn có chắc chắn muốn xóa vĩnh viễn sản phẩm "${product.productName}" không?`,
+      )
+    )
+      return;
+
+    try {
+      await productService.delete(product.productId);
+      alert("Đã xóa sản phẩm thành công!");
+      fetchStockSummary();
+      fetchDashboardStats();
+    } catch (error) {
+      alert("Lỗi xóa sản phẩm: " + (error.response?.data || "Có lỗi xảy ra"));
+    }
+  };
+
+  const handleViewDetails = (productId) => {
+    setSelectedProductForCard(productId);
+    setActiveTab("card");
   };
 
   const getStatusBadge = (status) => {
@@ -511,7 +539,7 @@ const StockManagementPage = () => {
     const badge = badges[status] || badges.NORMAL;
     return (
       <span
-        className={`px-3 py-1 rounded-full text-xs font-bold ${badge.bg} ${badge.text}`}
+        className={`px-2 py-0.5 rounded-full text-[11px] font-bold ${badge.bg} ${badge.text}`}
       >
         {badge.icon} {badge.label}
       </span>
@@ -654,7 +682,7 @@ const StockManagementPage = () => {
                   <table className="w-full">
                     <thead className="bg-slate-50 border-b border-slate-200">
                       <tr>
-                        <th className="px-6 py-4 text-left text-sm font-medium text-slate-700 w-[400px]">
+                        <th className="px-6 py-4 text-left text-sm font-medium text-slate-700 w-[250px]">
                           Tên sản phẩm
                         </th>
                         <th className="px-6 py-4 text-left text-sm font-medium text-slate-700">
@@ -678,6 +706,9 @@ const StockManagementPage = () => {
                         <th className="px-6 py-4 text-center text-sm font-medium text-slate-700">
                           Trạng thái
                         </th>
+                        <th className="px-6 py-4 text-center text-sm font-medium text-slate-700">
+                          Thao tác
+                        </th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
@@ -688,19 +719,6 @@ const StockManagementPage = () => {
                         >
                           <td className="px-6 py-4 text-sm font-medium text-slate-900">
                             <div className="flex items-center gap-3">
-                              <img
-                                src={
-                                  item.thumbnail
-                                    ? `http://localhost:8080/${item.thumbnail}`
-                                    : "https://placehold.co/40x40?text=No+Img"
-                                }
-                                alt=""
-                                className="h-10 w-10 rounded-lg object-cover border border-slate-200 bg-white"
-                                onError={(e) => {
-                                  e.target.src =
-                                    "https://placehold.co/40x40?text=Error";
-                                }}
-                              />
                               <div>
                                 <div className="font-medium text-slate-900 whitespace-normal">
                                   {item.productName}
@@ -732,6 +750,30 @@ const StockManagementPage = () => {
                           <td className="px-6 py-4 text-center">
                             {getStatusBadge(item.status)}
                           </td>
+                          <td className="px-6 py-4 text-center">
+                            <div className="flex items-center justify-center gap-2">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleViewDetails(item.productId);
+                                }}
+                                className="text-blue-500 hover:text-blue-700 transition-colors p-1"
+                                title="Xem thẻ kho"
+                              >
+                                <Info size={18} />
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDeleteProduct(item);
+                                }}
+                                className="text-red-500 hover:text-red-700 transition-colors p-1"
+                                title="Xóa vĩnh viễn"
+                              >
+                                <Trash2 size={18} />
+                              </button>
+                            </div>
+                          </td>
                         </tr>
                       ))}
                     </tbody>
@@ -755,7 +797,12 @@ const StockManagementPage = () => {
 
           {activeTab === "batches" && <BatchExpiryTab />}
 
-          {activeTab === "card" && <StockCardTab />}
+          {activeTab === "card" && (
+            <StockCardTab
+              selectedProduct={selectedProductForCard}
+              onSelectProduct={setSelectedProductForCard}
+            />
+          )}
         </div>
       </div>
     </div>
