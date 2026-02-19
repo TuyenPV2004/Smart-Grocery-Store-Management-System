@@ -82,7 +82,7 @@ const Sidebar = ({ isCollapsed, onToggle }) => {
     },
     {
       id: "sales",
-      path: "/sales",
+      path: "/pos",
       label: "Bán hàng",
       icon: ShoppingCart,
       roles: ["ADMIN", "STAFF"],

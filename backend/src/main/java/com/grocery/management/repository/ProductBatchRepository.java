@@ -57,6 +57,7 @@ public interface ProductBatchRepository extends JpaRepository<ProductBatch, Long
         Page<ProductBatch> findAll(@NonNull Pageable pageable);
 
         List<ProductBatch> findByProductIdAndQuantityGreaterThanOrderByExpiryDateAsc(Long productId, int quantity);
+        
 
         // Find available batches by product SKU for export selection (FEFO ordering)
         List<ProductBatch> findByProduct_SkuAndQuantityGreaterThanOrderByExpiryDateAsc(String sku, int minQuantity);
