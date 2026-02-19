@@ -32,6 +32,9 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/auth/**").permitAll()
                         .requestMatchers("/user-photos/**").permitAll()
                         .requestMatchers("/product-images/**").permitAll()
+                        .requestMatchers("/api/v1/users/profile", "/api/v1/users/profile/**",
+                                "/api/v1/users/change-password")
+                        .authenticated()
                         .requestMatchers("/api/v1/users/**").hasAnyAuthority("ADMIN", "STAFF")
                         .requestMatchers("/api/v1/inventory/**").hasAnyAuthority("ADMIN", "STAFF")
                         .anyRequest().authenticated())

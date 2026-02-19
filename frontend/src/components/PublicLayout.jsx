@@ -28,7 +28,7 @@ const PublicLayout = () => {
                 <div className="w-8 h-8 bg-green-600 rounded-lg flex items-center justify-center text-white font-bold">
                   G
                 </div>
-                <span className="text-xl font-bold text-slate-800">
+                <span className="text-xl font-bold text-green-800">
                   Grocery Store
                 </span>
               </div>

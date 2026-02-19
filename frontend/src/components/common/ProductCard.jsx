@@ -1,7 +1,9 @@
 import React from "react";
 import { ShoppingCart, Heart, Eye } from "lucide-react";
+import { useCart } from "../../context/CartContext";
 
 const ProductCard = ({ product }) => {
+  const { addToCart } = useCart();
   const getImageUrl = (path) => {
     if (!path) return "https://via.placeholder.com/300x300?text=No+Image";
     if (path.startsWith("http")) return path;
@@ -88,6 +90,7 @@ const ProductCard = ({ product }) => {
           </div>
 
           <button
+            onClick={() => addToCart(product)}
             className={`p-2.5 rounded-xl transition-all shadow-sm active:scale-95 ${
               isOutOfStock
                 ? "bg-slate-100 text-slate-400 cursor-not-allowed"

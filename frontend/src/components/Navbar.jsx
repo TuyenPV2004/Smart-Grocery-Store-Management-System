@@ -1,12 +1,25 @@
 import React, { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { useCart } from "../context/CartContext";
 import { Menu, X, ShoppingCart, LogOut, Search } from "lucide-react";
 
 const Navbar = () => {
   const { user, isAuthenticated, logout } = useAuth();
+  const { cartCount } = useCart();
   const [isOpen, setIsOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const location = useLocation();
+  const navigate = useNavigate();
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/products?search=${encodeURIComponent(searchQuery)}`);
+      setIsSearchOpen(false);
+    }
+  };
 
   const navLinks = [
     { name: "Trang chủ", path: "/" },
@@ -35,31 +48,84 @@ const Navbar = () => {
           </Link>
 
           {/* Desktop Menu */}
-          <div className="hidden md:flex items-center gap-8">
-            {navLinks.map((link) => (
-              <Link
-                key={link.path}
-                to={link.path}
-                className={`text-sm font-medium transition-colors hover:text-green-600 ${
-                  location.pathname === link.path
-                    ? "text-green-600 font-bold"
-                    : "text-slate-600"
-                }`}
+          {/* Desktop Menu */}
+          <div className="hidden md:flex flex-1 justify-center items-center px-8">
+            {!isSearchOpen ? (
+              <div className="flex items-center gap-8">
+                {navLinks.map((link) => (
+                  <Link
+                    key={link.path}
+                    to={link.path}
+                    className={`text-sm font-medium transition-colors hover:text-green-600 ${
+                      location.pathname === link.path
+                        ? "text-green-600 font-bold"
+                        : "text-slate-600"
+                    }`}
+                  >
+                    {link.name}
+                  </Link>
+                ))}
+              </div>
+            ) : (
+              <form
+                onSubmit={handleSearch}
+                className="w-full max-w-xl relative animate-in fade-in zoom-in-95 duration-200"
               >
-                {link.name}
-              </Link>
-            ))}
+                <input
+                  type="text"
+                  placeholder="Tìm kiếm sản phẩm..."
+                  className="w-full pl-12 pr-12 py-2.5 bg-slate-50 border border-slate-200 rounded-full outline-none focus:border-green-500 focus:ring-2 focus:ring-green-100 transition-all font-medium text-slate-700"
+                  autoFocus
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onBlur={() => !searchQuery && setIsSearchOpen(false)}
+                />
+                <Search
+                  size={18}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+                />
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSearchQuery("");
+                      document.querySelector('input[type="text"]').focus();
+                    }}
+                    className="absolute right-12 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1"
+                  >
+                    <X size={14} />
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setIsSearchOpen(false)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-rose-500 p-1 bg-white rounded-full shadow-sm border border-slate-100"
+                >
+                  <X size={16} />
+                </button>
+              </form>
+            )}
           </div>
 
           {/* Actions */}
           <div className="hidden md:flex items-center gap-4">
-            <button className="p-2.5 text-slate-500 hover:bg-slate-50 rounded-xl transition-colors">
-              <Search size={20} />
-            </button>
-            <button className="p-2.5 text-slate-500 hover:bg-slate-50 rounded-xl transition-colors relative">
+            {!isSearchOpen && (
+              <button
+                onClick={() => setIsSearchOpen(true)}
+                className="p-2.5 text-slate-500 hover:bg-slate-50 rounded-xl transition-colors"
+              >
+                <Search size={20} />
+              </button>
+            )}
+            <Link
+              to="/cart"
+              className="p-2.5 text-slate-500 hover:bg-slate-50 rounded-xl transition-colors relative"
+            >
               <ShoppingCart size={20} />
-              <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
-            </button>
+              {cartCount > 0 && (
+                <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
+              )}
+            </Link>
             <div className="h-6 w-px bg-slate-200 mx-1"></div>
 
             {isAuthenticated ? (

@@ -1,5 +1,7 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
+import { CartProvider } from "./context/CartContext";
+import CartPage from "./pages/CartPage";
 import LoginPage from "./pages/LoginPage";
 import DashboardPage from "./pages/DashboardPage";
 import UserListPage from "./pages/UserListPage";
@@ -25,42 +27,51 @@ import PublicLayout from "./components/PublicLayout";
 function App() {
   return (
     <AuthProvider>
-      <Routes>
-        <Route path="/login" element={<LoginPage />} />
-        {/* Public Routes */}
-        <Route element={<PublicLayout />}>
-          <Route path="/" element={<HomePage />} />
-          <Route element={<ProtectedRoute />}>
-            <Route path="/profile" element={<ProfilePage />} />
+      <CartProvider>
+        <Routes>
+          <Route path="/login" element={<LoginPage />} />
+          {/* Public Routes */}
+          <Route element={<PublicLayout />}>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/cart" element={<CartPage />} />
+            <Route element={<ProtectedRoute />}>
+              <Route path="/profile" element={<ProfilePage />} />
+            </Route>
           </Route>
-        </Route>
-        <Route element={<ProtectedRoute allowedRoles={["ADMIN", "STAFF"]} />}>
-          <Route element={<MainLayout />}>
-            <Route path="/dashboard" element={<DashboardPage />} />
-            <Route path="/products" element={<ProductListPage />} />
-            <Route path="/suppliers" element={<SupplierPage />} />
-            <Route path="/inventory/entry" element={<InventoryEntryPage />} />
-            <Route path="/inventory/list" element={<InventoryListPage />} />
-            <Route path="/inventory/batches" element={<BatchListPage />} />
-            <Route path="/inventory/export" element={<InventoryExportPage />} />
-            <Route path="/inventory/stock" element={<StockManagementPage />} />
-            {/* <Route path="/" element={<Navigate to="/dashboard" replace />} /> Removed redirect */}
-            <Route path="/pos" element={<PosPage />} />
-            <Route path="/orders" element={<OrderManagementPage />} />
+          <Route element={<ProtectedRoute allowedRoles={["ADMIN", "STAFF"]} />}>
+            <Route element={<MainLayout />}>
+              <Route path="/dashboard" element={<DashboardPage />} />
+              <Route path="/products" element={<ProductListPage />} />
+              <Route path="/suppliers" element={<SupplierPage />} />
+              <Route path="/inventory/entry" element={<InventoryEntryPage />} />
+              <Route path="/inventory/list" element={<InventoryListPage />} />
+              <Route path="/inventory/batches" element={<BatchListPage />} />
+              <Route
+                path="/inventory/export"
+                element={<InventoryExportPage />}
+              />
+              <Route
+                path="/inventory/stock"
+                element={<StockManagementPage />}
+              />
+              {/* <Route path="/" element={<Navigate to="/dashboard" replace />} /> Removed redirect */}
+              <Route path="/pos" element={<PosPage />} />
+              <Route path="/orders" element={<OrderManagementPage />} />
+            </Route>
           </Route>
-        </Route>
-        <Route element={<ProtectedRoute allowedRoles={["ADMIN"]} />}>
-          <Route element={<MainLayout />}>
-            <Route path="/users" element={<UserListPage />} />
-            <Route path="/categories" element={<CategoryPage />} />
+          <Route element={<ProtectedRoute allowedRoles={["ADMIN"]} />}>
+            <Route element={<MainLayout />}>
+              <Route path="/users" element={<UserListPage />} />
+              <Route path="/categories" element={<CategoryPage />} />
+            </Route>
           </Route>
-        </Route>
-        <Route path="*" element={<Navigate to="/" />} />{" "}
-        {/* Redirect to Home instead of Login */}
-        <Route path="/register" element={<RegisterPage />} />
-        <Route path="/verify-otp" element={<OtpVerifyPage />} />
-        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-      </Routes>
+          <Route path="*" element={<Navigate to="/" />} />{" "}
+          {/* Redirect to Home instead of Login */}
+          <Route path="/register" element={<RegisterPage />} />
+          <Route path="/verify-otp" element={<OtpVerifyPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        </Routes>
+      </CartProvider>
     </AuthProvider>
   );
 }
