@@ -245,8 +245,8 @@ const UserListPage = () => {
                           }`}
                       >
                         {user.status === "ACTIVE"
-                          ? "đang hoạt động"
-                          : "đã khóa"}
+                          ? "Đang hoạt động"
+                          : "Đã khóa"}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">

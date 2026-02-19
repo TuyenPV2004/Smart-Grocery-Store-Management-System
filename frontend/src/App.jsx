@@ -18,6 +18,7 @@ import BatchListPage from "./pages/BatchListPage";
 import InventoryExportPage from "./pages/InventoryExportPage";
 import StockManagementPage from "./pages/StockManagementPage";
 import PosPage from "./pages/PosPage";
+import OrderManagementPage from "./pages/OrderManagementPage";
 
 function App() {
   return (
@@ -37,6 +38,7 @@ function App() {
             <Route path="/inventory/stock" element={<StockManagementPage />} />
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
             <Route path="/pos" element={<PosPage />} />
+            <Route path="/orders" element={<OrderManagementPage />} />
           </Route>
         </Route>
         <Route element={<ProtectedRoute allowedRoles={["ADMIN"]} />}>

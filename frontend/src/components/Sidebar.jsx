@@ -88,6 +88,13 @@ const Sidebar = ({ isCollapsed, onToggle }) => {
       roles: ["ADMIN", "STAFF"],
     },
     {
+      id: "orders",
+      path: "/orders",
+      label: "Quản lý đơn hàng",
+      icon: ClipboardList,
+      roles: ["ADMIN", "STAFF"],
+    },
+    {
       id: "users",
       path: "/users",
       label: "Quản lý nhân sự",

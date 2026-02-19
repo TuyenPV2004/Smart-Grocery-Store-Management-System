@@ -539,7 +539,7 @@ const StockManagementPage = () => {
     const badge = badges[status] || badges.NORMAL;
     return (
       <span
-        className={`px-2 py-0.5 rounded-full text-[11px] font-bold ${badge.bg} ${badge.text}`}
+        className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${badge.bg} ${badge.text}`}
       >
         {badge.icon} {badge.label}
       </span>
