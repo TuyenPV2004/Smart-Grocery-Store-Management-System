@@ -31,4 +31,12 @@ public class PriceHistory {
 
     @Column(name = "changed_at", nullable = false)
     private LocalDateTime changedAt;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "price_type")
+    private PriceType priceType;
+
+    public enum PriceType {
+        IMPORT, SELL
+    }
 }

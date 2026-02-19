@@ -100,6 +100,7 @@ public class ProductService {
                 priceHistory.setChangedBy(currentUser.getFullName());
                 priceHistory.setUserRole(currentUser.getRole().name());
                 priceHistory.setChangedAt(LocalDateTime.now());
+                priceHistory.setPriceType(com.grocery.management.entity.PriceHistory.PriceType.IMPORT);
 
                 priceHistoryRepository.save(priceHistory);
             } catch (Exception e) {
@@ -243,6 +244,7 @@ public class ProductService {
                 priceHistory.setChangedBy(currentUser.getFullName());
                 priceHistory.setUserRole(currentUser.getRole().name());
                 priceHistory.setChangedAt(LocalDateTime.now());
+                priceHistory.setPriceType(com.grocery.management.entity.PriceHistory.PriceType.IMPORT);
 
                 priceHistoryRepository.save(priceHistory);
             } catch (Exception e) {
@@ -263,5 +265,39 @@ public class ProductService {
      */
     public List<com.grocery.management.entity.PriceHistory> getPriceHistory(Long productId) {
         return priceHistoryRepository.findByProductIdOrderByChangedAtDesc(productId);
+    }
+
+    @Transactional
+    public Product updateSellPrice(@NonNull Long productId, BigDecimal newPrice) {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new RuntimeException("Sản phẩm không tồn tại"));
+
+        BigDecimal oldPrice = product.getSellPrice() != null ? product.getSellPrice() : BigDecimal.ZERO;
+
+        if (oldPrice.compareTo(newPrice) != 0) {
+            try {
+                String username = SecurityContextHolder.getContext().getAuthentication().getName();
+                User currentUser = userService.getUserByUsername(username);
+
+                com.grocery.management.entity.PriceHistory priceHistory = new com.grocery.management.entity.PriceHistory();
+                priceHistory.setProductId(productId);
+                priceHistory.setOldPrice(oldPrice);
+                priceHistory.setNewPrice(newPrice);
+                priceHistory.setChangedBy(currentUser.getFullName());
+                priceHistory.setUserRole(currentUser.getRole().name());
+                priceHistory.setChangedAt(LocalDateTime.now());
+                priceHistory.setPriceType(com.grocery.management.entity.PriceHistory.PriceType.SELL);
+
+                priceHistoryRepository.save(priceHistory);
+            } catch (Exception e) {
+                System.err.println("Không thể lưu lịch sử giá bán: " + e.getMessage());
+            }
+
+            product.setSellPrice(newPrice);
+            Product updatedProduct = productRepository.save(product);
+            saveHistory(updatedProduct, "CẬP NHẬT GIÁ BÁN: " + oldPrice + " → " + newPrice);
+            return updatedProduct;
+        }
+        return product;
     }
 }

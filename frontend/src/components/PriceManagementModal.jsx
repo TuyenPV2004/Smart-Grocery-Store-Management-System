@@ -6,18 +6,22 @@ import {
   TrendingDown,
   ChartNoAxesCombined,
   AlertCircle,
+  ArrowRight,
 } from "lucide-react";
 import priceService from "../services/priceService";
 
 const PriceManagementModal = ({ isOpen, onClose, product, onPriceUpdated }) => {
-  const [newPrice, setNewPrice] = useState("");
+  const [newImportPrice, setNewImportPrice] = useState("");
+  const [newSellPrice, setNewSellPrice] = useState("");
   const [priceHistory, setPriceHistory] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
+  const [isSavingImport, setIsSavingImport] = useState(false);
+  const [isSavingSell, setIsSavingSell] = useState(false);
 
   useEffect(() => {
     if (isOpen && product) {
-      setNewPrice(product.importPrice || "");
+      setNewImportPrice(product.importPrice || "");
+      setNewSellPrice(product.sellPrice || "");
       fetchPriceHistory();
     }
   }, [isOpen, product]);
@@ -36,27 +40,56 @@ const PriceManagementModal = ({ isOpen, onClose, product, onPriceUpdated }) => {
     }
   };
 
-  const handleUpdatePrice = async () => {
-    if (!newPrice || parseFloat(newPrice) < 0) {
-      alert("Vui lòng nhập giá hợp lệ!");
+  const handleUpdateImportPrice = async () => {
+    if (!newImportPrice || parseFloat(newImportPrice) < 0) {
+      alert("Vui lòng nhập giá nhập hợp lệ!");
       return;
     }
 
-    if (parseFloat(newPrice) === parseFloat(product.importPrice)) {
-      alert("Giá mới phải khác giá hiện tại!");
+    if (parseFloat(newImportPrice) === parseFloat(product.importPrice)) {
+      alert("Giá nhập mới phải khác giá hiện tại!");
       return;
     }
 
-    setIsSaving(true);
+    setIsSavingImport(true);
     try {
-      await priceService.updateProductPrice(product.id, parseFloat(newPrice));
-      alert("Cập nhật giá thành công!");
+      await priceService.updateProductPrice(
+        product.id,
+        parseFloat(newImportPrice),
+      );
+      alert("Cập nhật giá nhập thành công!");
       fetchPriceHistory();
       onPriceUpdated();
     } catch (error) {
-      alert("Lỗi cập nhật giá: " + (error.response?.data || error.message));
+      alert(
+        "Lỗi cập nhật giá nhập: " + (error.response?.data || error.message),
+      );
     } finally {
-      setIsSaving(false);
+      setIsSavingImport(false);
+    }
+  };
+
+  const handleUpdateSellPrice = async () => {
+    if (!newSellPrice || parseFloat(newSellPrice) < 0) {
+      alert("Vui lòng nhập giá bán hợp lệ!");
+      return;
+    }
+
+    if (parseFloat(newSellPrice) === parseFloat(product.sellPrice)) {
+      alert("Giá bán mới phải khác giá hiện tại!");
+      return;
+    }
+
+    setIsSavingSell(true);
+    try {
+      await priceService.updateSellPrice(product.id, parseFloat(newSellPrice));
+      alert("Cập nhật giá bán thành công!");
+      fetchPriceHistory();
+      onPriceUpdated();
+    } catch (error) {
+      alert("Lỗi cập nhật giá bán: " + (error.response?.data || error.message));
+    } finally {
+      setIsSavingSell(false);
     }
   };
 
@@ -80,7 +113,7 @@ const PriceManagementModal = ({ isOpen, onClose, product, onPriceUpdated }) => {
 
   return (
     <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[70] flex items-center justify-center p-4 animate-in fade-in duration-200">
-      <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col border border-slate-200 animate-in zoom-in duration-200">
+      <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col border border-slate-200 animate-in zoom-in duration-200">
         <div className="flex justify-between items-center p-8 border-b border-slate-100">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-indigo-50 rounded-xl text-indigo-600">
@@ -91,7 +124,7 @@ const PriceManagementModal = ({ isOpen, onClose, product, onPriceUpdated }) => {
                 Quản lý giá sản phẩm
               </h2>
               <p className="text-slate-500 text-sm mt-1.5 font-medium">
-                Cập nhập giá sản phẩm
+                Cập nhập giá nhập và giá bán
               </p>
             </div>
           </div>
@@ -102,88 +135,133 @@ const PriceManagementModal = ({ isOpen, onClose, product, onPriceUpdated }) => {
             <X size={28} />
           </button>
         </div>
-        <div className="p-8 overflow-y-auto flex-1 custom-scrollbar space-y-6">
-          <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm transition-all">
-            <div className="flex items-center gap-4 mb-6 pb-6 border-b border-slate-100">
-              <img
-                src={
-                  product?.thumbnail
-                    ? `http://localhost:8080/${product.thumbnail}`
-                    : "https://via.placeholder.com/80"
-                }
-                alt={product?.name}
-                className="w-20 h-20 rounded-2xl object-cover border border-slate-100 shadow-sm"
-              />
-              <div className="flex-1">
-                <h3 className="text-lg font-medium text-slate-900 leading-tight">
-                  {product?.name}
-                </h3>
-                <p className="text-sm text-slate-900 mt-1">
-                  <span className="bg-slate-100 px-2 py-0.5 rounded-lg text-[11px] font-medium text-slate-900 uppercase tracking-wider">
-                    {product?.sku}
-                  </span>
-                </p>
-                <p className="text-sm text-slate-900 mt-1">
-                  <span className="bg-slate-100 px-2 py-0.5 rounded-lg text-[11px] font-medium text-slate-900 uppercase tracking-wider">
-                    {product?.brand}
-                  </span>
-                </p>
+
+        <div className="p-8 overflow-y-auto flex-1 custom-scrollbar space-y-8">
+          {/* Product Info */}
+          <div className="flex items-center gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-100">
+            <img
+              src={
+                product?.thumbnail
+                  ? `http://localhost:8080/${product.thumbnail}`
+                  : "https://via.placeholder.com/80"
+              }
+              alt={product?.name}
+              className="w-16 h-16 rounded-xl object-cover border border-slate-200"
+            />
+            <div>
+              <h3 className="text-lg font-medium text-slate-900">
+                {product?.name}
+              </h3>
+              <div className="flex gap-2 mt-1">
+                <span className="text-xs bg-white border border-slate-200 px-2 py-0.5 rounded-lg text-slate-600 font-medium">
+                  SKU: {product?.sku}
+                </span>
+                <span className="text-xs bg-white border border-slate-200 px-2 py-0.5 rounded-lg text-slate-600 font-medium">
+                  {product?.unit}
+                </span>
               </div>
             </div>
+          </div>
 
-            {/* Grid Layout - Giữ nguyên MD:GRID-COLS-2 */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <label className="block text-xs font-semibold text-slate-900 uppercase tracking-wide ml-1">
-                  Đơn giá nhập
-                </label>
-                <div className="h-[52px] flex items-center px-4 bg-slate-50 rounded-xl border border-slate-100">
-                  <span className="text-xl font-medium text-slate-900">
-                    {product?.importPrice?.toLocaleString() || "0"}
-                    <span className="text-sm ml-1 text-slate-400 font-normal">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {/* Import Price Section */}
+            <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm relative overflow-hidden">
+              <div className="absolute top-0 left-0 w-1 h-full bg-blue-500"></div>
+              <h3 className="text-md font-bold text-slate-800 mb-4 uppercase tracking-wide flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-blue-500"></span>
+                Giá nhập kho
+              </h3>
+
+              <div className="space-y-4">
+                <div className="bg-blue-50 rounded-xl p-4 flex justify-between items-center">
+                  <span className="text-sm font-medium text-blue-800">
+                    Hiện tại
+                  </span>
+                  <span className="text-xl font-bold text-blue-700">
+                    {product?.importPrice?.toLocaleString() || "0"} ₫
+                  </span>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-xs font-semibold text-slate-500 uppercase">
+                    Giá nhập mới
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="number"
+                      value={newImportPrice}
+                      onChange={(e) => setNewImportPrice(e.target.value)}
+                      className="w-full h-12 pl-4 pr-10 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-medium text-lg"
+                      placeholder="Nhập giá..."
+                    />
+                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 font-medium">
                       ₫
                     </span>
-                  </span>
+                  </div>
                 </div>
-              </div>
 
-              <div className="space-y-2">
-                <label className="block text-xs font-semibold text-slate-900 uppercase tracking-wide ml-1">
-                  Đơn giá mới
-                </label>
-                <div className="relative group">
-                  <input
-                    type="number"
-                    value={newPrice}
-                    onChange={(e) => setNewPrice(e.target.value)}
-                    className="w-full h-[52px] pl-4 pr-10 border border-slate-200 rounded-xl bg-white text-slate-900 focus:outline-none focus:ring-4 focus:ring-slate-900/5 focus:border-slate-900 transition-all font-medium text-lg placeholder:text-slate-300"
-                    placeholder="Nhập giá mới"
-                  />
-                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 font-medium">
-                    ₫
-                  </span>
-                </div>
+                <button
+                  onClick={handleUpdateImportPrice}
+                  disabled={isSavingImport}
+                  className="w-full py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all font-medium shadow-lg shadow-blue-100 active:scale-[0.98] disabled:opacity-50"
+                >
+                  {isSavingImport ? "Đang lưu..." : "Cập nhật giá nhập"}
+                </button>
               </div>
             </div>
 
-            {/* Button - Tinh chỉnh bo góc và độ bóng */}
-            <button
-              onClick={handleUpdatePrice}
-              disabled={isSaving}
-              className="mt-6 w-full px-6 py-3.5 bg-slate-900 text-white rounded-xl hover:bg-black transition-all font-medium shadow-md shadow-slate-200 active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              <Save size={18} strokeWidth={2.5} />
-              <span>
-                {isSaving ? "Đang cập nhật..." : "Xác nhận cập nhật giá"}
-              </span>
-            </button>
+            {/* Sell Price Section */}
+            <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm relative overflow-hidden">
+              <div className="absolute top-0 left-0 w-1 h-full bg-emerald-500"></div>
+              <h3 className="text-md font-bold text-slate-800 mb-4 uppercase tracking-wide flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                Giá bán ra
+              </h3>
+
+              <div className="space-y-4">
+                <div className="bg-emerald-50 rounded-xl p-4 flex justify-between items-center">
+                  <span className="text-sm font-medium text-emerald-800">
+                    Hiện tại
+                  </span>
+                  <span className="text-xl font-bold text-emerald-700">
+                    {product?.sellPrice?.toLocaleString() || "0"} ₫
+                  </span>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-xs font-semibold text-slate-500 uppercase">
+                    Giá bán mới
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="number"
+                      value={newSellPrice}
+                      onChange={(e) => setNewSellPrice(e.target.value)}
+                      className="w-full h-12 pl-4 pr-10 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all font-medium text-lg"
+                      placeholder="Nhập giá..."
+                    />
+                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 font-medium">
+                      ₫
+                    </span>
+                  </div>
+                </div>
+
+                <button
+                  onClick={handleUpdateSellPrice}
+                  disabled={isSavingSell}
+                  className="w-full py-3 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-all font-medium shadow-lg shadow-emerald-100 active:scale-[0.98] disabled:opacity-50"
+                >
+                  {isSavingSell ? "Đang lưu..." : "Cập nhật giá bán"}
+                </button>
+              </div>
+            </div>
           </div>
 
           {/* Price History */}
           <div>
             <h3 className="text-lg font-medium text-slate-900 mb-4 flex items-center gap-2">
-              <div className="w-1.5 h-6 bg-emerald-500 rounded-full"></div>
-              Lịch sử thay đổi giá
+              <div className="w-1.5 h-6 bg-slate-400 rounded-full"></div>
+              Lịch sử thay đổi
             </h3>
 
             {isLoading ? (
@@ -206,11 +284,11 @@ const PriceManagementModal = ({ isOpen, onClose, product, onPriceUpdated }) => {
                   <thead className="bg-slate-50 text-slate-600 font-medium">
                     <tr>
                       <th className="px-4 py-3 text-left">Thời gian</th>
+                      <th className="px-4 py-3 text-center">Loại giá</th>
                       <th className="px-4 py-3 text-right">Giá cũ</th>
                       <th className="px-4 py-3 text-right">Giá mới</th>
                       <th className="px-4 py-3 text-center">Chênh lệch</th>
-                      <th className="px-4 py-3 text-center">Role</th>
-                      <th className="px-4 py-3 text-left">Nhân viên</th>
+                      <th className="px-4 py-3 text-left">Người sửa</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
@@ -220,24 +298,32 @@ const PriceManagementModal = ({ isOpen, onClose, product, onPriceUpdated }) => {
                         history.newPrice,
                       );
                       const isIncrease = percentChange > 0;
+                      const isSellPrice = history.priceType === "SELL";
 
                       return (
                         <tr key={index} className="hover:bg-slate-50">
                           <td className="px-4 py-3 text-slate-600 font-medium">
                             {formatDateTime(history.changedAt)}
                           </td>
-                          <td className="px-4 py-3 text-right text-slate-600">
+                          <td className="px-4 py-3 text-center">
+                            <span
+                              className={`px-2 py-1 rounded-md text-[11px] font-bold uppercase ${isSellPrice ? "bg-emerald-100 text-emerald-700" : "bg-blue-100 text-blue-700"}`}
+                            >
+                              {isSellPrice ? "Giá bán" : "Giá nhập"}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-right text-slate-500">
                             {history.oldPrice?.toLocaleString()} ₫
                           </td>
-                          <td className="px-4 py-3 text-right text-slate-900 font-medium">
+                          <td className="px-4 py-3 text-right text-slate-900 font-bold">
                             {history.newPrice?.toLocaleString()} ₫
                           </td>
                           <td className="px-4 py-3 text-center">
                             <span
                               className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
                                 isIncrease
-                                  ? "bg-emerald-50 text-emerald-700"
-                                  : "bg-rose-50 text-rose-700"
+                                  ? "bg-green-50 text-green-700"
+                                  : "bg-red-50 text-red-700"
                               }`}
                             >
                               {isIncrease ? (
@@ -248,14 +334,12 @@ const PriceManagementModal = ({ isOpen, onClose, product, onPriceUpdated }) => {
                               {Math.abs(percentChange)}%
                             </span>
                           </td>
-                          <td className="px-4 py-3 text-center">
-                            <div className="text-slate-900 font-medium">
-                              {history.userRole}
-                            </div>
-                          </td>
                           <td className="px-4 py-3">
                             <div className="text-slate-900 font-medium">
                               {history.changedBy}
+                            </div>
+                            <div className="text-[10px] text-slate-500">
+                              {history.userRole}
                             </div>
                           </td>
                         </tr>

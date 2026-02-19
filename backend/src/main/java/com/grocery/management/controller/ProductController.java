@@ -103,6 +103,13 @@ public class ProductController {
         }
     }
 
+    @PostMapping("/{id}/sell-price")
+    public ResponseEntity<Product> updateSellPrice(
+            @PathVariable Long id,
+            @RequestParam BigDecimal newPrice) {
+        return ResponseEntity.ok(productService.updateSellPrice(id, newPrice));
+    }
+
     /**
      * Lấy lịch sử thay đổi giá của sản phẩm
      */

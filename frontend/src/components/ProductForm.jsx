@@ -19,6 +19,7 @@ const productSchema = z.object({
   barcode: z.string().min(1, "Mã vạch bắt buộc"),
   unit: z.string().min(1, "Đơn vị tính bắt buộc"),
   importPrice: z.coerce.number().min(0, "Giá nhập phải >= 0"),
+  sellPrice: z.coerce.number().min(0, "Giá bán phải >= 0"),
   description: z.string().optional(),
   status: z.enum(["ACTIVE", "INACTIVE", "OUT_OF_STOCK"]),
 });
@@ -42,6 +43,7 @@ const ProductForm = ({ existingProduct, onClose, onSuccess }) => {
     defaultValues: existingProduct || {
       status: "ACTIVE",
       importPrice: 0,
+      sellPrice: 0,
     },
   });
 
@@ -376,6 +378,23 @@ const ProductForm = ({ existingProduct, onClose, onSuccess }) => {
                             ? "bg-slate-100 text-slate-500 cursor-not-allowed"
                             : "bg-slate-50 text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:bg-white"
                         } transition-all`}
+                        placeholder="0"
+                      />
+                      <span className="absolute right-3 top-2.5 text-slate-400 font-medium">
+                        ₫
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-slate-700">
+                      Giá bán
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="number"
+                        {...register("sellPrice")}
+                        className="w-full pl-3 pr-8 py-2 border border-slate-200 rounded-xl bg-slate-50 text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:bg-white transition-all"
                         placeholder="0"
                       />
                       <span className="absolute right-3 top-2.5 text-slate-400 font-medium">
