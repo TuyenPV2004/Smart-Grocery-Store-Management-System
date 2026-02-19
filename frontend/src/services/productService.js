@@ -1,8 +1,8 @@
 import axiosClient from "./axiosClient";
 
 const productService = {
-
   getAll: (params) => axiosClient.get("/products", { params }),
+  get: (id) => axiosClient.get(`/products/${id}`),
   create: (productData, imageFile) => {
     const formData = new FormData();
     formData.append("product", JSON.stringify(productData));

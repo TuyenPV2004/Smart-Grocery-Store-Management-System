@@ -47,6 +47,11 @@ public class ProductService {
         return productRepository.searchProducts(keyword, status);
     }
 
+    public Product getProductById(Long id) {
+        return productRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy sản phẩm với ID: " + id));
+    }
+
     /**
      * Lưu lịch sử thay đổi sản phẩm
      */

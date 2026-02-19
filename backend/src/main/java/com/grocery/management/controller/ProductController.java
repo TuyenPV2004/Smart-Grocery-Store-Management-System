@@ -30,6 +30,15 @@ public class ProductController {
         return ResponseEntity.ok(productService.getAllProducts(keyword, status));
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getProductById(@PathVariable Long id) {
+        try {
+            return ResponseEntity.ok(productService.getProductById(id));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
     @PostMapping
     public ResponseEntity<?> createProduct(
             @RequestParam("product") String productJson,

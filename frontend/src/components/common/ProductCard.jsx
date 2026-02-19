@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router-dom";
 import { ShoppingCart, Heart, Eye } from "lucide-react";
 import { useCart } from "../../context/CartContext";
 
@@ -25,10 +26,10 @@ const ProductCard = ({ product }) => {
       {product.status !== "ACTIVE" && (
         <div className="absolute top-3 left-3 z-10">
           <span
-            className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+            className={`px-3 py-1 rounded-full text-[10px] font-medium uppercase tracking-wider ${
               isOutOfStock
-                ? "bg-stone-100 text-stone-600"
-                : "bg-rose-100 text-rose-600"
+                ? "bg-rose-400 text-white"
+                : "bg-rose-400 text-white"
             }`}
           >
             {isOutOfStock ? "Hết hàng" : "Ngừng kinh doanh"}
@@ -48,12 +49,13 @@ const ProductCard = ({ product }) => {
 
         {/* Quick Actions Overlay */}
         <div className="absolute inset-0 bg-black/5 flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-          <button
+          <Link
+            to={`/products/${product.id}`}
             className="p-3 bg-white text-slate-700 rounded-full shadow-lg hover:bg-green-600 hover:text-white transition-all transform hover:scale-110"
-            title="Xem nhanh"
+            title="Xem chi tiết"
           >
             <Eye size={18} />
-          </button>
+          </Link>
           <button
             className="p-3 bg-white text-slate-700 rounded-full shadow-lg hover:bg-rose-500 hover:text-white transition-all transform hover:scale-110"
             title="Yêu thích"
@@ -65,11 +67,6 @@ const ProductCard = ({ product }) => {
 
       {/* Content */}
       <div className="p-4 flex flex-col flex-1">
-        <div className="mb-1">
-          <p className="text-xs font-medium text-slate-400 uppercase tracking-wide">
-            {product.brand || "Thương hiệu khác"}
-          </p>
-        </div>
         <h3
           className="text-[15px] font-medium text-slate-800 line-clamp-2 mb-2 group-hover:text-green-600 transition-colors min-h-[44px]"
           title={product.name}
@@ -79,7 +76,7 @@ const ProductCard = ({ product }) => {
 
         <div className="mt-auto pt-3 flex items-end justify-between border-t border-slate-50">
           <div>
-            <p className="text-lg font-bold text-green-600">
+            <p className="text-lg font-medium text-green-600">
               {formatCurrency(product.sellPrice)}
             </p>
             {product.importPrice > 0 && (

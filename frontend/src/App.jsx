@@ -3,6 +3,7 @@ import { AuthProvider } from "./context/AuthContext";
 import { CartProvider } from "./context/CartContext";
 import CartPage from "./pages/CartPage";
 import LoginPage from "./pages/LoginPage";
+import ProductDetailPage from "./pages/ProductDetailPage";
 import DashboardPage from "./pages/DashboardPage";
 import UserListPage from "./pages/UserListPage";
 import ProfilePage from "./pages/ProfilePage";
@@ -34,6 +35,7 @@ function App() {
           <Route element={<PublicLayout />}>
             <Route path="/" element={<HomePage />} />
             <Route path="/cart" element={<CartPage />} />
+            <Route path="/products/:id" element={<ProductDetailPage />} />
             <Route element={<ProtectedRoute />}>
               <Route path="/profile" element={<ProfilePage />} />
             </Route>
