@@ -19,16 +19,24 @@ import InventoryExportPage from "./pages/InventoryExportPage";
 import StockManagementPage from "./pages/StockManagementPage";
 import PosPage from "./pages/PosPage";
 import OrderManagementPage from "./pages/OrderManagementPage";
+import HomePage from "./pages/HomePage";
+import PublicLayout from "./components/PublicLayout";
 
 function App() {
   return (
     <AuthProvider>
       <Routes>
         <Route path="/login" element={<LoginPage />} />
+        {/* Public Routes */}
+        <Route element={<PublicLayout />}>
+          <Route path="/" element={<HomePage />} />
+          <Route element={<ProtectedRoute />}>
+            <Route path="/profile" element={<ProfilePage />} />
+          </Route>
+        </Route>
         <Route element={<ProtectedRoute allowedRoles={["ADMIN", "STAFF"]} />}>
           <Route element={<MainLayout />}>
             <Route path="/dashboard" element={<DashboardPage />} />
-            <Route path="/profile" element={<ProfilePage />} />
             <Route path="/products" element={<ProductListPage />} />
             <Route path="/suppliers" element={<SupplierPage />} />
             <Route path="/inventory/entry" element={<InventoryEntryPage />} />
@@ -36,7 +44,7 @@ function App() {
             <Route path="/inventory/batches" element={<BatchListPage />} />
             <Route path="/inventory/export" element={<InventoryExportPage />} />
             <Route path="/inventory/stock" element={<StockManagementPage />} />
-            <Route path="/" element={<Navigate to="/dashboard" replace />} />
+            {/* <Route path="/" element={<Navigate to="/dashboard" replace />} /> Removed redirect */}
             <Route path="/pos" element={<PosPage />} />
             <Route path="/orders" element={<OrderManagementPage />} />
           </Route>
@@ -47,7 +55,8 @@ function App() {
             <Route path="/categories" element={<CategoryPage />} />
           </Route>
         </Route>
-        <Route path="*" element={<Navigate to="/login" />} />
+        <Route path="*" element={<Navigate to="/" />} />{" "}
+        {/* Redirect to Home instead of Login */}
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/verify-otp" element={<OtpVerifyPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
