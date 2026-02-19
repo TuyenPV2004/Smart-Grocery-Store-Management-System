@@ -108,7 +108,7 @@ const ProfilePage = () => {
     <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 font-poppins">
       <div className="max-w-5xl mx-auto">
         {/* Header Section */}
-        <div className="mb-10 border-l-4 border-indigo-600 pl-6">
+        <div className="mb-10 border-l-4 border-green-600 pl-6">
           <h2 className="text-3xl font-medium text-slate-900 tracking-tight">
             Hồ sơ cá nhân
           </h2>
@@ -121,7 +121,7 @@ const ProfilePage = () => {
           {/* CỘT TRÁI: AVATAR CARD */}
           <div className="lg:col-span-4 space-y-6">
             <div className="bg-white rounded-[2.5rem] shadow-sm border border-slate-200 overflow-hidden relative">
-              <div className="h-28 bg-indigo-600" />
+              <div className="h-28 bg-green-600" />
 
               <div className="px-6 pb-8 -mt-14 text-center">
                 <div className="relative inline-block">
@@ -140,7 +140,7 @@ const ProfilePage = () => {
                       </span>
                     )}
                   </div>
-                  <label className="absolute bottom-1 right-1 p-2 bg-indigo-600 rounded-xl shadow-lg border border-white cursor-pointer text-white hover:bg-indigo-700 transition-all">
+                  <label className="absolute bottom-1 right-1 p-2 bg-green-600 rounded-xl shadow-lg border border-white cursor-pointer text-white hover:bg-green-700 transition-all">
                     <Camera size={18} />
                     <input
                       type="file"
@@ -155,7 +155,7 @@ const ProfilePage = () => {
                   <h3 className="text-xl font-medium text-slate-900 leading-none">
                     {user.fullName || "Người dùng"}
                   </h3>
-                  <p className="text-base font-medium text-indigo-600 mt-2">
+                  <p className="text-base font-medium text-green-600 mt-2">
                     @{user.username}
                   </p>
                 </div>
@@ -165,7 +165,7 @@ const ProfilePage = () => {
                     className={`px-4 py-1 rounded-lg text-sm font-medium tracking-wide border ${
                       user.role === "ADMIN"
                         ? "bg-rose-50 text-rose-700 border-rose-100"
-                        : "bg-indigo-50 text-indigo-700 border-indigo-100"
+                        : "bg-green-50 text-green-700 border-green-100"
                     }`}
                   >
                     {user.role === "ADMIN" ? "Quản trị viên" : "Người dùng"}
@@ -177,12 +177,12 @@ const ProfilePage = () => {
             {/* Nút Đổi mật khẩu */}
             <div className="bg-white rounded-[2rem] p-6 shadow-sm border border-slate-200">
               <h4 className="text-sm font-medium text-slate-500 tracking-wider mb-4 flex items-center gap-2">
-                <Shield size={18} className="text-indigo-600" /> Bảo mật tài
+                <Shield size={18} className="text-green-600" /> Bảo mật tài
                 khoản
               </h4>
               <button
                 onClick={() => setShowPasswordModal(true)}
-                className="w-full flex items-center justify-between p-4 rounded-2xl bg-slate-900 text-white hover:bg-indigo-600 transition-all duration-300 shadow-md"
+                className="w-full flex items-center justify-between p-4 rounded-2xl bg-rose-600 text-white hover:bg-rose-700 transition-all duration-300 shadow-md"
               >
                 <div className="flex items-center gap-3">
                   <KeyRound size={20} />
@@ -210,7 +210,7 @@ const ProfilePage = () => {
                 {!isEditing ? (
                   <button
                     onClick={() => setIsEditing(true)}
-                    className="flex items-center gap-2 px-6 py-2.5 rounded-2xl bg-indigo-600 text-white font-medium text-sm hover:bg-indigo-700 transition-all shadow-sm"
+                    className="flex items-center gap-2 px-6 py-2.5 rounded-2xl bg-green-600 text-white font-medium text-sm hover:bg-green-700 transition-all shadow-sm"
                   >
                     <Edit size={18} /> Chỉnh sửa hồ sơ
                   </button>
@@ -259,7 +259,7 @@ const ProfilePage = () => {
                       <div className="relative">
                         <item.icon
                           className={`absolute left-4 top-1/2 -translate-y-1/2 ${
-                            isEditing ? "text-indigo-600" : "text-slate-400"
+                            isEditing ? "text-green-600" : "text-slate-400"
                           }`}
                           size={18}
                         />
@@ -268,7 +268,7 @@ const ProfilePage = () => {
                           disabled={!isEditing}
                           className={`w-full pl-12 pr-5 py-3.5 rounded-2xl border transition-all duration-300 outline-none font-medium text-slate-900 ${
                             isEditing
-                              ? "bg-white border-slate-300 focus:border-indigo-600 focus:ring-4 focus:ring-indigo-50 shadow-sm"
+                              ? "bg-white border-slate-300 focus:border-green-600 focus:ring-4 focus:ring-green-50 shadow-sm"
                               : "bg-gray-100 border-gray-100 text-slate-500 cursor-not-allowed"
                           }`}
                           value={formData[item.key]}
@@ -288,7 +288,7 @@ const ProfilePage = () => {
                   <div className="pt-6 flex justify-end">
                     <button
                       type="submit"
-                      className="bg-indigo-600 text-white px-8 py-3.5 rounded-2xl hover:bg-indigo-700 flex items-center shadow-lg shadow-indigo-100 font-medium tracking-wide text-sm active:scale-95 transition-all"
+                      className="bg-green-600 text-white px-8 py-3.5 rounded-2xl hover:bg-green-700 flex items-center shadow-lg shadow-green-100 font-medium tracking-wide text-sm active:scale-95 transition-all"
                     >
                       <Save size={20} className="mr-2" /> Cập nhật ngay
                     </button>
@@ -308,7 +308,7 @@ const ProfilePage = () => {
             />
 
             <div className="relative bg-white rounded-[2.5rem] shadow-2xl w-full max-w-md overflow-hidden border border-slate-200">
-              <div className="px-8 pt-8 pb-4 flex justify-between items-center border-b border-slate-100">
+              <div className="px-8 pt-8 pb-4 flex justify-between items-center">
                 <h3 className="text-xl font-medium text-slate-900">
                   Đổi mật khẩu
                 </h3>
@@ -328,13 +328,13 @@ const ProfilePage = () => {
                     { label: "Xác nhận mật khẩu mới", key: "confirmPassword" },
                   ].map((f) => (
                     <div key={f.key} className="space-y-2">
-                      <label className="text-xs font-medium text-slate-500 tracking-wider ml-1">
+                      <label className="text-xs font-medium text-slate-900 tracking-wider ml-1">
                         {f.label}
                       </label>
                       <input
                         type="password"
                         required
-                        className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl focus:border-indigo-600 focus:ring-4 focus:ring-indigo-50 shadow-sm outline-none font-medium text-slate-900 transition-all"
+                        className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl focus:border-green-600 focus:ring-4 focus:ring-green-50 shadow-sm outline-none font-medium text-slate-900 transition-all"
                         value={passData[f.key]}
                         onChange={(e) =>
                           setPassData({ ...passData, [f.key]: e.target.value })
@@ -345,7 +345,7 @@ const ProfilePage = () => {
                 </div>
                 <button
                   type="submit"
-                  className="w-full bg-slate-900 text-white py-4 rounded-2xl hover:bg-indigo-600 font-medium shadow-md tracking-wide transition-all active:scale-95 mt-4"
+                  className="w-full bg-green-600 text-white py-4 rounded-2xl hover:bg-green-700 font-medium shadow-md tracking-wide transition-all active:scale-95 mt-4"
                 >
                   Xác nhận thay đổi
                 </button>

@@ -22,35 +22,28 @@ const DetailModal = ({ isOpen, onClose, batch }) => {
       <div className="bg-white rounded-[2rem] w-full max-w-3xl shadow-2xl border border-white/50 max-h-[90vh] overflow-hidden flex flex-col animate-in fade-in zoom-in duration-200">
         <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
           <h3 className="text-xl font-bold text-slate-800 flex items-center gap-2">
-            <Package className="text-indigo-600" />
             Chi tiết lô hàng: {batch.batchCode}
           </h3>
-          <button
-            onClick={onClose}
-            className="text-slate-400 hover:text-slate-600"
-          >
-            <X size={24} />
-          </button>
         </div>
 
         <div className="p-6 overflow-y-auto flex-1 space-y-6">
           <div className="grid grid-cols-2 gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-100">
             <div>
-              <p className="text-xs text-slate-500 font-medium uppercase mb-1">
+              <p className="text-xs text-slate-900 font-medium mb-1">
                 Mã phiếu
               </p>
-              <p className="font-medium text-indigo-600">
+              <p className="font-medium text-slate-900">
                 {batch.inventoryNote?.code}
               </p>
             </div>
             <div>
-              <p className="text-xs text-slate-500 font-medium uppercase mb-1">
+              <p className="text-xs text-slate-900 font-medium mb-1">
                 Mã lô hàng
               </p>
-              <p className="font-medium text-indigo-600">{batch.batchCode}</p>
+              <p className="font-medium text-slate-900">{batch.batchCode}</p>
             </div>
             <div>
-              <p className="text-xs text-slate-500 font-medium uppercase mb-1">
+              <p className="text-xs text-slate-900 font-medium mb-1">
                 Sản phẩm
               </p>
               <p className="font-medium text-slate-700">
@@ -58,15 +51,11 @@ const DetailModal = ({ isOpen, onClose, batch }) => {
               </p>
             </div>
             <div>
-              <p className="text-xs text-slate-500 font-medium uppercase mb-1">
-                Mã SKU
-              </p>
-              <p className="font-medium text-slate-700">
-                {batch.product?.sku}
-              </p>
+              <p className="text-xs text-slate-900 font-medium mb-1">Mã SKU</p>
+              <p className="font-medium text-slate-700">{batch.product?.sku}</p>
             </div>
             <div>
-              <p className="text-xs text-slate-500 font-medium uppercase mb-1">
+              <p className="text-xs text-slate-900 font-medium mb-1">
                 Nhà cung cấp
               </p>
               <p className="font-medium text-slate-700">
@@ -74,10 +63,10 @@ const DetailModal = ({ isOpen, onClose, batch }) => {
               </p>
             </div>
             <div>
-              <p className="text-xs text-slate-500 font-medium uppercase mb-1">
+              <p className="text-xs text-slate-900 font-medium mb-1">
                 Đơn giá nhập
               </p>
-              <p className="font-medium text-indigo-600">
+              <p className="font-medium text-slate-900">
                 {(
                   (batch.importPrice || 0) * (batch.conversionRate || 1)
                 ).toLocaleString()}{" "}
@@ -85,25 +74,23 @@ const DetailModal = ({ isOpen, onClose, batch }) => {
               </p>
             </div>
             <div>
-              <p className="text-xs text-slate-500 font-medium uppercase mb-1">
+              <p className="text-xs text-slate-900 font-medium mb-1">
                 Ngày sản xuất
               </p>
-              <div className="flex items-center gap-2 text-slate-700 font-medium">
-                <Calendar size={14} className="text-indigo-500" />
+              <div className="flex items-center gap-2 text-slate-900 font-medium">
                 {batch.manufacturingDate || "---"}
               </div>
             </div>
             <div>
-              <p className="text-xs text-slate-500 font-medium uppercase mb-1">
+              <p className="text-xs text-slate-900 font-medium mb-1">
                 Hạn sử dụng
               </p>
-              <div className="flex items-center gap-2 text-slate-700 font-medium">
-                <Calendar size={14} className="text-indigo-500" />
+              <div className="flex items-center gap-2 text-slate-900 font-medium">
                 {batch.expiryDate || "---"}
               </div>
             </div>
             <div>
-              <p className="text-xs text-slate-500 font-medium uppercase mb-1">
+              <p className="text-xs text-slate-900 font-medium mb-1">
                 Số lượng lô nhập
               </p>
               <p className="font-medium text-slate-700">
@@ -113,7 +100,7 @@ const DetailModal = ({ isOpen, onClose, batch }) => {
               </p>
             </div>
             <div>
-              <p className="text-xs text-slate-500 font-medium uppercase mb-1">
+              <p className="text-xs text-slate-900 font-medium mb-1">
                 Số lượng hàng tồn
               </p>
               <p className="font-medium text-slate-700">
@@ -128,7 +115,7 @@ const DetailModal = ({ isOpen, onClose, batch }) => {
         <div className="p-6 border-t border-slate-100 bg-white flex justify-end">
           <button
             onClick={onClose}
-            className="px-6 py-2.5 bg-slate-100 text-slate-700 rounded-xl font-medium hover:bg-slate-200 transition-colors"
+            className="px-6 py-2.5 bg-rose-500 text-white rounded-lg font-medium hover:bg-rose-600 transition-colors"
           >
             Đóng
           </button>
@@ -187,7 +174,8 @@ const BatchListPage = () => {
   };
 
   const getExpiryStatus = (expiryDate) => {
-    if (!expiryDate) return { status: "unknown", color: "slate" };
+    if (!expiryDate)
+      return { status: "unknown", color: "bg-slate-500 text-white" };
 
     const today = new Date();
     const expiry = new Date(expiryDate);
@@ -196,21 +184,21 @@ const BatchListPage = () => {
     if (daysUntilExpiry < 0) {
       return {
         status: "expired",
-        color: "red",
+        color: "bg-red-600 text-white",
         icon: AlertCircle,
         text: "Hết hạn",
       };
     } else if (daysUntilExpiry <= 30) {
       return {
         status: "near-expiry",
-        color: "amber",
+        color: "bg-amber-500 text-white",
         icon: Clock,
         text: "Sắp hết hạn",
       };
     } else {
       return {
         status: "good",
-        color: "emerald",
+        color: "bg-emerald-600 text-white",
         icon: CheckCircle,
         text: "Còn hạn",
       };
@@ -253,7 +241,7 @@ const BatchListPage = () => {
             placeholder="Tìm kiếm theo mã lô, SKU, tên sản phẩm, nhà cung cấp"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-12 pr-4 py-3 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+            className="w-full pl-12 pr-4 py-3 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
           />
         </div>
       </div>
@@ -335,7 +323,7 @@ const BatchListPage = () => {
                         </td>
                         <td className="px-6 py-4 text-center">
                           <span
-                            className={`inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-full bg-${expiryStatus.color}-100 text-${expiryStatus.color}-700 border border-${expiryStatus.color}-200`}
+                            className={`inline-flex items-center gap-1 px-3 py-1 text-xs font-medium rounded-full shadow-sm min-w-[100px] justify-center ${expiryStatus.color}`}
                           >
                             {StatusIcon && <StatusIcon size={12} />}
                             {expiryStatus.text}
@@ -345,7 +333,7 @@ const BatchListPage = () => {
                           <div className="flex items-center justify-center gap-2">
                             <button
                               onClick={() => handleViewDetail(batch)}
-                              className="text-indigo-600 hover:bg-indigo-50 p-2 rounded-lg transition-colors"
+                              className="text-green-600 hover:bg-green-50 p-2 rounded-lg transition-colors"
                               title="Xem chi tiết"
                             >
                               <Eye size={18} />

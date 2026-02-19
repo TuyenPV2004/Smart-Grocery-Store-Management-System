@@ -167,7 +167,7 @@ const PriceManagementModal = ({ isOpen, onClose, product, onPriceUpdated }) => {
             {/* Import Price Section */}
             <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm relative overflow-hidden">
               <div className="absolute top-0 left-0 w-1 h-full bg-blue-500"></div>
-              <h3 className="text-md font-bold text-slate-800 mb-4 uppercase tracking-wide flex items-center gap-2">
+              <h3 className="text-md font-bold text-slate-800 mb-4 flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-blue-500"></span>
                 Giá nhập kho
               </h3>
@@ -177,13 +177,13 @@ const PriceManagementModal = ({ isOpen, onClose, product, onPriceUpdated }) => {
                   <span className="text-sm font-medium text-blue-800">
                     Hiện tại
                   </span>
-                  <span className="text-xl font-bold text-blue-700">
+                  <span className="text-xl font-medium text-blue-700">
                     {product?.importPrice?.toLocaleString() || "0"} ₫
                   </span>
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-xs font-semibold text-slate-500 uppercase">
+                  <label className="text-xs font-semibold text-slate-900">
                     Giá nhập mới
                   </label>
                   <div className="relative">
@@ -192,7 +192,7 @@ const PriceManagementModal = ({ isOpen, onClose, product, onPriceUpdated }) => {
                       value={newImportPrice}
                       onChange={(e) => setNewImportPrice(e.target.value)}
                       className="w-full h-12 pl-4 pr-10 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-medium text-lg"
-                      placeholder="Nhập giá..."
+                      placeholder="Nhập giá"
                     />
                     <span className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 font-medium">
                       ₫
@@ -213,7 +213,7 @@ const PriceManagementModal = ({ isOpen, onClose, product, onPriceUpdated }) => {
             {/* Sell Price Section */}
             <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm relative overflow-hidden">
               <div className="absolute top-0 left-0 w-1 h-full bg-emerald-500"></div>
-              <h3 className="text-md font-bold text-slate-800 mb-4 uppercase tracking-wide flex items-center gap-2">
+              <h3 className="text-md font-bold text-slate-800 mb-4 flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
                 Giá bán ra
               </h3>
@@ -223,13 +223,13 @@ const PriceManagementModal = ({ isOpen, onClose, product, onPriceUpdated }) => {
                   <span className="text-sm font-medium text-emerald-800">
                     Hiện tại
                   </span>
-                  <span className="text-xl font-bold text-emerald-700">
+                  <span className="text-xl font-medium text-emerald-700">
                     {product?.sellPrice?.toLocaleString() || "0"} ₫
                   </span>
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-xs font-semibold text-slate-500 uppercase">
+                  <label className="text-xs font-semibold text-slate-900">
                     Giá bán mới
                   </label>
                   <div className="relative">
@@ -307,15 +307,15 @@ const PriceManagementModal = ({ isOpen, onClose, product, onPriceUpdated }) => {
                           </td>
                           <td className="px-4 py-3 text-center">
                             <span
-                              className={`px-2 py-1 rounded-md text-[11px] font-bold uppercase ${isSellPrice ? "bg-emerald-100 text-emerald-700" : "bg-blue-100 text-blue-700"}`}
+                              className={`px-2 py-1 rounded-md text-[11px] font-bold ${isSellPrice ? "bg-emerald-600 text-white" : "bg-blue-600 text-white"}`}
                             >
                               {isSellPrice ? "Giá bán" : "Giá nhập"}
                             </span>
                           </td>
-                          <td className="px-4 py-3 text-right text-slate-500">
+                          <td className="px-4 py-3 text-right text-slate-900 font-medium">
                             {history.oldPrice?.toLocaleString()} ₫
                           </td>
-                          <td className="px-4 py-3 text-right text-slate-900 font-bold">
+                          <td className="px-4 py-3 text-right text-slate-900 font-medium">
                             {history.newPrice?.toLocaleString()} ₫
                           </td>
                           <td className="px-4 py-3 text-center">

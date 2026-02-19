@@ -135,10 +135,10 @@ const PosPage = () => {
           {!isCartOpen && (
             <button
               onClick={() => setIsCartOpen(true)}
-              className="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-blue-700 transition-colors shadow-sm"
+              className="bg-green-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-green-700 transition-colors shadow-sm"
             >
               <ShoppingCart size={20} />
-              <span className="font-bold">
+              <span className="font-medium">
                 {cart.reduce((sum, item) => sum + item.cartQty, 0)}
               </span>
             </button>
@@ -154,7 +154,7 @@ const PosPage = () => {
               onClick={() => addToCart(prod)}
               className="relative bg-white p-2 rounded-lg shadow-sm hover:shadow-md cursor-pointer border border-transparent hover:border-blue-400 transition-all group"
             >
-              <span className="absolute top-1.5 left-1.5 bg-[#2DC275] text-white text-[10px] px-1.5 py-0.5 rounded-full z-10 font-bold shadow-sm">
+              <span className="absolute top-1.5 left-1.5 bg-[#2DC275] text-white text-[10px] px-1.5 py-0.5 rounded-full z-10 font-medium shadow-sm">
                 Tồn: {prod.stockQuantity}
               </span>
               <div className="h-40 bg-gray-100 rounded-md mb-2 flex items-center justify-center overflow-hidden">
@@ -164,17 +164,17 @@ const PosPage = () => {
                     className="h-full w-full object-cover group-hover:scale-105 transition-transform"
                   />
                 ) : (
-                  <span className="text-[10px] text-gray-400">No Img</span>
+                  <span className="text-[11px] text-slate-400">No Img</span>
                 )}
               </div>
-              <h4 className="font-semibold text-gray-800 text-[11px] leading-tight line-clamp-2 min-h-[28px] mb-1">
+              <h4 className="font-semimedium text-slate-900 text-[11px] leading-tight line-clamp-2 min-h-[28px] mb-1">
                 {prod.name}
               </h4>
               <div className="flex justify-between items-end">
-                <span className="text-blue-600 font-bold text-xs">
+                <span className="text-slate-900 font-medium text-xs">
                   {prod.sellPrice?.toLocaleString()} ₫
                 </span>
-                <span className="text-[9px] text-gray-400">{prod.sku}</span>
+                <span className="text-[11px] text-slate-900">{prod.sku}</span>
               </div>
             </div>
           ))}
@@ -188,8 +188,8 @@ const PosPage = () => {
         } bg-white shadow-2xl flex flex-col h-full transition-all duration-300`}
       >
         <div className="p-5 border-b bg-blue-50 flex justify-between items-center">
-          <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
-            <ShoppingCart className="w-5 h-5" /> Giỏ hàng
+          <h2 className="text-xl font-medium text-gray-800 flex items-center gap-2">
+            Giỏ hàng
           </h2>
           <button
             onClick={() => setIsCartOpen(false)}
@@ -251,14 +251,14 @@ const PosPage = () => {
                   <button onClick={() => updateQty(item.id, -1)}>
                     <Minus className="w-3 h-3" />
                   </button>
-                  <span className="text-sm font-bold w-4 text-center">
+                  <span className="text-sm font-medium w-4 text-center">
                     {item.cartQty}
                   </span>
                   <button onClick={() => updateQty(item.id, 1)}>
                     <Plus className="w-3 h-3" />
                   </button>
                 </div>
-                <div className="text-sm font-bold min-w-[70px] text-right">
+                <div className="text-sm font-medium min-w-[70px] text-right">
                   {((item.sellPrice || 0) * item.cartQty).toLocaleString()}
                 </div>
                 <button
@@ -283,7 +283,7 @@ const PosPage = () => {
               <span>Giảm giá:</span> <span>0 ₫</span>
             </div>
             <div className="border-t my-3"></div>
-            <div className="flex justify-between text-2xl font-bold text-blue-700">
+            <div className="flex justify-between text-2xl font-medium text-green-700">
               <span>Thanh toán:</span>{" "}
               <span>{totalAmount.toLocaleString()} ₫</span>
             </div>
@@ -292,13 +292,13 @@ const PosPage = () => {
           <div className="grid grid-cols-2 gap-3 mb-4">
             <button
               onClick={() => setPaymentMethod("CASH")}
-              className={`flex justify-center gap-2 py-2 rounded-full border ${paymentMethod === "CASH" ? "bg-blue-100 border-blue-500 text-blue-700" : "bg-white"}`}
+              className={`flex justify-center gap-2 py-2 rounded-full border ${paymentMethod === "CASH" ? "bg-green-100 border-green-500 text-green-700" : "bg-white"}`}
             >
               Tiền mặt
             </button>
             <button
               onClick={() => setPaymentMethod("TRANSFER")}
-              className={`flex justify-center gap-2 py-2 rounded-full border ${paymentMethod === "TRANSFER" ? "bg-blue-100 border-blue-500 text-blue-700" : "bg-white"}`}
+              className={`flex justify-center gap-2 py-2 rounded-full border ${paymentMethod === "TRANSFER" ? "bg-green-100 border-green-500 text-green-700" : "bg-white"}`}
             >
               Chuyển khoản
             </button>
@@ -307,7 +307,7 @@ const PosPage = () => {
           <button
             onClick={handleCheckout}
             disabled={loading}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-full font-bold text-lg shadow-lg"
+            className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-full font-medium text-lg shadow-lg"
           >
             {loading ? "Đang xử lý..." : "THANH TOÁN NGAY"}
           </button>

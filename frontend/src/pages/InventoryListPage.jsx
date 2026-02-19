@@ -21,7 +21,7 @@ const DetailModal = ({ isOpen, onClose, note }) => {
       <div className="bg-white rounded-[2rem] w-full max-w-4xl shadow-2xl border border-white/50 max-h-[90vh] overflow-hidden flex flex-col animate-in fade-in zoom-in duration-200">
         <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
           <h3 className="text-xl font-bold text-slate-800 flex items-center gap-2">
-            <ClipboardList className="text-indigo-600" />
+            <ClipboardList className="text-green-600" />
             Chi tiết phiếu nhập: {note.code}
           </h3>
           <button
@@ -35,16 +35,16 @@ const DetailModal = ({ isOpen, onClose, note }) => {
         <div className="p-6 overflow-y-auto flex-1 space-y-6">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-100">
             <div>
-              <p className="text-xs text-slate-500 font-medium uppercase mb-2">
+              <p className="text-xs text-slate-500 font-medium mb-2">
                 Ngày tạo
               </p>
               <div className="flex items-center gap-2 text-slate-700 font-medium">
-                <Calendar size={14} className="text-indigo-500" />
+                <Calendar size={14} className="text-green-500" />
                 {new Date(note.createdAt).toLocaleString("vi-VN")}
               </div>
             </div>
             <div>
-              <p className="text-xs text-slate-500 font-medium uppercase mb-2">
+              <p className="text-xs text-slate-500 font-medium mb-2">
                 Mã nhân viên
               </p>
               <p className="font-medium text-slate-700">
@@ -52,17 +52,17 @@ const DetailModal = ({ isOpen, onClose, note }) => {
               </p>
             </div>
             <div>
-              <p className="text-xs text-slate-500 font-medium uppercase mb-2">
+              <p className="text-xs text-slate-500 font-medium mb-2">
                 Nhân viên thực hiện
               </p>
               <div className="flex items-center gap-2 text-slate-700 font-medium text-sm">
-                <User size={14} className="text-indigo-500" />
+                <User size={14} className="text-green-500" />
                 <span>{note.createdBy?.fullName}</span>
               </div>
             </div>
 
             <div>
-              <p className="text-xs text-slate-500 font-medium uppercase mb-2">
+              <p className="text-xs text-slate-500 font-medium mb-2">
                 Trạng thái
               </p>
               <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-emerald-100 text-emerald-700 border border-emerald-200">
@@ -70,9 +70,7 @@ const DetailModal = ({ isOpen, onClose, note }) => {
               </span>
             </div>
             <div className="col-span-full border-t border-slate-200 pt-3 mt-1">
-              <p className="text-xs text-slate-500 font-medium uppercase">
-                Ghi chú
-              </p>
+              <p className="text-xs text-slate-500 font-medium">Ghi chú</p>
               <p className="font-medium text-slate-700 italic">
                 {note.note || "Không có ghi chú"}
               </p>
@@ -133,7 +131,7 @@ const DetailModal = ({ isOpen, onClose, note }) => {
                             {d.product?.name}
                           </div>
                           <div className="text-[11px] text-slate-900 mt-1 font-medium">
-                            Mã Lô: {d.batchCode}
+                            {d.batchCode}
                           </div>
                         </div>
                       </div>
@@ -171,15 +169,15 @@ const DetailModal = ({ isOpen, onClose, note }) => {
 
         <div className="p-6 border-t border-slate-100 bg-white flex justify-between items-center">
           <div className="flex items-center gap-2 text-slate-600 font-medium">
-            <Package size={20} className="text-indigo-600" />
+            <Package size={20} className="text-green-600" />
             Tổng sản phẩm:{" "}
-            <span className="text-indigo-600 font-bold">
+            <span className="text-green-600 font-bold">
               {note.details?.length || 0}
             </span>
           </div>
           <div className="flex items-center gap-3">
             <span className="text-slate-500 font-medium">Tổng tiền phiếu:</span>
-            <span className="text-2xl font-bold text-emerald-600">
+            <span className="text-2xl font-medium text-green-600">
               {note.finalAmount?.toLocaleString()} VNĐ
             </span>
           </div>
@@ -260,43 +258,44 @@ const InventoryListPage = () => {
       <div className="max-w-[1400px] mx-auto flex justify-between items-center mb-6">
         <div>
           <h1 className="text-2xl font-medium text-slate-900 flex items-center">
-            Danh sách phiếu nhập xuất kho 
+            Danh sách phiếu nhập xuất kho
           </h1>
+          <p className="text-slate-500 text-sm mt-1.5 font-medium">
+                Tạo phiếu nhập, quản lý thông tin phiếu nhập xuất kho
+              </p>
         </div>
         <button
           onClick={() => navigate("/inventory/entry")}
-          className="bg-indigo-600 text-white px-5 py-2 rounded-xl flex items-center shadow-sm hover:bg-indigo-700 transition-all font-medium"
+          className="bg-green-600 text-white px-5 py-2 rounded-xl flex items-center shadow-sm hover:bg-green-700 transition-all font-medium"
         >
-          <Package className="mr-2" size={18} /> Tạo phiếu nhập mới
+        Tạo phiếu nhập
         </button>
       </div>
 
       {/* Table */}
       <div className="max-w-[1400px] mx-auto bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
         {loading ? (
-          <div className="p-8 text-center text-slate-500">
-            Đang tải dữ liệu...
-          </div>
+          <div className="p-8 text-center text-slate-500">Đang tải dữ liệu</div>
         ) : (
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-50/50 border-b border-slate-100">
-                <th className="px-6 py-4 font-medium text-slate-900 text-sm uppercase tracking-wider">
+                <th className="px-6 py-4 font-medium text-slate-900 text-sm tracking-wider">
                   Mã phiếu
                 </th>
-                <th className="px-6 py-4 font-medium text-slate-900 text-sm uppercase tracking-wider">
+                <th className="px-6 py-4 font-medium text-slate-900 text-sm tracking-wider">
                   Ngày tạo
                 </th>
-                <th className="px-6 py-4 font-medium text-slate-900 text-sm uppercase tracking-wider">
-                  Mã thực hiện
+                <th className="px-6 py-4 font-medium text-slate-900 text-sm tracking-wider">
+                  Mã nhân viên
                 </th>
-                <th className="px-6 py-4 font-medium text-slate-900 text-sm uppercase tracking-wider">
+                <th className="px-6 py-4 font-medium text-slate-900 text-sm tracking-wider">
                   Người tạo
                 </th>
-                <th className="px-6 py-4 font-medium text-slate-900 text-sm uppercase tracking-wider text-right">
+                <th className="px-6 py-4 font-medium text-slate-900 text-sm tracking-wider text-right">
                   Tổng tiền
                 </th>
-                <th className="px-6 py-4 font-medium text-slate-900 text-center text-sm uppercase tracking-wider">
+                <th className="px-6 py-4 font-medium text-slate-900 text-center text-sm tracking-wider">
                   Thao tác
                 </th>
               </tr>
@@ -307,7 +306,7 @@ const InventoryListPage = () => {
                   key={note.id}
                   className="hover:bg-slate-50/50 transition-colors"
                 >
-                  <td className="px-6 py-4 font-medium text-indigo-600">
+                  <td className="px-6 py-4 font-medium text-green-600">
                     {note.code}
                   </td>
 

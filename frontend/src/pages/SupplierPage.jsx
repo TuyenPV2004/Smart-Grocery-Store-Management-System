@@ -116,25 +116,27 @@ const SupplierPage = () => {
               </p>
             </div>
           </div>
-          <button
-            onClick={() => setShowModal(true)}
-            className="bg-indigo-600 text-white px-4 py-2 rounded-lg flex items-center hover:bg-indigo-700 transition"
-          >
-            <Plus size={20} className="mr-2" /> Thêm nhà cung cấp
-          </button>
         </div>
 
-        <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-100 mb-6 relative">
-          <Search
-            className="absolute left-7 top-1/2 -translate-y-1/2 text-slate-400"
-            size={18}
-          />
-          <input
-            type="text"
-            placeholder="Tìm theo tên công ty, tên viết tắt"
-            className="w-full pl-10 pr-4 py-2 bg-slate-50 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+        <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-100 mb-6 flex items-center gap-4">
+          <div className="relative flex-1">
+            <Search
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+              size={18}
+            />
+            <input
+              type="text"
+              placeholder="Tìm theo tên công ty, tên viết tắt"
+              className="w-full pl-10 pr-4 py-2 bg-slate-50 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+          <button
+            onClick={() => setShowModal(true)}
+            className="bg-green-600 text-white px-4 py-2 rounded-lg flex items-center hover:bg-green-700 transition whitespace-nowrap"
+          >
+            Thêm nhà cung cấp
+          </button>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -146,27 +148,25 @@ const SupplierPage = () => {
               <div className="flex justify-between items-start mb-3">
                 <div className="w-full">
                   <div className="flex justify-between items-center mb-2">
-                    <span className="text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded">
+                    <span className="text-xs font-bold text-white bg-green-600 px-2 py-1 rounded">
                       {s.code}
                     </span>
                     <div className="flex gap-2">
                       <button
                         onClick={() => handleEdit(s)}
-                        className="text-slate-400 hover:text-indigo-600"
+                        className="text-indigo-500 hover:text-indigo-600"
                       >
                         <Edit size={16} />
                       </button>
                       <button
                         onClick={() => handleToggleStatus(s.id)}
-                        className={`${s.active ? "text-green-500" : "text-slate-400"}`}
+                        className={`${s.active ? "text-rose-500" : "text-slate-400"}`}
                       >
                         <Power size={16} />
                       </button>
                     </div>
                   </div>
-
-                  {/* Hiển thị Tên viết tắt (To) và Tên đầy đủ (Nhỏ) */}
-                  <h3 className="font-bold text-xl text-slate-800 uppercase">
+                  <h3 className="font-bold text-xl text-slate-900 uppercase">
                     {s.tradingName || s.vietnameseName}
                   </h3>
                   {s.tradingName && (
@@ -184,23 +184,23 @@ const SupplierPage = () => {
 
               <div className="space-y-2 text-sm text-slate-600 mt-4 pt-4 border-t border-slate-100">
                 <div className="flex items-center gap-2">
-                  <Phone size={14} className="text-slate-400" />
+                  <Phone size={14} className="text-slate-800" />
                   <span>{s.phone}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Mail size={14} className="text-slate-400" />
+                  <Mail size={14} className="text-slate-800" />
                   <span>{s.email}</span>
                 </div>
                 {s.address && (
                   <div className="flex items-start gap-2">
                     <MapPin
                       size={14}
-                      className="text-slate-400 mt-1 shrink-0"
+                      className="text-slate-800 mt-1 shrink-0"
                     />
                     <span className="line-clamp-2">{s.address}</span>
                   </div>
                 )}
-                <div className="text-xs pt-2 text-slate-400 flex items-center gap-1">
+                <div className="text-xs pt-2 text-slate-800 flex items-center gap-1">
                   <Building2 size={12} /> Mã số thuế: {s.taxCode || "---"}
                 </div>
               </div>
@@ -234,13 +234,12 @@ const SupplierPage = () => {
               </p>
             </div>
 
-            <div className="overflow-y-auto px-8 pb-8 custom-scrollbar">
+            <div className="overflow-y-auto px-8 pb-8 [&::-webkit-scrollbar]:hidden">
               <form onSubmit={handleSubmit} className="space-y-6">
-                {/* Nhóm thông tin định danh */}
                 <div className="bg-slate-50/50 border border-slate-100 p-5 rounded-2xl space-y-4">
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="w-1 h-4 bg-indigo-500 rounded-full"></span>
-                    <h3 className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                    <span className="w-1 h-4 bg-green-500 rounded-full"></span>
+                    <h3 className="text-[11px] font-bold text-slate-900 uppercase tracking-wider">
                       Thông tin định danh
                     </h3>
                   </div>
@@ -262,9 +261,6 @@ const SupplierPage = () => {
                           })
                         }
                       />
-                      <p className="text-[11px] text-slate-400 mt-1.5 ml-1 italic">
-                        Dùng để hiển thị nhanh trên hệ thống
-                      </p>
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-slate-700 mb-1.5 ml-1">
@@ -325,8 +321,8 @@ const SupplierPage = () => {
                 {/* Nhóm thông tin liên hệ & chi tiết */}
                 <div className="bg-slate-50/50 border border-slate-100 p-5 rounded-2xl space-y-4">
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="w-1 h-4 bg-indigo-500 rounded-full"></span>
-                    <h3 className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                    <span className="w-1 h-4 bg-green-500 rounded-full"></span>
+                    <h3 className="text-[11px] font-bold text-slate-900 uppercase tracking-wider">
                       Thông tin liên hệ và chi tiết
                     </h3>
                   </div>
@@ -394,8 +390,8 @@ const SupplierPage = () => {
                       Giới thiệu
                     </label>
                     <textarea
-                      className="w-full border border-slate-200 p-3 rounded-xl outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all resize-none"
-                      rows="3"
+                      className="w-full border border-slate-200 p-3 rounded-xl outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all resize-none [&::-webkit-scrollbar]:hidden"
+                      rows="6"
                       placeholder="Nhập mô tả ngắn về nhà cung cấp..."
                       value={formData.note}
                       onChange={(e) =>
@@ -406,10 +402,10 @@ const SupplierPage = () => {
                 </div>
 
                 {/* Footer Actions */}
-                <div className="flex justify-end pt-6 border-t border-slate-100">
+                <div className="flex justify-end pt-6">
                   <button
                     type="submit"
-                    className="w-full md:w-auto px-10 py-3 text-sm font-bold bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 shadow-lg shadow-indigo-200 active:scale-95 transition-all"
+                    className="w-full md:w-auto px-10 py-3 text-sm font-bold bg-green-600 text-white rounded-xl hover:bg-green-700 shadow-lg shadow-green-200 active:scale-95 transition-all"
                   >
                     Lưu thông tin
                   </button>

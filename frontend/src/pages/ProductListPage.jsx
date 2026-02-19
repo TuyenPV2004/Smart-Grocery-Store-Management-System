@@ -109,19 +109,16 @@ const ProductCheckModal = ({
 
   return (
     <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[70] flex items-center justify-center p-6 animate-in fade-in duration-200">
-      <div className="bg-white rounded-[2rem] shadow-2xl w-full max-w-[750px] max-h flex flex-col border border-slate-200 animate-in zoom-in duration-200 overflow-hidden">
-        <div className="flex justify-between items-center p-6 border-b border-slate-100 flex-shrink-0">
+      <div className="bg-white rounded-[2rem] shadow-2xl w-full max-w-[750px] max-h flex flex-col border border-green-200 animate-in zoom-in duration-200 overflow-hidden">
+        <div className="flex justify-between items-center p-6 border-b border-green-100 flex-shrink-0">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-rose-50 rounded-xl text-rose-600">
+            <div className="p-2 bg-green-50 rounded-xl text-green-600">
               <Search size={24} />
             </div>
             <div>
               <h2 className="text-2xl font-medium text-slate-900 leading-none">
                 Kiểm tra sản phẩm
               </h2>
-              <p className="text-slate-500 text-sm mt-1.5 font-medium">
-                Tìm kiếm theo tên sản phẩm hoặc mã SKU
-              </p>
             </div>
           </div>
           <button
@@ -131,9 +128,7 @@ const ProductCheckModal = ({
             <X size={28} />
           </button>
         </div>
-
-        {/* Body - Search Input (Dàn ngang để giảm chiều cao) */}
-        <div className="px-8 py-5 flex-shrink-0 bg-slate-50/30 border-b border-slate-100">
+        <div className="px-8 py-5 flex-shrink-0 bg-slate-50/30 border-b border-green-100">
           <div className="flex items-end gap-3">
             <div className="flex-1">
               <label className="block text-[13px] font-medium text-slate-600 mb-2 ml-1">
@@ -144,15 +139,15 @@ const ProductCheckModal = ({
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 onKeyPress={(e) => e.key === "Enter" && handleSearch()}
-                className="w-full px-5 py-3 bg-white border border-slate-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-rose-50 focus:border-rose-400 transition-all font-medium text-slate-900"
-                placeholder="Ví dụ: Sữa tươi Vinamilk hoặc SKU123"
+                className="w-full px-5 py-3 bg-white border border-slate-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-green-50 focus:border-green-400 transition-all font-medium text-slate-900"
+                placeholder="Nhập tên sản phẩm hoặc mã SKU"
                 disabled={isSearching}
               />
             </div>
             <button
               onClick={handleSearch}
               disabled={isSearching}
-              className="px-8 py-3 bg-rose-600 text-white rounded-2xl hover:bg-rose-700 transition-all font-medium shadow-lg shadow-rose-100 active:scale-95 flex items-center gap-2 disabled:opacity-50 h-[48px]"
+              className="px-8 py-3 bg-green-600 text-white rounded-2xl hover:bg-green-700 transition-all font-medium shadow-lg shadow-green-100 active:scale-95 flex items-center gap-2 disabled:opacity-50 h-[48px]"
             >
               <Search size={18} />
               {isSearching ? "Đang tìm..." : "Tìm kiếm"}
@@ -176,7 +171,7 @@ const ProductCheckModal = ({
                   {/* Grid 2 cột cho thông tin chi tiết */}
                   <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm grid grid-cols-2 gap-x-10 gap-y-6">
                     <div className="col-span-2 md:col-span-1">
-                      <p className="text-xs text-slate-500 font-medium uppercase mb-1">
+                      <p className="text-xs text-slate-900 font-medium mb-1">
                         Tên sản phẩm
                       </p>
                       <p className="font-medium text-slate-900">
@@ -184,31 +179,29 @@ const ProductCheckModal = ({
                       </p>
                     </div>
                     <div className="col-span-2 md:col-span-1">
-                      <p className="text-xs text-slate-500 font-medium uppercase mb-1">
+                      <p className="text-xs text-slate-900 font-medium mb-1">
                         Mã SKU
                       </p>
-                      <p className="font-medium text-rose-600">
+                      <p className="font-medium text-slate-900">
                         {searchResult.sku}
                       </p>
                     </div>
                     <div className="pt-3 border-t border-slate-50">
-                      <p className="text-xs text-slate-500 font-medium uppercase mb-1">
+                      <p className="text-xs text-slate-900 font-medium mb-1">
                         Thương hiệu
                       </p>
-                      <p className="font-medium text-slate-700">
+                      <p className="font-medium text-slate-900">
                         {searchResult.brand || "---"}
                       </p>
                     </div>
                     <div className="pt-3 border-t border-slate-50">
-                      <p className="text-xs text-slate-500 font-medium uppercase mb-1">
+                      <p className="text-xs text-slate-900 font-medium mb-1">
                         Giá nhập
                       </p>
-                      <p className="font-medium text-emerald-600">
+                      <p className="font-medium text-slate-900">
                         {searchResult.importPrice?.toLocaleString() || "0"} ₫
                       </p>
                     </div>
-
-                    {/* Hàng nút bấm dàn ngang: Kiểm tra lại và Sử dụng sản phẩm */}
                     <div className="col-span-2 pt-4 flex gap-3">
                       <button
                         onClick={handleClose}
@@ -218,7 +211,7 @@ const ProductCheckModal = ({
                       </button>
                       <button
                         onClick={handleUseProduct}
-                        className="flex-[2] px-6 py-3.5 bg-rose-600 text-white rounded-2xl hover:bg-rose-700 transition-all font-medium shadow-lg shadow-rose-100 active:scale-95"
+                        className="flex-[2] px-6 py-3.5 bg-green-600 text-white rounded-2xl hover:bg-green-700 transition-all font-medium shadow-lg shadow-green-100 active:scale-95"
                       >
                         Sử dụng sản phẩm này
                       </button>
@@ -242,7 +235,7 @@ const ProductCheckModal = ({
                     </button>
                     <button
                       onClick={handleAddNew}
-                      className="flex-[2] px-6 py-3 bg-rose-600 text-white rounded-2xl hover:bg-rose-700 transition-all font-medium"
+                      className="flex-[2] px-6 py-3 bg-green-600 text-white rounded-2xl hover:bg-green-700 transition-all font-medium"
                     >
                       Thêm sản phẩm mới
                     </button>
@@ -451,13 +444,6 @@ const ProductListPage = () => {
             </p>
           </div>
         </div>
-
-        <button
-          onClick={() => setCheckModalOpen(true)}
-          className="bg-green-600 text-white px-5 py-2 rounded-xl flex items-center shadow-sm hover:bg-green-700 transition-all font-medium"
-        >
-          <Plus size={18} className="mr-2" /> Thêm sản phẩm
-        </button>
       </div>
 
       {/* Filter Bar */}
@@ -469,7 +455,7 @@ const ProductListPage = () => {
           />
           <input
             type="text"
-            placeholder="Tìm theo tên, SKU, Barcode..."
+            placeholder="Tìm theo tên sản phẩm, mã SKU, Barcode"
             className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:bg-white transition-all font-medium"
             onChange={(e) => setFilter({ ...filter, keyword: e.target.value })}
           />
@@ -483,6 +469,12 @@ const ProductListPage = () => {
           <option value="INACTIVE">Ngừng kinh doanh</option>
           <option value="OUT_OF_STOCK">Hết hàng</option>
         </select>
+        <button
+          onClick={() => setCheckModalOpen(true)}
+          className="bg-green-600 text-white px-5 py-2 rounded-xl flex items-center shadow-sm hover:bg-green-700 transition-all font-medium whitespace-nowrap"
+        >
+          Thêm sản phẩm
+        </button>
       </div>
 
       {/* Table Section */}
@@ -490,29 +482,29 @@ const ProductListPage = () => {
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="bg-slate-50/50 border-b border-slate-100">
-              <th className="px-6 py-4 text-[13px] font-medium text-slate-900 uppercase tracking-wider">
-                Sản phẩm
+              <th className="px-6 py-4 text-[13px] font-medium text-slate-900">
+                Tên sản phẩm
               </th>
-              <th className="px-6 py-4 text-[13px] font-medium text-slate-900 uppercase tracking-wider">
-                SKU
+              <th className="px-6 py-4 text-[13px] font-medium text-slate-900">
+                Mã SKU
               </th>
-              <th className="px-6 py-4 text-[13px] font-medium text-slate-900 uppercase tracking-wider">
+              <th className="px-6 py-4 text-[13px] font-medium text-slate-900">
                 Barcode
               </th>
-              <th className="px-4 py-4 text-right text-[13px] font-medium text-slate-900 uppercase tracking-wider">
+              <th className="px-4 py-4 text-right text-[13px] font-medium text-slate-900">
                 <div className="flex flex-col items-center ml-auto w-fit">
                   <span className="block">Giá nhập</span>
                 </div>
               </th>
-              <th className="px-4 py-4 text-right text-[13px] font-medium text-slate-900 uppercase tracking-wider">
+              <th className="px-4 py-4 text-right text-[13px] font-medium text-slate-900">
                 <div className="flex flex-col items-center ml-auto w-fit">
                   <span className="block">Giá bán</span>
                 </div>
               </th>
-              <th className="px-6 py-4 text-[13px] font-medium text-slate-900 uppercase tracking-wider">
+              <th className="px-6 py-4 text-[13px] font-medium text-slate-900">
                 Trạng thái
               </th>
-              <th className="px-6 py-4 text-center text-[13px] font-medium text-slate-900 uppercase tracking-wider">
+              <th className="px-6 py-4 text-center text-[13px] font-medium text-slate-900">
                 Thao tác
               </th>
             </tr>
@@ -549,35 +541,35 @@ const ProductListPage = () => {
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-[13px] font-medium text-slate-700">
+                    <div className="text-[13px] font-medium text-slate-900">
                       {p.sku}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-[13px] text-slate-700 font-medium">
+                    <div className="text-[13px] text-slate-900 font-medium">
                       {p.barcode}
                     </div>
                   </td>
                   <td className="px-4 py-4 text-right whitespace-nowrap">
-                    <div className="text-[14px] font-medium text-slate-500">
+                    <div className="text-[14px] font-medium text-slate-900">
                       {p.importPrice?.toLocaleString()} ₫
                     </div>
                   </td>
 
                   <td className="px-4 py-4 text-right whitespace-nowrap">
-                    <div className="text-[14px] font-medium text-emerald-600">
+                    <div className="text-[14px] font-medium text-slate-900">
                       {p.sellPrice?.toLocaleString()} ₫
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span
-                      className={`px-2.5 py-1 text-[11px] font-medium rounded-full border
+                      className={`px-1.5 py-0.5 text-[11px] font-medium rounded-full border shadow-sm
                       ${
                         p.status === "ACTIVE"
-                          ? "bg-green-100 text-green-800 border-green-200"
+                          ? "bg-green-600 text-white border-green-700"
                           : p.status === "OUT_OF_STOCK"
-                            ? "bg-orange-100 text-orange-800 border-orange-200"
-                            : "bg-gray-100 text-gray-800 border-gray-200"
+                            ? "bg-orange-500 text-white border-orange-600"
+                            : "bg-gray-500 text-white border-gray-600"
                       }`}
                     >
                       {p.status}

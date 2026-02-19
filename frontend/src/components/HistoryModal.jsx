@@ -73,7 +73,7 @@ const HistoryModal = ({ history, onClose }) => {
                       >
                         {item.action.toLowerCase()}
                       </span>
-                      <div className="flex items-center gap-1.5 text-slate-400 font-medium text-xs">
+                      <div className="flex items-center gap-1.5 text-slate-900 font-medium text-xs">
                         <Clock size={14} />
                         {formatDate(item.timestamp)}
                       </div>
@@ -89,8 +89,8 @@ const HistoryModal = ({ history, onClose }) => {
                         <span className="ml-2 text-slate-900">
                           {item.performedBy || "không xác định"}
                           {item.role && (
-                            <span className="ml-2 text-indigo-500 opacity-70">
-                              • {item.role.replace("ROLE_", "").toLowerCase()}
+                            <span className="ml-2 text-slate-900">
+                              - {item.role.replace("ROLE_", "").toLowerCase()}
                             </span>
                           )}
                         </span>
@@ -117,7 +117,7 @@ const HistoryModal = ({ history, onClose }) => {
                               {item.productName}
                             </span>
                             {item.sku && (
-                              <span className="ml-2 text-slate-400 font-normal">
+                              <span className="ml-2 text-slate-900 font-medium">
                                 [{item.sku}]
                               </span>
                             )}
@@ -136,7 +136,7 @@ const HistoryModal = ({ history, onClose }) => {
         <div className="p-6 border-t border-slate-100 bg-white flex justify-end">
           <button
             onClick={onClose}
-            className="px-8 py-3 bg-slate-900 text-white rounded-2xl hover:bg-indigo-700 transition-all font-medium text-[14px] shadow-lg shadow-slate-200 active:scale-95"
+            className="px-8 py-3 bg-slate-900 text-white rounded-2xl hover:bg-slate-700 transition-all font-medium text-[14px] shadow-lg shadow-slate-200 active:scale-95"
           >
             Đóng cửa sổ
           </button>

@@ -131,21 +131,18 @@ const ProductCheckModal = ({
       <div className="bg-white rounded-[2rem] shadow-2xl w-full max-w-[750px] max-h flex flex-col border border-slate-200 animate-in zoom-in duration-200 overflow-hidden">
         <div className="flex justify-between items-center p-6 border-b border-slate-100 flex-shrink-0">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-rose-50 rounded-xl text-rose-600">
+            <div className="p-2 bg-green-50 rounded-xl text-green-600">
               <Search size={24} />
             </div>
             <div>
               <h2 className="text-2xl font-medium text-slate-900 leading-none">
                 Kiểm tra sản phẩm
               </h2>
-              <p className="text-slate-500 text-sm mt-1.5 font-medium">
-                Tìm kiếm theo tên sản phẩm hoặc mã SKU
-              </p>
             </div>
           </div>
           <button
             onClick={handleClose}
-            className="p-2 hover:bg-rose-50 hover:text-rose-600 rounded-full text-slate-400 transition-all"
+            className="p-2 hover:bg-green-50 hover:text-green-600 rounded-full text-slate-400 transition-all"
           >
             <X size={28} />
           </button>
@@ -163,7 +160,7 @@ const ProductCheckModal = ({
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 onKeyPress={(e) => e.key === "Enter" && handleSearch()}
-                className="w-full px-5 py-3 bg-white border border-slate-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-rose-50 focus:border-rose-400 transition-all font-medium text-slate-900"
+                className="w-full px-5 py-3 bg-white border border-slate-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-green-50 focus:border-green-400 transition-all font-medium text-slate-900"
                 placeholder="Tìm kiếm tên hoặc mã SKU"
                 disabled={isSearching}
               />
@@ -171,7 +168,7 @@ const ProductCheckModal = ({
             <button
               onClick={handleSearch}
               disabled={isSearching}
-              className="px-8 py-3 bg-rose-600 text-white rounded-2xl hover:bg-rose-700 transition-all font-medium shadow-lg shadow-rose-100 active:scale-95 flex items-center gap-2 disabled:opacity-50 h-[48px]"
+              className="px-8 py-3 bg-green-600 text-white rounded-2xl hover:bg-green-700 transition-all font-medium shadow-lg shadow-green-100 active:scale-95 flex items-center gap-2 disabled:opacity-50 h-[48px]"
             >
               <Search size={18} />
               {isSearching ? "Đang tìm..." : "Tìm kiếm"}
@@ -206,7 +203,7 @@ const ProductCheckModal = ({
                       <p className="text-xs text-slate-500 font-medium uppercase mb-1">
                         Mã SKU
                       </p>
-                      <p className="font-medium text-rose-600">
+                      <p className="font-medium text-slate-600">
                         {searchResult.sku}
                       </p>
                     </div>
@@ -222,12 +219,10 @@ const ProductCheckModal = ({
                       <p className="text-xs text-slate-500 font-medium uppercase mb-1">
                         Giá nhập
                       </p>
-                      <p className="font-medium text-emerald-600">
+                      <p className="font-medium text-slate-600">
                         {searchResult.importPrice?.toLocaleString() || "0"} ₫
                       </p>
                     </div>
-
-                    {/* Hàng nút bấm dàn ngang: Kiểm tra lại và Sử dụng sản phẩm */}
                     <div className="col-span-2 pt-4 flex gap-3">
                       <button
                         onClick={handleClose}
@@ -237,7 +232,7 @@ const ProductCheckModal = ({
                       </button>
                       <button
                         onClick={handleUseProduct}
-                        className="flex-[2] px-6 py-3.5 bg-rose-600 text-white rounded-2xl hover:bg-rose-700 transition-all font-medium shadow-lg shadow-rose-100 active:scale-95"
+                        className="flex-[2] px-6 py-3.5 bg-green-600 text-white rounded-2xl hover:bg-green-700 transition-all font-medium shadow-lg shadow-green-100 active:scale-95"
                       >
                         Sử dụng sản phẩm này
                       </button>
@@ -261,7 +256,7 @@ const ProductCheckModal = ({
                     </button>
                     <button
                       onClick={handleAddNew}
-                      className="flex-[2] px-6 py-3 bg-rose-600 text-white rounded-2xl hover:bg-rose-700 transition-all font-medium"
+                      className="flex-[2] px-6 py-3 bg-green-600 text-white rounded-2xl hover:bg-green-700 transition-all font-medium"
                     >
                       Thêm sản phẩm mới
                     </button>
@@ -393,7 +388,7 @@ const QuickProductModal = ({
             <div className="flex-shrink-0 transition-all duration-300 group-hover:scale-110">
               <PackagePlus
                 size={32}
-                className="text-indigo-600"
+                className="text-green-600"
                 strokeWidth={2.25}
               />
             </div>
@@ -410,7 +405,7 @@ const QuickProductModal = ({
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-rose-50 hover:text-rose-600 rounded-full text-slate-400 transition-all"
+            className="p-2 hover:bg-green-50 hover:text-green-600 rounded-full text-slate-400 transition-all"
           >
             <X size={28} />
           </button>
@@ -423,7 +418,7 @@ const QuickProductModal = ({
             <div className="md:col-span-8 space-y-8">
               <section>
                 <div className="flex items-center gap-2 mb-6">
-                  <div className="w-1.5 h-6 bg-indigo-500 rounded-full"></div>
+                  <div className="w-1.5 h-6 bg-green-500 rounded-full"></div>
                   <h3 className="text-lg font-medium text-slate-900">
                     Thông tin chi tiết
                   </h3>
@@ -441,7 +436,7 @@ const QuickProductModal = ({
                         setFormData({ ...formData, name: e.target.value })
                       }
                       disabled={!!initialData}
-                      className={`w-full px-5 py-3.5 border border-slate-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-indigo-50 focus:border-indigo-400 transition-all font-medium ${initialData ? "bg-slate-100 text-slate-500 cursor-not-allowed" : "bg-slate-50 text-slate-900 focus:bg-white"}`}
+                      className={`w-full px-5 py-3.5 border border-slate-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-green-50 focus:border-green-400 transition-all font-medium ${initialData ? "bg-slate-100 text-slate-500 cursor-not-allowed" : "bg-slate-50 text-slate-900 focus:bg-white"}`}
                       placeholder="Ví dụ: Sữa tươi Vinamilk..."
                     />
                   </div>
@@ -488,7 +483,7 @@ const QuickProductModal = ({
                               });
                               e.target.blur();
                             }}
-                            className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl outline-none transition-all font-medium cursor-pointer focus:ring-4 focus:ring-indigo-50 focus:border-indigo-400 focus:bg-white text-slate-900 appearance-none peer"
+                            className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl outline-none transition-all font-medium cursor-pointer focus:ring-4 focus:ring-green-50 focus:border-green-400 focus:bg-white text-slate-900 appearance-none peer"
                           >
                             <option value="">-- Chọn thương hiệu --</option>
                             {suppliers.map((s) => (
@@ -514,7 +509,7 @@ const QuickProductModal = ({
                           setFormData({ ...formData, barcode: e.target.value })
                         }
                         disabled={!!initialData}
-                        className={`w-full px-5 py-3.5 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-indigo-50 focus:border-indigo-400 outline-none transition-all font-medium ${initialData ? "bg-slate-100 text-slate-500 cursor-not-allowed" : "bg-slate-50 focus:bg-white"}`}
+                        className={`w-full px-5 py-3.5 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-green-50 focus:border-green-400 outline-none transition-all font-medium ${initialData ? "bg-slate-100 text-slate-500 cursor-not-allowed" : "bg-slate-50 focus:bg-white"}`}
                         placeholder="Quét hoặc nhập..."
                       />
                     </div>
@@ -532,14 +527,14 @@ const QuickProductModal = ({
                           setFormData({ ...formData, sku: e.target.value })
                         }
                         disabled={!!initialData}
-                        className={`w-full pl-5 pr-40 py-3.5 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-indigo-50 focus:border-indigo-400 outline-none transition-all font-medium ${initialData ? "bg-slate-100 text-slate-500 cursor-not-allowed" : "bg-slate-50 focus:bg-white"}`}
+                        className={`w-full pl-5 pr-40 py-3.5 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-green-50 focus:border-green-400 outline-none transition-all font-medium ${initialData ? "bg-slate-100 text-slate-500 cursor-not-allowed" : "bg-slate-50 focus:bg-white"}`}
                         placeholder="SKU sản phẩm"
                       />
                       {!initialData && (
                         <button
                           type="button"
                           onClick={handleGenerateRandom}
-                          className="absolute right-2 top-1.5 bottom-1.5 px-3 bg-white border border-slate-200 rounded-xl text-[11px] font-medium text-indigo-600 hover:bg-indigo-50 hover:border-indigo-200 transition-all flex items-center gap-1"
+                          className="absolute right-2 top-1.5 bottom-1.5 px-3 bg-white border border-slate-200 rounded-xl text-[11px] font-medium text-green-600 hover:bg-green-50 hover:border-green-200 transition-all flex items-center gap-1"
                         >
                           <Dices size={14} /> Tạo ngẫu nhiên
                         </button>
@@ -562,7 +557,7 @@ const QuickProductModal = ({
                             importPrice: e.target.value,
                           })
                         }
-                        className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-indigo-50 focus:border-indigo-400 focus:bg-white outline-none transition-all font-medium"
+                        className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-green-50 focus:border-green-400 focus:bg-white outline-none transition-all font-medium"
                         placeholder="0"
                       />
                     </div>
@@ -579,7 +574,7 @@ const QuickProductModal = ({
                             shelfLife: e.target.value,
                           })
                         }
-                        className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-indigo-50 focus:border-indigo-400 focus:bg-white outline-none transition-all font-medium"
+                        className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-green-50 focus:border-green-400 focus:bg-white outline-none transition-all font-medium"
                         placeholder="Nhập thời gian bảo quản"
                       />
                     </div>
@@ -596,7 +591,7 @@ const QuickProductModal = ({
                         onChange={(e) =>
                           setFormData({ ...formData, origin: e.target.value })
                         }
-                        className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-indigo-50 focus:border-indigo-400 focus:bg-white outline-none transition-all font-medium"
+                        className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-green-50 focus:border-green-400 focus:bg-white outline-none transition-all font-medium"
                         placeholder="Nhập xuất xứ"
                       />
                     </div>
@@ -606,7 +601,7 @@ const QuickProductModal = ({
                       </label>
                       <div className="relative">
                         <select
-                          className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-indigo-50 focus:border-indigo-400 focus:bg-white outline-none transition-all font-medium cursor-pointer text-slate-700 appearance-none peer"
+                          className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-green-50 focus:border-green-400 focus:bg-white outline-none transition-all font-medium cursor-pointer text-slate-700 appearance-none peer"
                           value={formData.unit}
                           onChange={(e) => {
                             setFormData({
@@ -668,7 +663,7 @@ const QuickProductModal = ({
                   </div>
                 ) : (
                   // Editable upload area for new products
-                  <div className="relative group aspect-square bg-white rounded-[2rem] border-2 border-dashed border-slate-300 hover:border-indigo-400 transition-all flex items-center justify-center overflow-hidden">
+                  <div className="relative group aspect-square bg-white rounded-[2rem] border-2 border-dashed border-slate-300 hover:border-green-400 transition-all flex items-center justify-center overflow-hidden">
                     {formData.previewUrl ? (
                       <img
                         src={formData.previewUrl}
@@ -717,7 +712,7 @@ const QuickProductModal = ({
           </button>
           <button
             onClick={handleSubmit}
-            className="px-10 py-3 bg-indigo-600 text-white rounded-2xl hover:bg-indigo-700 transition-all font-medium text-sm shadow-lg shadow-indigo-100 active:scale-95 flex items-center gap-2"
+            className="px-10 py-3 bg-green-600 text-white rounded-2xl hover:bg-green-700 transition-all font-medium text-sm shadow-lg shadow-green-100 active:scale-95 flex items-center gap-2"
           >
             <Save size={18} />
             {initialData ? "Cập nhật dữ liệu" : "Lưu vào phiếu nhập"}
@@ -751,7 +746,7 @@ const PreviewModal = ({ isOpen, onClose, onConfirm, data, grandTotal }) => {
               <p className="text-xs text-slate-500 font-medium uppercase">
                 Mã phiếu
               </p>
-              <p className="font-bold text-indigo-600">{data.header.code}</p>
+              <p className="font-bold text-green-600">{data.header.code}</p>
             </div>
             <div>
               <p className="text-xs text-slate-500 font-medium uppercase">
@@ -868,7 +863,7 @@ const PreviewModal = ({ isOpen, onClose, onConfirm, data, grandTotal }) => {
         <div className="p-6 border-t border-slate-100 bg-white flex justify-between items-center">
           <div className="font-medium text-slate-600">
             Tổng sản phẩm:{" "}
-            <span className="text-indigo-600 font-bold">
+            <span className="text-green-600 font-bold">
               {data.details.length}
             </span>
           </div>
@@ -881,7 +876,7 @@ const PreviewModal = ({ isOpen, onClose, onConfirm, data, grandTotal }) => {
             </button>
             <button
               onClick={onConfirm}
-              className="px-6 py-3 bg-indigo-600 text-white rounded-xl font-medium hover:bg-indigo-700 shadow-lg shadow-indigo-200 transition-all flex items-center gap-2"
+              className="px-6 py-3 bg-green-600 text-white rounded-xl font-medium hover:bg-green-700 shadow-lg shadow-green-200 transition-all flex items-center gap-2"
             >
               <CheckCircle size={20} /> Xác nhận phiếu
             </button>
@@ -1539,7 +1534,7 @@ const InventoryEntryPage = () => {
           <span className="text-xs font-bold text-slate-500 mb-1">
             Mã phiếu nhập kho
           </span>
-          <div className="text-xl font-medium text-indigo-600 font-mono tracking-wide">
+          <div className="text-xl font-medium text-green-600 font-mono tracking-wide">
             {header.code}
           </div>
         </div>
@@ -1549,7 +1544,7 @@ const InventoryEntryPage = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           <div className="space-y-2">
             <label className="text-sm font-medium text-slate-500 flex items-center gap-2">
-              <Calendar size={16} className="text-indigo-500" /> Thời gian nhập
+              <Calendar size={16} className="text-green-500" /> Thời gian nhập
             </label>
             <input
               type="datetime-local"
@@ -1560,13 +1555,13 @@ const InventoryEntryPage = () => {
           </div>
           <div className="space-y-2">
             <label className="text-sm font-medium text-slate-500 flex items-center gap-2">
-              <User size={16} className="text-indigo-500" /> Mã nhân viên
+              <User size={16} className="text-green-500" /> Mã nhân viên
             </label>
             <div className="relative">
               <input
                 value={header.staffId}
                 onChange={handleStaffIdChange}
-                className={`w-full border font-medium rounded-2xl px-4 py-3 outline-none transition-all ${isValidStaff === true ? "border-emerald-400 bg-emerald-50/50 text-emerald-700" : isValidStaff === false ? "border-rose-400 bg-rose-50/50 text-rose-700" : "border-slate-200 bg-white focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"}`}
+                className={`w-full border font-medium rounded-2xl px-4 py-3 outline-none transition-all ${isValidStaff === true ? "border-emerald-400 bg-emerald-50/50 text-emerald-700" : isValidStaff === false ? "border-green-400 bg-green-50/50 text-green-700" : "border-slate-200 bg-white focus:border-green-400 focus:ring-2 focus:ring-green-100"}`}
                 placeholder="Nhập mã ID..."
               />
               {isValidStaff === true && (
@@ -1576,7 +1571,7 @@ const InventoryEntryPage = () => {
           </div>
           <div className="space-y-2 md:col-span-2">
             <label className="text-sm font-medium text-slate-500 flex items-center gap-2">
-              <Smile size={16} className="text-indigo-500" /> Người thực hiện
+              <Smile size={16} className="text-green-500" /> Người thực hiện
             </label>
             <input
               value={header.staffName}
@@ -1587,12 +1582,12 @@ const InventoryEntryPage = () => {
           </div>
           <div className="space-y-2 md:col-span-4">
             <label className="text-sm font-medium text-slate-500 flex items-center gap-2">
-              <FileText size={16} className="text-indigo-500" /> Ghi chú
+              <FileText size={16} className="text-green-500" /> Ghi chú
             </label>
             <input
               value={header.note}
               onChange={(e) => setHeader({ ...header, note: e.target.value })}
-              className="w-full border border-slate-200 bg-white font-medium text-slate-700 rounded-2xl px-4 py-3 outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition-all"
+              className="w-full border border-slate-200 bg-white font-medium text-slate-700 rounded-2xl px-4 py-3 outline-none focus:border-green-400 focus:ring-2 focus:ring-green-100 transition-all"
               placeholder="Nhập ghi chú cho đợt hàng"
             />
           </div>
@@ -1637,7 +1632,7 @@ const InventoryEntryPage = () => {
               {details.map((row, index) => (
                 <tr
                   key={row.id}
-                  className="hover:bg-indigo-50/30 transition-colors group"
+                  className="hover:bg-green-50/30 transition-colors group"
                 >
                   <td className="py-4 px-2 align-top first:pl-6">
                     {!(row.productInfo || row.tempData) ? (
@@ -1649,14 +1644,14 @@ const InventoryEntryPage = () => {
                               handleDetailChange(index, "sku", e.target.value)
                             }
                             onBlur={() => handleSkuBlur(index)}
-                            className={`w-44 h-10 border pl-9 pr-3 py-2 rounded-xl text-sm font-medium outline-none transition-all ${row.isSaved ? "border-emerald-200 bg-emerald-50/30 text-emerald-700" : row.isValidSku === false ? "border-rose-200 bg-rose-50/30 text-rose-700" : "border-slate-200 bg-white focus:border-indigo-400"}`}
+                            className={`w-44 h-10 border pl-9 pr-3 py-2 rounded-xl text-sm font-medium outline-none transition-all ${row.isSaved ? "border-emerald-200 bg-emerald-50/30 text-emerald-700" : row.isValidSku === false ? "border-green-200 bg-green-50/30 text-green-700" : "border-slate-200 bg-white focus:border-green-400"}`}
                             placeholder="Nhập mã SKU"
                           />
                           <Search className="absolute left-3 top-2.5 text-slate-400 w-4 h-4" />
                         </div>
                         <button
                           onClick={() => openCreateModal(index)}
-                          className="bg-indigo-50 text-indigo-600 hover:bg-indigo-100 p-2 rounded-xl transition-colors w-10 h-10 flex items-center justify-center"
+                          className="bg-green-50 text-green-600 hover:bg-green-100 p-2 rounded-xl transition-colors w-10 h-10 flex items-center justify-center"
                         >
                           <Plus size={18} />
                         </button>
@@ -1704,8 +1699,8 @@ const InventoryEntryPage = () => {
                       value={row.manufacturingDate}
                       className={`w-32 h-10 bg-white border rounded-xl px-3 py-2 text-sm font-medium text-slate-600 outline-none transition-all text-center ${
                         row.isValidDate === false
-                          ? "border-rose-400 shadow-[0_0_12px_rgba(244,63,94,0.4)]"
-                          : "border-slate-200 focus:border-indigo-400"
+                          ? "border-green-400 shadow-[0_0_12px_rgba(244,63,94,0.4)]"
+                          : "border-slate-200 focus:border-green-400"
                       }`}
                       placeholder="dd/mm/yyyy"
                       onChange={(e) => handleDateInput(index, e.target.value)}
@@ -1726,7 +1721,7 @@ const InventoryEntryPage = () => {
                       type="number"
                       min="1"
                       value={row.quantity}
-                      className="w-24 h-10 bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm font-medium text-center focus:border-indigo-400 outline-none text-slate-600"
+                      className="w-24 h-10 bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm font-medium text-center focus:border-green-400 outline-none text-slate-600"
                       onChange={(e) =>
                         handleDetailChange(
                           index,
@@ -1741,7 +1736,7 @@ const InventoryEntryPage = () => {
                       type="number"
                       min={1}
                       value={row.rate}
-                      className="w-24 h-10 bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm text-center font-medium focus:border-indigo-400 outline-none"
+                      className="w-24 h-10 bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm text-center font-medium focus:border-green-400 outline-none"
                       onChange={(e) =>
                         handleDetailChange(
                           index,
@@ -1765,7 +1760,7 @@ const InventoryEntryPage = () => {
                     <div className="flex items-center justify-center gap-0">
                       <button
                         onClick={() => openEditModal(index)}
-                        className="text-indigo-600 hover:text-indigo-800 p-2 rounded-xl transition-all"
+                        className="text-green-600 hover:text-green-800 p-2 rounded-xl transition-all"
                         title="Sửa"
                         disabled={row.isSaved}
                       >
@@ -1807,7 +1802,7 @@ const InventoryEntryPage = () => {
                 },
               ])
             }
-            className="flex items-center gap-2 text-sm font-medium text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 px-5 py-2.5 rounded-2xl transition-all"
+            className="flex items-center gap-2 text-sm font-medium text-green-600 hover:text-green-700 hover:bg-green-50 px-5 py-2.5 rounded-2xl transition-all"
           >
             <Plus size={18} /> Thêm dòng sản phẩm
           </button>
@@ -1830,7 +1825,7 @@ const InventoryEntryPage = () => {
           </button>
           <button
             onClick={handlePreSave}
-            className="bg-indigo-600 text-white px-8 py-3 rounded-2xl font-medium hover:bg-indigo-700 shadow-lg shadow-indigo-200 transition-all flex items-center gap-2 text-sm"
+            className="bg-green-600 text-white px-8 py-3 rounded-2xl font-medium hover:bg-green-700 shadow-lg shadow-green-200 transition-all flex items-center gap-2 text-sm"
           >
             <Save size={20} /> Lưu phiếu nhập
           </button>

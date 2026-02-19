@@ -3,10 +3,15 @@
 @tailwind utilities;
 
 @layer base {
-  html, body, #root {
-    font-family: 'Poppins', sans-serif !important;
+  html,
+  body,
+  #root {
+    font-family: "Poppins", sans-serif !important;
   }
-  input, button, select, textarea {
-    font-family: 'Poppins', sans-serif !important;
+  input,
+  button,
+  select,
+  textarea {
+    font-family: "Poppins", sans-serif !important;
   }
 }

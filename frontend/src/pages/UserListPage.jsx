@@ -41,8 +41,8 @@ const UserListPage = () => {
       users.filter(
         (u) =>
           u.fullName.toLowerCase().includes(lowerSearch) ||
-          u.email.toLowerCase().includes(lowerSearch)
-      )
+          u.email.toLowerCase().includes(lowerSearch),
+      ),
     );
   }, [search, users]);
 
@@ -106,7 +106,7 @@ const UserListPage = () => {
     const newStatus = user.status === "ACTIVE" ? "INACTIVE" : "ACTIVE";
     if (
       window.confirm(
-        `Bạn có chắc chắn muốn thay đổi trạng thái của ${user.username}?`
+        `Bạn có chắc chắn muốn thay đổi trạng thái của ${user.username}?`,
       )
     ) {
       try {
@@ -149,27 +149,29 @@ const UserListPage = () => {
               Điều chỉnh danh sách và quyền hạn nhân viên trong hệ thống
             </p>
           </div>
-          <button
-            onClick={openAdd}
-            className="bg-indigo-600 text-white px-5 py-2.5 rounded-xl flex items-center hover:bg-indigo-700 shadow-sm transition-all font-medium active:scale-95"
-          >
-            <Plus size={18} className="mr-2" /> Thêm nhân viên
-          </button>
         </div>
 
-        {/* Search Bar */}
-        <div className="mb-6 relative">
-          <Search
-            className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
-            size={18}
-          />
-          <input
-            type="text"
-            placeholder="Tìm kiếm theo họ tên hoặc địa chỉ email..."
-            className="w-full pl-11 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:bg-white focus:border-indigo-300 transition-all font-medium placeholder:text-slate-400"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
+        {/* Search Bar & Add Button */}
+        <div className="mb-6 flex space-x-4">
+          <div className="relative flex-1">
+            <Search
+              className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+              size={18}
+            />
+            <input
+              type="text"
+              placeholder="Tìm kiếm theo họ tên hoặc địa chỉ email..."
+              className="w-full pl-11 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:bg-white focus:border-indigo-300 transition-all font-medium placeholder:text-slate-400"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+          <button
+            onClick={openAdd}
+            className="bg-green-600 text-white px-5 py-2.5 rounded-xl flex items-center hover:bg-green-700 shadow-sm transition-all font-medium active:scale-95 whitespace-nowrap"
+          >
+            Thêm nhân viên
+          </button>
         </div>
 
         {/* Table Container */}
@@ -178,26 +180,25 @@ const UserListPage = () => {
             <table className="w-full border-collapse">
               <thead>
                 <tr className="bg-slate-50/50 border-b border-slate-200">
-                  {/* --- BỔ SUNG CỘT ID --- */}
-                  <th className="px-6 py-4 text-left text-[13px] font-medium text-slate-900 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-[13px] font-medium text-slate-900">
                     ID
                   </th>
-                  <th className="px-6 py-4 text-left text-[13px] font-medium text-slate-900 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-[13px] font-medium text-slate-900">
                     Họ tên nhân viên
                   </th>
-                  <th className="px-6 py-4 text-left text-[13px] font-medium text-slate-900 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-[13px] font-medium text-slate-900">
                     Username
                   </th>
-                  <th className="px-6 py-4 text-left text-[13px] font-medium text-slate-900 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-[13px] font-medium text-slate-900">
                     Email
                   </th>
-                  <th className="px-6 py-4 text-left text-[13px] font-medium text-slate-900 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-[13px] font-medium text-slate-900">
                     Vai trò
                   </th>
-                  <th className="px-6 py-4 text-left text-[13px] font-medium text-slate-900 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-[13px] font-medium text-slate-900">
                     Trạng thái
                   </th>
-                  <th className="px-6 py-4 text-center text-[13px] font-medium text-slate-900 uppercase tracking-wider w-[200px]">
+                  <th className="px-6 py-4 text-center text-[13px] font-medium text-slate-900 w-[200px]">
                     Thao tác
                   </th>
                 </tr>
@@ -228,8 +229,8 @@ const UserListPage = () => {
                             user.role === "ADMIN"
                               ? "bg-rose-50 text-rose-700 border-rose-100"
                               : user.role === "STAFF"
-                              ? "bg-blue-50 text-blue-700 border-blue-100"
-                              : "bg-emerald-50 text-emerald-700 border-emerald-100"
+                                ? "bg-blue-50 text-blue-700 border-blue-100"
+                                : "bg-emerald-50 text-emerald-700 border-emerald-100"
                           }`}
                       >
                         {user.role}
@@ -456,7 +457,7 @@ const UserListPage = () => {
                   {selectedUserForRole.username.charAt(0).toUpperCase()}
                 </div>
                 <div>
-                  <p className="text-xs text-slate-500 uppercase tracking-wider font-bold">
+                  <p className="text-xs text-slate-500 font-bold">
                     Tài khoản đang chọn
                   </p>
                   <p className="text-base font-semibold text-slate-800">
@@ -539,7 +540,7 @@ const UserListPage = () => {
               </button>
               <button
                 onClick={handleSaveRole}
-                className="flex-1 px-4 py-2.5 text-sm font-semibold text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 shadow-md shadow-indigo-200 active:scale-95 transition-all"
+                className="flex-1 px-4 py-2.5 text-sm font-medium text-white bg-green-600 rounded-xl hover:bg-green-600 shadow-md shadow-indigo-200 active:scale-95 transition-all"
               >
                 Xác nhận lưu
               </button>

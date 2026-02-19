@@ -147,11 +147,10 @@ const ProductForm = ({ existingProduct, onClose, onSuccess }) => {
           className="p-8 overflow-y-auto flex-1 custom-scrollbar"
         >
           <div className="grid grid-cols-1 md:grid-cols-12 gap-10">
-            {/* CỘT TRÁI: THÔNG TIN CƠ BẢN & ĐỊNH DANH (8 columns) */}
             <div className="md:col-span-8 space-y-8">
               <section>
                 <div className="flex items-center gap-2 mb-6">
-                  <div className="w-1.5 h-6 bg-indigo-500 rounded-full"></div>
+                  <div className="w-1.5 h-6 bg-green-500 rounded-full"></div>
                   <h3 className="text-lg font-medium text-slate-900">
                     Thông tin cơ bản
                   </h3>
@@ -159,7 +158,7 @@ const ProductForm = ({ existingProduct, onClose, onSuccess }) => {
 
                 <div className="space-y-5">
                   <div className="group">
-                    <label className="block text-[13px] font-medium text-slate-600 mb-2 ml-1">
+                    <label className="block text-[13px] font-medium text-slate-900 mb-2 ml-1">
                       Tên sản phẩm
                     </label>
                     <input
@@ -181,7 +180,7 @@ const ProductForm = ({ existingProduct, onClose, onSuccess }) => {
 
                   <div className="grid grid-cols-3 gap-5">
                     <div className="col-span-2">
-                      <label className="block text-[13px] font-medium text-slate-600 mb-2 ml-1">
+                      <label className="block text-[13px] font-medium text-slate-900 mb-2 ml-1">
                         Thương hiệu
                       </label>
                       <div className="relative">
@@ -215,7 +214,7 @@ const ProductForm = ({ existingProduct, onClose, onSuccess }) => {
                       )}
                     </div>
                     <div className="col-span-1">
-                      <label className="block text-[13px] font-medium text-slate-600 mb-2 ml-1">
+                      <label className="block text-[13px] font-medium text-slate-900 mb-2 ml-1">
                         Đơn vị
                       </label>
                       <div className="relative">
@@ -251,7 +250,7 @@ const ProductForm = ({ existingProduct, onClose, onSuccess }) => {
 
                   <div className="grid grid-cols-2 gap-5">
                     <div>
-                      <label className="block text-[13px] font-medium text-slate-600 mb-2 ml-1">
+                      <label className="block text-[13px] font-medium text-slate-900 mb-2 ml-1">
                         Mã SKU
                       </label>
                       <div className="relative">
@@ -268,7 +267,7 @@ const ProductForm = ({ existingProduct, onClose, onSuccess }) => {
                           <button
                             type="button"
                             onClick={generateSkuAndBarcode}
-                            className="absolute right-2 top-1.5 bottom-1.5 px-3 bg-white border border-slate-200 rounded-xl text-[11px] font-medium text-indigo-600 hover:bg-indigo-50 hover:border-indigo-200 transition-all"
+                            className="absolute right-2 top-1.5 bottom-1.5 px-3 bg-white border border-slate-200 rounded-xl text-[11px] font-medium text-green-600 hover:bg-green-50 hover:border-green-200 transition-all"
                           >
                             Tạo ngẫu nhiên
                           </button>
@@ -281,14 +280,14 @@ const ProductForm = ({ existingProduct, onClose, onSuccess }) => {
                       )}
                     </div>
                     <div>
-                      <label className="block text-[13px] font-medium text-slate-600 mb-2 ml-1">
+                      <label className="block text-[13px] font-medium text-slate-900 mb-2 ml-1">
                         Mã barcode
                       </label>
                       <input
                         {...register("barcode")}
                         readOnly
                         className="w-full px-5 py-3.5 bg-slate-100 border border-slate-200 rounded-2xl outline-none transition-all font-medium text-slate-700 cursor-not-allowed"
-                        placeholder="Tự động từ SKU"
+                        placeholder="Tự động sinh"
                       />
                       {errors.barcode && (
                         <p className="text-rose-500 text-xs mt-2 ml-1 font-medium">
@@ -357,7 +356,7 @@ const ProductForm = ({ existingProduct, onClose, onSuccess }) => {
                 </p>
               </div>
               <div className="bg-white border border-slate-200 rounded-[2.5rem] p-6 shadow-sm space-y-5">
-                <div className="flex items-center gap-2 mb-2 text-slate-600">
+                <div className="flex items-center gap-2 mb-2 text-slate-900">
                   <span className="text-[13px] font-medium">
                     Thanh toán và Trạng thái
                   </span>
@@ -365,8 +364,8 @@ const ProductForm = ({ existingProduct, onClose, onSuccess }) => {
 
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-slate-700">
-                      Đơn giá nhập
+                    <label className="text-sm font-medium text-slate-900">
+                      Giá nhập
                     </label>
                     <div className="relative">
                       <input
@@ -387,7 +386,7 @@ const ProductForm = ({ existingProduct, onClose, onSuccess }) => {
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-slate-700">
+                    <label className="text-sm font-medium text-slate-900">
                       Giá bán
                     </label>
                     <div className="relative">
@@ -403,7 +402,7 @@ const ProductForm = ({ existingProduct, onClose, onSuccess }) => {
                     </div>
                   </div>
                   <div>
-                    <label className="block text-[12px] font-medium text-slate-500 mb-1.5 ml-1">
+                    <label className="block text-[12px] font-medium text-slate-900 mb-1.5 ml-1">
                       Trạng thái hiện tại
                     </label>
                     <select
@@ -431,7 +430,7 @@ const ProductForm = ({ existingProduct, onClose, onSuccess }) => {
           <button
             type="submit"
             onClick={handleSubmit(onSubmit)}
-            className="px-10 py-3 bg-indigo-600 text-white rounded-2xl hover:bg-indigo-700 transition-all font-medium text-sm shadow-lg shadow-indigo-100 active:scale-95"
+            className="px-10 py-3 bg-indigo-600 text-white rounded-2xl hover:bg-green-600 transition-all font-medium text-sm shadow-lg shadow-green-100 active:scale-95"
           >
             Lưu dữ liệu sản phẩm
           </button>

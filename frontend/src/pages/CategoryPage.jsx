@@ -10,7 +10,7 @@ import {
   FolderOpen,
   Layers,
   Info,
-    X,
+  X,
 } from "lucide-react";
 import HistoryModal from "../components/HistoryModal";
 
@@ -248,9 +248,9 @@ const CategoryPage = () => {
               });
               setShowModal(true);
             }}
-            className="bg-indigo-600 text-white px-5 py-2.5 rounded-xl flex items-center shadow-sm hover:bg-indigo-700 transition-all active:scale-95 font-medium"
+            className="bg-green-600 text-white px-5 py-2.5 rounded-xl flex items-center shadow-sm hover:bg-green-700 transition-all active:scale-95 font-medium"
           >
-            <Plus size={18} className="mr-2" /> Thêm danh mục
+            Thêm danh mục
           </button>
         </div>
 
@@ -260,19 +260,19 @@ const CategoryPage = () => {
             <table className="w-full border-collapse">
               <thead>
                 <tr className="bg-slate-50/50 border-b border-slate-200">
-                  <th className="px-6 py-4 text-left text-[13px] font-medium text-slate-900 uppercase tracking-wider whitespace-nowrap">
+                  <th className="px-6 py-4 text-left text-[13px] font-medium text-slate-900 whitespace-nowrap">
                     Tên danh mục
                   </th>
-                  <th className="px-6 py-4 text-left text-[13px] font-medium text-slate-900 uppercase tracking-wider whitespace-nowrap">
+                  <th className="px-6 py-4 text-left text-[13px] font-medium text-slate-900 whitespace-nowrap">
                     Slug
                   </th>
-                  <th className="px-6 py-4 text-left text-[13px] font-medium text-slate-900 uppercase tracking-wider whitespace-nowrap">
+                  <th className="px-6 py-4 text-left text-[13px] font-medium text-slate-900 whitespace-nowrap">
                     Nhãn gán
                   </th>
-                  <th className="px-6 py-4 text-center text-[13px] font-medium text-slate-900 uppercase tracking-wider whitespace-nowrap w-[150px]">
+                  <th className="px-6 py-4 text-center text-[13px] font-medium text-slate-900 whitespace-nowrap w-[150px]">
                     Hành động
                   </th>
-                  <th className="px-6 py-4 text-center text-[13px] font-medium text-slate-900 uppercase tracking-wider whitespace-nowrap w-[120px]">
+                  <th className="px-6 py-4 text-center text-[13px] font-medium text-slate-900 whitespace-nowrap w-[120px]">
                     Lịch sử
                   </th>
                 </tr>
@@ -298,24 +298,14 @@ const CategoryPage = () => {
           <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-lg overflow-hidden border border-slate-200 animate-in fade-in zoom-in duration-200">
             <div className="px-8 pt-8 pb-4 flex justify-between items-center">
               <h2 className="text-2xl font-medium text-slate-900 flex items-center gap-3">
-                {formData.id ? (
-                  <Edit size={22} className="text-indigo-600" />
-                ) : (
-                  <Plus size={22} className="text-indigo-600" />
-                )}
+                {formData.id && <Edit size={22} className="text-indigo-600" />}
                 {formData.id ? "Cập nhật danh mục" : "Tạo danh mục mới"}
               </h2>
-              <button
-                onClick={() => setShowModal(false)}
-                className="p-2 hover:bg-slate-50 rounded-full text-slate-400 transition-colors"
-              >
-                <X size={24} />
-              </button>
             </div>
 
             <form onSubmit={handleSubmit} className="p-8 pt-4 space-y-5">
               <div>
-                <label className="block text-[13px] font-medium text-slate-600 mb-2 ml-1">
+                <label className="block text-[13px] font-medium text-slate-900 mb-2 ml-1">
                   Tên danh mục
                 </label>
                 <input
@@ -323,18 +313,18 @@ const CategoryPage = () => {
                   className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3 focus:bg-white focus:border-indigo-400 outline-none transition-all font-medium text-slate-900"
                   value={formData.name}
                   onChange={handleNameChange}
-                  placeholder="Ví dụ: Rau củ quả..."
+                  placeholder="Nhập tên danh mục"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-5">
                 <div>
-                  <label className="block text-[13px] font-medium text-slate-600 mb-2 ml-1">
+                  <label className="block text-[13px] font-medium text-slate-900 mb-2 ml-1">
                     Tên nhãn gán
                   </label>
                   <input
                     className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3 focus:bg-white focus:border-indigo-400 outline-none transition-all font-medium text-slate-900"
-                    placeholder="Ví dụ: HOT, NEW"
+                    placeholder="Nhập tên nhãn"
                     value={formData.label}
                     onChange={(e) =>
                       setFormData({ ...formData, label: e.target.value })
@@ -354,7 +344,7 @@ const CategoryPage = () => {
                         setFormData({ ...formData, labelColor: e.target.value })
                       }
                     />
-                    <span className="text-xs font-medium text-slate-400 uppercase tracking-wider">
+                    <span className="text-xs font-medium text-slate-400">
                       {formData.labelColor}
                     </span>
                   </div>
@@ -420,13 +410,13 @@ const CategoryPage = () => {
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  className="px-6 py-2.5 bg-slate-100 text-slate-600 rounded-xl hover:bg-slate-200 font-medium transition-all"
+                  className="px-6 py-2.5 bg-rose-600 text-white rounded-xl hover:bg-rose-600 font-medium transition-all"
                 >
                   Đóng
                 </button>
                 <button
                   type="submit"
-                  className="px-8 py-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 font-medium shadow-sm shadow-indigo-100 transition-all active:scale-95"
+                  className="px-8 py-2.5 bg-green-600 text-white rounded-xl hover:bg-green-700 font-medium shadow-sm shadow-green-100 transition-all active:scale-95"
                 >
                   {formData.id ? "Cập nhật ngay" : "Tạo danh mục"}
                 </button>

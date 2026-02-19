@@ -48,7 +48,7 @@ const OrderManagementPage = () => {
       case "CANCELLED":
         return "bg-red-100 text-red-700";
       default:
-        return "bg-gray-100 text-gray-700";
+        return "bg-slate-100 text-slate-700";
     }
   };
 
@@ -64,17 +64,17 @@ const OrderManagementPage = () => {
   };
 
   return (
-    <div className="p-6 space-y-6 bg-gray-50 min-h-screen">
+    <div className="p-6 space-y-6 bg-slate-50 min-h-screen">
       {/* Header Section */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-gray-800">Quản lý đơn hàng</h1>
-          <p className="text-sm text-gray-500 mt-1">
+          <h1 className="text-2xl font-medium text-slate-900">Quản lý đơn hàng</h1>
+          <p className="text-sm text-slate-500 mt-1">
             Theo dõi và quản lý tất cả đơn hàng
           </p>
         </div>
         <div className="flex gap-3">
-          <button className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+          <button className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors">
             <Download size={18} />
             Xuất Excel
           </button>
@@ -82,75 +82,75 @@ const OrderManagementPage = () => {
       </div>
 
       {/* Filters Section */}
-      <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-wrap gap-4 items-center justify-between">
+      <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex flex-wrap gap-4 items-center justify-between">
         <div className="flex items-center gap-4 flex-1 min-w-[300px]">
           <div className="relative flex-1 max-w-md">
             <Search
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
               size={20}
             />
             <input
               type="text"
               placeholder="Tìm theo mã, tên khách, SĐT..."
-              className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-medium text-sm"
+              className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-medium text-sm"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          <button className="p-2 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors border border-gray-200">
-            <Filter size={20} />
+          <button className="p-2 text-slate-500 hover:bg-slate-100 rounded-lg transition-colors border border-slate-200">
+            <Filter size={20} /> 
           </button>
         </div>
         <div className="flex items-center gap-2">
-          <div className="flex items-center px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-600">
-            <Calendar size={16} className="mr-2 text-gray-400" />
+          <div className="flex items-center px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm text-slate-600">
+            <Calendar size={16} className="mr-2 text-slate-400" />
             <span>Hôm nay</span>
           </div>
         </div>
       </div>
 
       {/* Table Section */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+      <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gray-50 border-b border-gray-100">
+            <thead className="bg-slate-50 border-b border-slate-100">
               <tr>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-4 text-left text-xs font-medium text-slate-900">
                   Mã đơn
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-4 text-left text-xs font-medium text-slate-900">
                   Khách hàng
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-4 text-left text-xs font-medium text-slate-900">
                   Tổng tiền
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-4 text-left text-xs font-medium text-slate-900">
                   Nhân viên
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-4 text-left text-xs font-medium text-slate-900">
                   Thanh toán
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-4 text-left text-xs font-medium text-slate-900">
                   Trạng thái
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-4 text-left text-xs font-medium text-slate-900">
                   Thời gian
                 </th>
-                <th className="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-4 text-right text-xs font-medium text-slate-900">
                   Hành động
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-50">
+            <tbody className="divide-y divide-slate-50">
               {loading ? (
                 <tr>
-                  <td colSpan="7" className="text-center py-8 text-gray-500">
+                  <td colSpan="7" className="text-center py-8 text-slate-500">
                     Đang tải dữ liệu...
                   </td>
                 </tr>
               ) : filteredOrders.length === 0 ? (
                 <tr>
-                  <td colSpan="7" className="text-center py-8 text-gray-500">
+                  <td colSpan="7" className="text-center py-8 text-slate-500">
                     Không tìm thấy đơn hàng nào.
                   </td>
                 </tr>
@@ -166,15 +166,15 @@ const OrderManagementPage = () => {
                       </span>
                     </td>
                     <td className="px-6 py-4">
-                      <div className="text-sm font-medium text-gray-900">
+                      <div className="text-sm font-medium text-slate-900">
                         {order.customerName}
                       </div>
-                      <div className="text-xs text-gray-500">
+                      <div className="text-xs text-slate-500">
                         {order.customerPhone}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-bold text-gray-900">
+                      <div className="text-sm font-medium text-slate-900">
                         {order.finalAmount?.toLocaleString()} ₫
                       </div>
                       {order.discount > 0 && (
@@ -183,11 +183,11 @@ const OrderManagementPage = () => {
                         </div>
                       )}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900">
                       {order.user?.fullName || "---"}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="text-sm text-gray-600">
+                      <span className="text-sm text-slate-600">
                         {getPaymentMethodLabel(order.paymentMethod)}
                       </span>
                     </td>
@@ -198,7 +198,7 @@ const OrderManagementPage = () => {
                         {order.status}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
                       {new Date(order.createdAt).toLocaleString("vi-VN")}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right">
@@ -223,15 +223,15 @@ const OrderManagementPage = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-white rounded-2xl w-full max-w-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-in slide-in-from-bottom-4 zoom-in-95 duration-200">
             {/* Modal Header */}
-            <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+            <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
               <div>
-                <h2 className="text-xl font-bold text-gray-800 flex items-center gap-3">
+                <h2 className="text-xl font-medium text-slate-800 flex items-center gap-3">
                   Chi tiết đơn hàng
-                  <span className="text-base font-normal text-gray-500 font-mono bg-white px-2 py-0.5 rounded border">
+                  <span className="text-base font-normal text-slate-500 font-mono bg-white px-2 py-0.5 rounded border">
                     {selectedOrder.code}
                   </span>
                 </h2>
-                <div className="text-sm text-gray-500 mt-1 flex gap-2">
+                <div className="text-sm text-slate-500 mt-1 flex gap-2">
                   <span>
                     {new Date(selectedOrder.createdAt).toLocaleString("vi-VN")}
                   </span>
@@ -241,7 +241,7 @@ const OrderManagementPage = () => {
               </div>
               <button
                 onClick={() => setSelectedOrder(null)}
-                className="p-2 hover:bg-white rounded-full transition-colors text-gray-400 hover:text-gray-600"
+                className="p-2 hover:bg-white rounded-full transition-colors text-slate-400 hover:text-slate-600"
               >
                 <X size={24} />
               </button>
@@ -252,40 +252,40 @@ const OrderManagementPage = () => {
               {/* Customer Info Grid */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="p-4 bg-blue-50/50 rounded-xl border border-blue-100">
-                  <h3 className="text-sm font-semibold text-blue-800 mb-3 uppercase tracking-wide">
+                  <h3 className="text-sm font-medium text-blue-800 mb-3">
                     Thông tin khách hàng
                   </h3>
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
-                      <span className="text-gray-500">Họ tên:</span>
-                      <span className="font-medium text-gray-900">
+                      <span className="text-slate-500">Họ tên:</span>
+                      <span className="font-medium text-slate-900">
                         {selectedOrder.customerName}
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-500">Số điện thoại:</span>
-                      <span className="font-medium text-gray-900">
+                      <span className="text-slate-500">Số điện thoại:</span>
+                      <span className="font-medium text-slate-900">
                         {selectedOrder.customerPhone || "---"}
                       </span>
                     </div>
                   </div>
                 </div>
 
-                <div className="p-4 bg-gray-50/50 rounded-xl border border-gray-100">
-                  <h3 className="text-sm font-semibold text-gray-800 mb-3 uppercase tracking-wide">
+                <div className="p-4 bg-slate-50/50 rounded-xl border border-slate-100">
+                  <h3 className="text-sm font-medium text-slate-800 mb-3">
                     Thông tin thanh toán
                   </h3>
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
-                      <span className="text-gray-500">Phương thức:</span>
-                      <span className="font-medium text-gray-900">
+                      <span className="text-slate-500">Phương thức:</span>
+                      <span className="font-medium text-slate-900">
                         {getPaymentMethodLabel(selectedOrder.paymentMethod)}
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-500">Trạng thái:</span>
+                      <span className="text-slate-500">Trạng thái:</span>
                       <span
-                        className={`px-2 py-0.5 rounded text-xs font-bold ${getStatusColor(selectedOrder.status)}`}
+                        className={`px-2 py-0.5 rounded text-xs font-medium ${getStatusColor(selectedOrder.status)}`}
                       >
                         {selectedOrder.status}
                       </span>
@@ -296,40 +296,40 @@ const OrderManagementPage = () => {
 
               {/* Products Table */}
               <div>
-                <h3 className="text-sm font-bold text-gray-800 mb-3 uppercase tracking-wide">
+                <h3 className="text-sm font-medium text-slate-800 mb-3">
                   Danh sách sản phẩm
                 </h3>
                 <div className="border rounded-lg overflow-hidden">
                   <table className="w-full text-sm">
-                    <thead className="bg-gray-50">
+                    <thead className="bg-slate-50">
                       <tr>
-                        <th className="px-4 py-3 text-left font-medium text-gray-500">
+                        <th className="px-4 py-3 text-left font-medium text-slate-500">
                           Sản phẩm
                         </th>
-                        <th className="px-4 py-3 text-center font-medium text-gray-500">
+                        <th className="px-4 py-3 text-center font-medium text-slate-500">
                           SL
                         </th>
-                        <th className="px-4 py-3 text-right font-medium text-gray-500">
+                        <th className="px-4 py-3 text-right font-medium text-slate-500">
                           Đơn giá
                         </th>
-                        <th className="px-4 py-3 text-right font-medium text-gray-500">
+                        <th className="px-4 py-3 text-right font-medium text-slate-500">
                           Thành tiền
                         </th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-gray-100">
+                    <tbody className="divide-y divide-slate-100">
                       {selectedOrder.details.map((item, idx) => (
                         <tr key={idx}>
-                          <td className="px-4 py-3 text-gray-800">
+                          <td className="px-4 py-3 text-slate-800">
                             {item.product?.name}
                           </td>
-                          <td className="px-4 py-3 text-center text-gray-600">
+                          <td className="px-4 py-3 text-center text-slate-600">
                             {item.quantity}
                           </td>
-                          <td className="px-4 py-3 text-right text-gray-600">
+                          <td className="px-4 py-3 text-right text-slate-600">
                             {item.price?.toLocaleString()} ₫
                           </td>
-                          <td className="px-4 py-3 text-right font-medium text-gray-900">
+                          <td className="px-4 py-3 text-right font-medium text-slate-900">
                             {item.totalLine?.toLocaleString()} ₫
                           </td>
                         </tr>
@@ -341,14 +341,14 @@ const OrderManagementPage = () => {
             </div>
 
             {/* Modal Footer */}
-            <div className="p-6 border-t border-gray-100 bg-gray-50 flex justify-between items-center">
-              <button className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:bg-white hover:shadow-sm rounded-lg border border-transparent hover:border-gray-200 transition-all">
+            <div className="p-6 border-t border-slate-100 bg-slate-50 flex justify-between items-center">
+              <button className="flex items-center gap-2 px-4 py-2 text-slate-600 hover:bg-white hover:shadow-sm rounded-lg border border-transparent hover:border-slate-200 transition-all">
                 <Printer size={18} />
                 In hóa đơn
               </button>
               <div className="text-right">
-                <div className="text-sm text-gray-500">Tổng thanh toán</div>
-                <div className="text-2xl font-bold text-blue-600">
+                <div className="text-sm text-slate-500">Tổng thanh toán</div>
+                <div className="text-2xl font-medium text-blue-600">
                   {selectedOrder.finalAmount?.toLocaleString()} ₫
                 </div>
               </div>
