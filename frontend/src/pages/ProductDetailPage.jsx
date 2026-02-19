@@ -126,21 +126,21 @@ const ProductDetailPage = () => {
             {/* Right Column - Info */}
             <div>
               <div className="mb-2">
-                <span className="text-green-600 font-medium tracking-wider text-sm uppercase bg-green-50 px-3 py-1 rounded-full">
+                <span className="text-white font-medium tracking-wider text-sm uppercase bg-green-600 px-3 py-1 rounded-full">
                   {product.brand || "Grocery Store"}
                 </span>
               </div>
 
-              <h1 className="text-3xl md:text-4xl font-medium text-slate-900 mb-4 leading-tight">
+              <h1 className="text-2xl md:text-3xl font-medium text-slate-900 mb-4 leading-tight">
                 {product.name}
               </h1>
 
               <div className="flex items-center gap-4 mb-8">
                 <div className="flex items-end gap-2">
-                  <span className="text-4xl font-medium text-slate-900">
+                  <span className="text-3xl font-medium text-slate-900">
                     {product.sellPrice?.toLocaleString("vi-VN")}
                   </span>
-                  <span className="text-xl font-medium text-slate-900 mb-1">
+                  <span className="text-lg font-medium text-slate-900 mb-1">
                     ₫ / {product.unit}
                   </span>
                 </div>
