@@ -122,7 +122,7 @@ const ProductForm = ({ existingProduct, onClose, onSuccess }) => {
         {/* Header - Tinh tế và gọn gàng */}
         <div className="flex justify-between items-center p-8 border-b border-slate-100 bg-white">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-indigo-50 rounded-xl text-indigo-600">
+            <div className="p-2 bg-green-50 rounded-xl text-green-600">
               <Package size={24} />
             </div>
             <div>
@@ -134,12 +134,6 @@ const ProductForm = ({ existingProduct, onClose, onSuccess }) => {
               </p>
             </div>
           </div>
-          <button
-            onClick={onClose}
-            className="p-2 hover:bg-rose-50 hover:text-rose-600 rounded-full text-slate-400 transition-all"
-          >
-            <X size={28} />
-          </button>
         </div>
 
         <form
@@ -147,7 +141,7 @@ const ProductForm = ({ existingProduct, onClose, onSuccess }) => {
           className="p-8 overflow-y-auto flex-1 custom-scrollbar"
         >
           <div className="grid grid-cols-1 md:grid-cols-12 gap-10">
-            <div className="md:col-span-8 space-y-8">
+            <div className="md:col-span-8 flex flex-col gap-8">
               <section>
                 <div className="flex items-center gap-2 mb-6">
                   <div className="w-1.5 h-6 bg-green-500 rounded-full"></div>
@@ -167,7 +161,7 @@ const ProductForm = ({ existingProduct, onClose, onSuccess }) => {
                       className={`w-full px-5 py-3.5 border border-slate-200 rounded-2xl focus:outline-none transition-all font-medium text-slate-900 ${
                         existingProduct
                           ? "bg-slate-100 cursor-not-allowed"
-                          : "bg-slate-50 focus:ring-4 focus:ring-indigo-50 focus:border-indigo-400 focus:bg-white"
+                          : "bg-slate-50 focus:ring-4 focus:ring-green-50 focus:border-green-400 focus:bg-white"
                       }`}
                       placeholder="Nhập tên sản phẩm"
                     />
@@ -190,7 +184,7 @@ const ProductForm = ({ existingProduct, onClose, onSuccess }) => {
                             register("brand").onChange(e);
                             e.target.blur();
                           }}
-                          className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-indigo-50 focus:border-indigo-400 focus:bg-white outline-none transition-all font-medium text-slate-900 cursor-pointer appearance-none peer"
+                          className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-green-50 focus:border-green-400 focus:bg-white outline-none transition-all font-medium text-slate-900 cursor-pointer appearance-none peer"
                         >
                           <option value="">Chọn thương hiệu</option>
                           {suppliers.map((supplier) => (
@@ -224,7 +218,7 @@ const ProductForm = ({ existingProduct, onClose, onSuccess }) => {
                             register("unit").onChange(e);
                             e.target.blur();
                           }}
-                          className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-indigo-50 focus:border-indigo-400 focus:bg-white outline-none transition-all font-medium text-slate-900 cursor-pointer appearance-none peer"
+                          className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-green-50 focus:border-green-400 focus:bg-white outline-none transition-all font-medium text-slate-900 cursor-pointer appearance-none peer"
                         >
                           <option value="">Chọn đơn vị</option>
                           <option value="Thùng">Thùng</option>
@@ -260,7 +254,7 @@ const ProductForm = ({ existingProduct, onClose, onSuccess }) => {
                           className={`w-full py-3.5 border border-slate-200 rounded-2xl outline-none transition-all font-medium ${
                             existingProduct
                               ? "px-5 bg-slate-100 text-slate-700 cursor-not-allowed"
-                              : "pl-5 pr-20 bg-slate-50 focus:ring-4 focus:ring-indigo-50 focus:border-indigo-400 focus:bg-white"
+                              : "pl-5 pr-20 bg-slate-50 focus:ring-4 focus:ring-green-50 focus:border-green-400 focus:bg-white"
                           }`}
                         />
                         {!existingProduct && (
@@ -299,7 +293,7 @@ const ProductForm = ({ existingProduct, onClose, onSuccess }) => {
                 </div>
               </section>
 
-              <section>
+              <section className="flex flex-col flex-1">
                 <div className="flex items-center gap-2 mb-6 pt-2">
                   <div className="w-1.5 h-6 bg-emerald-500 rounded-full"></div>
                   <h3 className="text-lg font-medium text-slate-900">
@@ -308,8 +302,8 @@ const ProductForm = ({ existingProduct, onClose, onSuccess }) => {
                 </div>
                 <textarea
                   {...register("description")}
-                  rows="5"
-                  className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-[2rem] focus:outline-none focus:ring-4 focus:ring-emerald-50 focus:border-emerald-400 focus:bg-white transition-all font-medium text-slate-900 resize-none min-h-[160px]"
+                  className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-[2rem] focus:outline-none focus:ring-4 focus:ring-emerald-50 focus:border-emerald-400 focus:bg-white transition-all font-medium text-slate-900 resize-none flex-1 min-h-[200px] [&::-webkit-scrollbar]:hidden"
+                  style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
                   placeholder="Viết mô tả ngắn gọn về đặc điểm của sản phẩm..."
                 ></textarea>
               </section>
@@ -323,7 +317,7 @@ const ProductForm = ({ existingProduct, onClose, onSuccess }) => {
                   </span>
                 </div>
 
-                <div className="relative group aspect-square bg-white rounded-[2rem] border-2 border-dashed border-slate-300 hover:border-indigo-400 transition-all flex items-center justify-center overflow-hidden">
+                <div className="relative group aspect-square bg-white rounded-[2rem] border-2 border-dashed border-slate-300 hover:border-green-400 transition-all flex items-center justify-center overflow-hidden">
                   {preview ? (
                     <img
                       src={preview}
@@ -375,7 +369,7 @@ const ProductForm = ({ existingProduct, onClose, onSuccess }) => {
                         className={`w-full pl-3 pr-8 py-2 border border-slate-200 rounded-xl ${
                           existingProduct
                             ? "bg-slate-100 text-slate-500 cursor-not-allowed"
-                            : "bg-slate-50 text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:bg-white"
+                            : "bg-slate-50 text-slate-900 focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:bg-white"
                         } transition-all`}
                         placeholder="0"
                       />
@@ -393,7 +387,7 @@ const ProductForm = ({ existingProduct, onClose, onSuccess }) => {
                       <input
                         type="number"
                         {...register("sellPrice")}
-                        className="w-full pl-3 pr-8 py-2 border border-slate-200 rounded-xl bg-slate-50 text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:bg-white transition-all"
+                        className="w-full pl-3 pr-8 py-2 border border-slate-200 rounded-xl bg-slate-50 text-slate-900 focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:bg-white transition-all"
                         placeholder="0"
                       />
                       <span className="absolute right-3 top-2.5 text-slate-400 font-medium">
@@ -407,7 +401,7 @@ const ProductForm = ({ existingProduct, onClose, onSuccess }) => {
                     </label>
                     <select
                       {...register("status")}
-                      className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl font-medium text-slate-700 outline-none cursor-pointer focus:bg-white focus:border-indigo-400"
+                      className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl font-medium text-slate-700 outline-none cursor-pointer focus:bg-white focus:border-green-400"
                     >
                       <option value="ACTIVE">Đang kinh doanh</option>
                       <option value="INACTIVE">Ngừng kinh doanh</option>
@@ -430,7 +424,7 @@ const ProductForm = ({ existingProduct, onClose, onSuccess }) => {
           <button
             type="submit"
             onClick={handleSubmit(onSubmit)}
-            className="px-10 py-3 bg-indigo-600 text-white rounded-2xl hover:bg-green-600 transition-all font-medium text-sm shadow-lg shadow-green-100 active:scale-95"
+            className="px-10 py-3 bg-green-600 text-white rounded-2xl hover:bg-green-600 transition-all font-medium text-sm shadow-lg shadow-green-100 active:scale-95"
           >
             Lưu dữ liệu sản phẩm
           </button>
