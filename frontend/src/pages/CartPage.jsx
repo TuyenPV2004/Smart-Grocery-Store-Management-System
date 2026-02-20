@@ -1,11 +1,30 @@
-import React from "react";
-import { Link } from "react-router-dom";
+import React, { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { useCart } from "../context/CartContext";
-import { Trash2, Plus, Minus, ArrowLeft, ShoppingBag } from "lucide-react";
+import { useAuth } from "../context/AuthContext";
+import orderService from "../services/orderService";
+import {
+  Trash2,
+  Plus,
+  Minus,
+  ArrowLeft,
+  ShoppingBag,
+  QrCode,
+  X,
+  CheckCircle,
+  Loader2,
+} from "lucide-react";
 
 const CartPage = () => {
   const { cartItems, removeFromCart, updateQuantity, cartTotal, clearCart } =
     useCart();
+  const { user } = useAuth(); // Lấy thông tin user đang đăng nhập
+  const navigate = useNavigate();
+
+  // State cho Modal Thanh toán
+  const [showCheckoutModal, setShowCheckoutModal] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [orderSuccess, setOrderSuccess] = useState(false);
 
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat("vi-VN", {
@@ -20,7 +39,43 @@ const CartPage = () => {
     return `http://localhost:8080/${path}`;
   };
 
-  if (cartItems.length === 0) {
+  // Hàm xử lý khi ấn Xác nhận thanh toán
+  const handleConfirmCheckout = async () => {
+    if (!user) {
+      alert("Vui lòng đăng nhập để thanh toán!");
+      navigate("/login");
+      return;
+    }
+
+    setIsProcessing(true);
+
+    // Chuẩn bị dữ liệu gửi lên backend khớp với OrderRequest.java
+    const orderData = {
+      customerName: user.fullName || user.username || "Khách hàng",
+      customerPhone: user.phone || "Đang cập nhật",
+      paymentMethod: "CHUYEN_KHOAN", // Phương thức chuyển khoản
+      discount: 0,
+      items: cartItems.map((item) => ({
+        productId: item.product.id,
+        quantity: item.quantity,
+        price: item.product.sellPrice,
+      })),
+    };
+
+    try {
+      await orderService.create(orderData);
+      setOrderSuccess(true);
+      clearCart(); // Xóa giỏ hàng sau khi đặt thành công
+    } catch (error) {
+      console.error("Lỗi khi đặt hàng:", error);
+      alert("Có lỗi xảy ra khi đặt hàng. Vui lòng thử lại!");
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  // Giao diện khi giỏ hàng trống
+  if (cartItems.length === 0 && !orderSuccess) {
     return (
       <div className="min-h-screen bg-[#F8FAFC] flex flex-col items-center justify-center p-4">
         <div className="w-24 h-24 bg-slate-100 rounded-full flex items-center justify-center mb-6 text-slate-300">
@@ -43,9 +98,34 @@ const CartPage = () => {
     );
   }
 
+  // Giao diện thông báo Đặt hàng thành công
+  if (orderSuccess) {
+    return (
+      <div className="min-h-screen bg-[#F8FAFC] flex flex-col items-center justify-center p-4">
+        <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mb-6 text-green-500">
+          <CheckCircle size={48} />
+        </div>
+        <h2 className="text-2xl font-medium text-slate-800 mb-2">
+          Đặt hàng thành công!
+        </h2>
+        <p className="text-slate-500 mb-8 text-center max-w-md">
+          Cảm ơn bạn đã mua sắm. Đơn hàng của bạn đang được xử lý và sẽ sớm giao
+          đến bạn.
+        </p>
+        <Link
+          to="/products"
+          className="px-8 py-3 bg-green-600 text-white rounded-xl font-medium hover:bg-green-700 transition-all shadow-lg shadow-green-200"
+        >
+          Tiếp tục mua sắm
+        </Link>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-[#F8FAFC] py-12 px-4 sm:px-6 font-poppins">
+    <div className="min-h-screen bg-[#F8FAFC] py-12 px-4 sm:px-6 font-poppins relative">
       <div className="max-w-7xl mx-auto">
+        {/* Header Giỏ hàng */}
         <div className="flex items-center gap-4 mb-8">
           <Link
             to="/products"
@@ -62,14 +142,13 @@ const CartPage = () => {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          {/* Cart Items List */}
+          {/* Danh sách sản phẩm */}
           <div className="lg:col-span-8 space-y-4">
             {cartItems.map((item) => (
               <div
                 key={item.product.id}
                 className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex gap-4 sm:items-center"
               >
-                {/* Product Image */}
                 <div className="w-24 h-24 bg-slate-50 rounded-xl flex-shrink-0 overflow-hidden border border-slate-100">
                   <img
                     src={getImageUrl(item.product.thumbnail)}
@@ -78,32 +157,24 @@ const CartPage = () => {
                   />
                 </div>
 
-                {/* Info & Controls */}
                 <div className="flex-1 flex flex-col justify-between min-h-[100px]">
-                  {/* Row 1: Name and Delete */}
                   <div className="flex justify-between items-start gap-4">
                     <h3 className="font-medium text-slate-800 text-lg line-clamp-2">
                       {item.product.name}
                     </h3>
                     <button
                       onClick={() => removeFromCart(item.product.id)}
-                      className="p-1.5 bg-rose-500 text-white hover:bg-rose-500 hover:text-white rounded-full transition-all shrink-0 shadow-sm"
-                      title="Xóa sản phẩm"
+                      className="p-1.5 bg-rose-500 text-white hover:bg-rose-600 rounded-full transition-all shrink-0 shadow-sm"
                     >
                       <Trash2 size={18} />
                     </button>
                   </div>
-
-                  {/* Row 2: Unit */}
                   <div className="mb-2">
                     <p className="text-slate-500 text-sm">
                       Đơn vị: {item.product.unit}
                     </p>
                   </div>
-
-                  {/* Row 3: Quantity Controls and Total Price */}
                   <div className="flex items-end justify-between mt-auto">
-                    {/* Quantity Controls */}
                     <div className="flex items-center gap-3 bg-slate-50 rounded-xl p-1 border border-slate-100 w-fit">
                       <button
                         onClick={() =>
@@ -126,8 +197,6 @@ const CartPage = () => {
                         <Plus size={14} />
                       </button>
                     </div>
-
-                    {/* Total Price */}
                     <p className="font-medium text-slate-900 text-lg">
                       {formatCurrency(item.product.sellPrice * item.quantity)}
                     </p>
@@ -135,7 +204,6 @@ const CartPage = () => {
                 </div>
               </div>
             ))}
-
             <button
               onClick={clearCart}
               className="text-rose-500 font-medium hover:text-rose-700 hover:underline px-2"
@@ -144,13 +212,12 @@ const CartPage = () => {
             </button>
           </div>
 
-          {/* Checkout Summary */}
+          {/* Tổng đơn hàng (Cột phải) */}
           <div className="lg:col-span-4">
             <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm sticky top-24">
               <h3 className="text-xl font-medium text-slate-800 mb-6">
                 Tổng đơn hàng
               </h3>
-
               <div className="space-y-4 mb-6">
                 <div className="flex justify-between text-slate-500">
                   <span>Tạm tính</span>
@@ -171,17 +238,134 @@ const CartPage = () => {
                 </div>
               </div>
 
-              <button className="w-full py-4 bg-green-600 text-white rounded-2xl font-medium hover:bg-green-700 transition-all shadow-lg shadow-green-200 active:scale-95 flex items-center justify-center gap-2">
-                Thanh toán ngay
+              {/* Nút Kích hoạt Modal Thanh toán */}
+              <button
+                onClick={() => setShowCheckoutModal(true)}
+                className="w-full py-4 bg-green-600 text-white rounded-2xl font-medium hover:bg-green-700 transition-all shadow-lg shadow-green-200 active:scale-95 flex items-center justify-center gap-2"
+              >
+                Tiến hành thanh toán
               </button>
-
-              <div className="mt-6 text-center">
-                <p className="text-xs text-slate-400">Đã bao gồm thuế GTGT</p>
-              </div>
             </div>
           </div>
         </div>
       </div>
+
+      {/* MODAL THANH TOÁN */}
+      {showCheckoutModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
+            onClick={() => setShowCheckoutModal(false)}
+          />
+
+          <div className="relative bg-white rounded-[2rem] shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-slate-200 flex flex-col md:flex-row">
+            {/* Cột trái: Thông tin chuyển khoản */}
+            <div className="bg-slate-50 p-8 md:w-1/2 flex flex-col items-center border-b md:border-b-0 md:border-r border-slate-200">
+              <div className="flex items-center gap-2 text-indigo-600 mb-6 font-medium bg-indigo-50 px-4 py-2 rounded-full">
+                <QrCode size={20} />
+                Chuyển khoản QR
+              </div>
+              <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 mb-6 w-48 h-48 flex items-center justify-center">
+                <img
+                  src={`https://img.vietqr.io/image/MB-0987654321-compact2.png?amount=${cartTotal}&addInfo=Thanh toan don hang ${user?.phone}`}
+                  alt="QR Code"
+                  className="w-full h-full object-contain"
+                />
+              </div>
+
+              <div className="w-full space-y-3 text-sm">
+                <div className="flex justify-between border-b border-slate-200 pb-2">
+                  <span className="text-slate-500">Ngân hàng:</span>
+                  <span className="font-medium text-slate-800">MB Bank</span>
+                </div>
+                <div className="flex justify-between border-b border-slate-200 pb-2">
+                  <span className="text-slate-500">Chủ tài khoản:</span>
+                  <span className="font-medium text-slate-800">
+                    PHAM VAN TUYEN
+                  </span>
+                </div>
+                <div className="flex justify-between border-b border-slate-200 pb-2">
+                  <span className="text-slate-500">Số tài khoản:</span>
+                  <span className="font-medium text-slate-800 text-indigo-600">
+                    0987 654 321
+                  </span>
+                </div>
+                <div className="flex justify-between pt-1">
+                  <span className="text-slate-500">Nội dung CK:</span>
+                  <span className="font-medium text-rose-500">
+                    TT {user?.phone || "DH"}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Cột phải: Thông tin đơn hàng & Xác nhận */}
+            <div className="p-8 md:w-1/2 flex flex-col">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-xl font-medium text-slate-900">
+                  Xác nhận đơn
+                </h3>
+                <button
+                  onClick={() => setShowCheckoutModal(false)}
+                  className="p-1 hover:bg-slate-100 rounded-full text-slate-400"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              <div className="space-y-4 mb-8 flex-1">
+                <div>
+                  <label className="text-xs text-slate-500 font-medium">
+                    Người nhận
+                  </label>
+                  <p className="font-medium text-slate-800">
+                    {user?.fullName || user?.username || "Khách hàng"}
+                  </p>
+                </div>
+                <div>
+                  <label className="text-xs text-slate-500 font-medium">
+                    Số điện thoại
+                  </label>
+                  <p className="font-medium text-slate-800">
+                    {user?.phone || "Cần cập nhật trong hồ sơ"}
+                  </p>
+                </div>
+
+                <div className="bg-green-50 p-4 rounded-xl border border-green-100 mt-4">
+                  <p className="text-sm text-green-800 font-medium mb-1">
+                    Số tiền cần thanh toán:
+                  </p>
+                  <p className="text-2xl font-medium text-green-600">
+                    {formatCurrency(cartTotal)}
+                  </p>
+                </div>
+                <p className="text-xs text-slate-500 italic mt-2">
+                  *Vui lòng thực hiện chuyển khoản trước khi bấm xác nhận.
+                </p>
+              </div>
+
+              <div className="space-y-3 mt-auto">
+                <button
+                  onClick={handleConfirmCheckout}
+                  disabled={isProcessing}
+                  className="w-full py-3.5 bg-green-600 text-white rounded-xl font-medium hover:bg-green-700 shadow-md shadow-green-200 transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
+                >
+                  {isProcessing ? (
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                  ) : null}
+                  {isProcessing ? "Đang xử lý" : "Chuyển khoản"}
+                </button>
+                <button
+                  onClick={() => setShowCheckoutModal(false)}
+                  className="w-full py-3.5 bg-slate-100 text-slate-600 rounded-xl font-medium hover:bg-slate-200 transition-all"
+                >
+                  Hủy bỏ
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

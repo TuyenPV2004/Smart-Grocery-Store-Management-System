@@ -18,6 +18,7 @@ import {
   Boxes,
   Upload,
   Database,
+  Wallet,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -30,8 +31,6 @@ const Sidebar = ({ isCollapsed, onToggle }) => {
   );
   const [openFlyoutIndex, setOpenFlyoutIndex] = useState(null);
   const [flyoutTop, setFlyoutTop] = useState(0);
-
-  // Thêm biến cấu hình cho Avatar
   const BACKEND_URL = "http://localhost:8080/";
   const avatarPath = user?.avatarUrl || user?.avatar_url || user?.avatar;
 
@@ -103,6 +102,13 @@ const Sidebar = ({ isCollapsed, onToggle }) => {
       path: "/users",
       label: "Quản lý nhân sự",
       icon: Users,
+      roles: ["ADMIN"],
+    },
+    {
+      id: "cash-flow",
+      path: "/cash-flow",
+      label: "Quản lý dòng tiền",
+      icon: Wallet,
       roles: ["ADMIN"],
     },
   ];

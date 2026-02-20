@@ -26,6 +26,7 @@ import OrderManagementPage from "./pages/OrderManagementPage";
 import HomePage from "./pages/HomePage";
 import PublicLayout from "./components/PublicLayout";
 import RoleBasedLayout from "./components/RoleBasedLayout";
+import CashFlowManagementPage from "./pages/CashFlowManagementPage";
 
 function App() {
   return (
@@ -61,7 +62,6 @@ function App() {
                 path="/inventory/stock"
                 element={<StockManagementPage />}
               />
-              {/* <Route path="/" element={<Navigate to="/dashboard" replace />} /> Removed redirect */}
               <Route path="/pos" element={<PosPage />} />
               <Route path="/orders" element={<OrderManagementPage />} />
             </Route>
@@ -70,6 +70,7 @@ function App() {
             <Route element={<MainLayout />}>
               <Route path="/users" element={<UserListPage />} />
               <Route path="/categories" element={<CategoryPage />} />
+              <Route path="/cash-flow" element={<CashFlowManagementPage />} />
             </Route>
           </Route>
           <Route path="*" element={<Navigate to="/" />} />{" "}
