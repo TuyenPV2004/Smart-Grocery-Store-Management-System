@@ -38,7 +38,6 @@ const Navbar = () => {
     <nav className="bg-white/80 backdrop-blur-md sticky top-0 z-50 border-b border-slate-100">
       <div className="max-w-7xl mx-auto px-6">
         <div className="flex justify-between items-center h-20">
-          {/* Logo */}
           <Link to="/" className="flex items-center gap-2 group">
             <div className="w-10 h-10 bg-green-600 rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-green-200 group-hover:scale-105 transition-transform duration-300">
               G
@@ -145,9 +144,14 @@ const Navbar = () => {
                       <User size={20} />
                     </div>
                   )}
-                  <span className="font-medium text-slate-700 hidden md:block max-w-[100px] truncate">
-                    {user?.fullname || user?.fullName || "Tài khoản"}
-                  </span>
+                  <div className="hidden md:flex flex-col">
+                    <span className="font-medium text-slate-700 max-w-[100px] truncate leading-tight">
+                      {user?.fullname || user?.fullName || "Tài khoản"}
+                    </span>
+                    <span className="text-[11px] text-slate-500 font-medium">
+                      Xem hồ sơ
+                    </span>
+                  </div>
                 </Link>
                 <button
                   onClick={logout}

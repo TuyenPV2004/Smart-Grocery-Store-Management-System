@@ -2,6 +2,7 @@ import { useState } from "react";
 import axiosClient from "../services/axiosClient";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import userService from "../services/userService";
 import { User, Lock, Store, Loader2, Check } from "lucide-react";
 
 const LoginPage = () => {
@@ -20,7 +21,17 @@ const LoginPage = () => {
 
     try {
       const res = await axiosClient.post("/auth/login", { username, password });
-      login(res.data, res.data.token);
+      const token = res.data.token;
+      localStorage.setItem("token", token); 
+      
+      try {
+        const profileRes = await userService.getProfile();
+        const fullUserData = { ...res.data, ...profileRes.data };
+        login(fullUserData, token);
+      } catch (profileError) {
+        console.error("Không tải được profile:", profileError);
+        login(res.data, token); 
+      }
     } catch (err) {
       console.error(err);
       if (err.response && err.response.status === 401) {

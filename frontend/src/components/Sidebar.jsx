@@ -31,6 +31,10 @@ const Sidebar = ({ isCollapsed, onToggle }) => {
   const [openFlyoutIndex, setOpenFlyoutIndex] = useState(null);
   const [flyoutTop, setFlyoutTop] = useState(0);
 
+  // Thêm biến cấu hình cho Avatar
+  const BACKEND_URL = "http://localhost:8080/";
+  const avatarPath = user?.avatarUrl || user?.avatar_url || user?.avatar;
+
   const menuItems = [
     {
       id: "dashboard",
@@ -144,7 +148,7 @@ const Sidebar = ({ isCollapsed, onToggle }) => {
             isCollapsed ? "justify-center" : "gap-3"
           } mb-4`}
         >
-          <div className="p-2 bg-indigo-600 rounded-xl shadow-lg shadow-indigo-200 shrink-0">
+          <div className="p-2 bg-green-600 rounded-xl shadow-lg shadow-green-200 shrink-0">
             <Store className="text-white" size={24} />
           </div>
           {!isCollapsed && (
@@ -155,7 +159,7 @@ const Sidebar = ({ isCollapsed, onToggle }) => {
         </div>
         <button
           onClick={onToggle}
-          className="absolute top-8 -right-4 z-[60] p-1.5 bg-white rounded-full shadow-md border border-slate-200 text-slate-500 hover:text-indigo-600 transition-all hover:scale-110"
+          className="absolute top-8 -right-4 z-[60] p-1.5 bg-white rounded-full shadow-md border border-slate-200 text-slate-500 hover:text-green-600 transition-all hover:scale-110"
         >
           {isCollapsed ? (
             <CircleChevronLeft size={12} />
@@ -181,7 +185,7 @@ const Sidebar = ({ isCollapsed, onToggle }) => {
                     } py-3 rounded-2xl transition-all duration-200 group font-medium ${
                       location.pathname.startsWith("/inventory") ||
                       openFlyoutIndex === index
-                        ? "bg-slate-50 text-indigo-600"
+                        ? "bg-slate-50 text-green-600"
                         : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
                     }`}
                   >
@@ -190,7 +194,7 @@ const Sidebar = ({ isCollapsed, onToggle }) => {
                       className={`${isCollapsed ? "" : "mr-3"} ${
                         location.pathname.startsWith("/inventory") ||
                         openFlyoutIndex === index
-                          ? "text-indigo-600"
+                          ? "text-green-600"
                           : "text-slate-400 group-hover:text-slate-600"
                       }`}
                     />
@@ -233,7 +237,7 @@ const Sidebar = ({ isCollapsed, onToggle }) => {
                               onClick={() => handleFlyoutLinkClick(child.path)}
                               className={`w-full flex items-center gap-3 py-2 px-3 rounded-xl text-[13.5px] font-medium transition-all ${
                                 isChildActive(child.path)
-                                  ? "text-indigo-600 bg-indigo-50/50"
+                                  ? "text-green-600 bg-green-50/50"
                                   : "text-slate-500 hover:text-slate-900 hover:bg-slate-50"
                               }`}
                             >
@@ -241,7 +245,7 @@ const Sidebar = ({ isCollapsed, onToggle }) => {
                                 size={16}
                                 className={
                                   isChildActive(child.path)
-                                    ? "text-indigo-600"
+                                    ? "text-green-600"
                                     : "text-slate-400"
                                 }
                               />
@@ -261,7 +265,7 @@ const Sidebar = ({ isCollapsed, onToggle }) => {
                           to={child.path}
                           className={`flex items-center gap-3 py-2 px-3 rounded-xl text-[13.5px] font-medium transition-all ${
                             isChildActive(child.path)
-                              ? "text-indigo-600 bg-indigo-50/50"
+                              ? "text-green-600 bg-green-50/50"
                               : "text-slate-500 hover:text-slate-900 hover:bg-slate-50"
                           }`}
                         >
@@ -269,7 +273,7 @@ const Sidebar = ({ isCollapsed, onToggle }) => {
                             size={16}
                             className={
                               isChildActive(child.path)
-                                ? "text-indigo-600"
+                                ? "text-green-600"
                                 : "text-slate-400"
                             }
                           />
@@ -292,7 +296,7 @@ const Sidebar = ({ isCollapsed, onToggle }) => {
                   isCollapsed ? "justify-center" : "px-4"
                 } py-3 rounded-2xl transition-all duration-200 group font-medium ${
                   isActive(item.path)
-                    ? "bg-indigo-50 text-indigo-600 shadow-sm shadow-indigo-100/50"
+                    ? "bg-green-50 text-green-600 shadow-sm shadow-green-100/50"
                     : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
                 }`}
               >
@@ -300,7 +304,7 @@ const Sidebar = ({ isCollapsed, onToggle }) => {
                   size={20}
                   className={`${isCollapsed ? "" : "mr-3"} ${
                     isActive(item.path)
-                      ? "text-indigo-600"
+                      ? "text-green-600"
                       : "text-slate-400 group-hover:text-slate-600"
                   }`}
                 />
@@ -312,7 +316,7 @@ const Sidebar = ({ isCollapsed, onToggle }) => {
           })}
         </nav>
 
-        {/* User */}
+        {/* User - Đã được cập nhật để hiển thị Avatar thay thế cho icon chữ */}
         <div className="p-4 mt-auto border-t border-slate-50 space-y-2">
           <button
             onClick={() => navigate("/profile")}
@@ -321,13 +325,26 @@ const Sidebar = ({ isCollapsed, onToggle }) => {
               isCollapsed ? "justify-center" : "px-4"
             } py-3 rounded-2xl flex items-center gap-3 bg-slate-50 hover:bg-slate-100/50 transition-all`}
           >
-            <div className="w-9 h-9 rounded-xl bg-white border flex items-center justify-center text-indigo-600 font-medium shrink-0">
-              {user?.fullName?.charAt(0).toUpperCase() ||
-                user?.username?.charAt(0).toUpperCase()}
-            </div>
+            {avatarPath ? (
+              <img
+                src={
+                  avatarPath.startsWith("http")
+                    ? avatarPath
+                    : `${BACKEND_URL}${avatarPath}`
+                }
+                alt={user?.fullName || user?.username || "Avatar"}
+                className="w-9 h-9 rounded-xl object-cover border border-slate-200 shadow-sm shrink-0"
+              />
+            ) : (
+              <div className="w-9 h-9 rounded-xl bg-white border flex items-center justify-center text-green-600 font-medium shrink-0">
+                {user?.fullName?.charAt(0).toUpperCase() ||
+                  user?.username?.charAt(0).toUpperCase()}
+              </div>
+            )}
+
             {!isCollapsed && (
               <div className="text-left overflow-hidden">
-                <p className="text-[13px] font-medium truncate">
+                <p className="text-[13px] font-medium text-slate-800 truncate">
                   {user?.fullName || user?.username}
                 </p>
                 <p className="text-[11px] text-slate-400">Xem hồ sơ</p>

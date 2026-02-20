@@ -25,6 +25,7 @@ import PosPage from "./pages/PosPage";
 import OrderManagementPage from "./pages/OrderManagementPage";
 import HomePage from "./pages/HomePage";
 import PublicLayout from "./components/PublicLayout";
+import RoleBasedLayout from "./components/RoleBasedLayout";
 
 function App() {
   return (
@@ -38,7 +39,9 @@ function App() {
             <Route path="/cart" element={<CartPage />} />
             <Route path="/products/:id" element={<ProductDetailPage />} />
             <Route path="/products" element={<CustomerProductPage />} />
-            <Route element={<ProtectedRoute />}>
+          </Route>
+          <Route element={<ProtectedRoute />}>
+            <Route element={<RoleBasedLayout />}>
               <Route path="/profile" element={<ProfilePage />} />
             </Route>
           </Route>
