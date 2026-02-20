@@ -2,11 +2,12 @@ import React, { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
-import { Menu, X, ShoppingCart, LogOut, Search } from "lucide-react";
+import { Menu, X, ShoppingCart, LogOut, Search, User } from "lucide-react";
 
 const Navbar = () => {
   const { user, isAuthenticated, logout } = useAuth();
   const { cartCount } = useCart();
+  const BACKEND_URL = "http://localhost:8080/";
   const [isOpen, setIsOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -46,9 +47,6 @@ const Navbar = () => {
               Grocery Store
             </span>
           </Link>
-
-          {/* Desktop Menu */}
-          {/* Desktop Menu */}
           <div className="hidden md:flex flex-1 justify-center items-center px-8">
             {!isSearchOpen ? (
               <div className="flex items-center gap-8">
@@ -106,8 +104,6 @@ const Navbar = () => {
               </form>
             )}
           </div>
-
-          {/* Actions */}
           <div className="hidden md:flex items-center gap-4">
             {!isSearchOpen && (
               <button
@@ -132,23 +128,25 @@ const Navbar = () => {
               <div className="flex items-center gap-3">
                 <Link
                   to="/profile"
-                  className="flex items-center gap-2 pl-2 pr-1 py-1 rounded-full border border-slate-200 hover:border-green-200 hover:bg-green-50/50 transition-all group"
+                  className="flex items-center gap-3 cursor-pointer"
                 >
-                  <div className="w-8 h-8 rounded-full bg-slate-100 overflow-hidden border border-white shadow-sm group-hover:scale-105 transition-transform">
-                    {user?.avatarUrl ? (
-                      <img
-                        src={getAvatarUrl(user.avatarUrl)}
-                        alt={user.fullName}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-green-600 text-white font-bold text-xs">
-                        {user?.fullName?.charAt(0).toUpperCase() || "U"}
-                      </div>
-                    )}
-                  </div>
-                  <span className="text-sm font-bold text-slate-700 max-w-[100px] truncate mr-2">
-                    {user?.fullName || "User"}
+                  {user?.avatarUrl ? (
+                    <img
+                      src={
+                        user.avatarUrl.startsWith("http")
+                          ? user.avatarUrl
+                          : `${BACKEND_URL}${user.avatarUrl}`
+                      }
+                      alt={user.fullname || user.fullName || "Avatar"}
+                      className="w-10 h-10 rounded-full object-cover border-2 border-green-100 shadow-sm"
+                    />
+                  ) : (
+                    <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 border border-slate-200">
+                      <User size={20} />
+                    </div>
+                  )}
+                  <span className="font-medium text-slate-700 hidden md:block max-w-[100px] truncate">
+                    {user?.fullname || user?.fullName || "Tài khoản"}
                   </span>
                 </Link>
                 <button
@@ -176,8 +174,6 @@ const Navbar = () => {
               </>
             )}
           </div>
-
-          {/* Mobile Menu Button */}
           <button
             onClick={() => setIsOpen(!isOpen)}
             className="md:hidden p-2 text-slate-600 hover:bg-slate-50 rounded-lg transition-colors"
@@ -186,8 +182,6 @@ const Navbar = () => {
           </button>
         </div>
       </div>
-
-      {/* Mobile Menu */}
       {isOpen && (
         <div className="md:hidden border-t border-slate-100 bg-white absolute w-full left-0 shadow-xl animate-in slide-in-from-top-4">
           <div className="px-6 py-4 space-y-4">
@@ -214,22 +208,24 @@ const Navbar = () => {
                     onClick={() => setIsOpen(false)}
                     className="flex items-center gap-3 p-3 rounded-xl bg-slate-50"
                   >
-                    <div className="w-10 h-10 rounded-full bg-slate-200 overflow-hidden">
-                      {user?.avatarUrl ? (
-                        <img
-                          src={getAvatarUrl(user.avatarUrl)}
-                          alt={user.fullName}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center bg-green-600 text-white font-bold">
-                          {user?.fullName?.charAt(0).toUpperCase() || "U"}
-                        </div>
-                      )}
-                    </div>
+                    {user?.avatarUrl ? (
+                      <img
+                        src={
+                          user.avatarUrl.startsWith("http")
+                            ? user.avatarUrl
+                            : `${BACKEND_URL}${user.avatarUrl}`
+                        }
+                        alt={user.fullname || user.fullName || "Avatar"}
+                        className="w-10 h-10 rounded-full object-cover border-2 border-green-100 shadow-sm"
+                      />
+                    ) : (
+                      <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 border border-slate-200">
+                        <User size={20} />
+                      </div>
+                    )}
                     <div>
                       <p className="font-bold text-slate-800">
-                        {user?.fullName || "User"}
+                        {user?.fullname || user?.fullName || "User"}
                       </p>
                       <p className="text-xs text-slate-500">Xem hồ sơ</p>
                     </div>

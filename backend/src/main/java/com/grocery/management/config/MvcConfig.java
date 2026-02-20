@@ -5,14 +5,15 @@ import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import org.springframework.lang.NonNull;
 
 @Configuration
 public class MvcConfig implements WebMvcConfigurer {
+    
     @Override
-    public void addResourceHandlers(@NonNull ResourceHandlerRegistry registry) {
-        exposeDirectory("user-photos", registry);
+    public void addResourceHandlers(ResourceHandlerRegistry registry) {
+        // Gọi hàm exposeDirectory cho cả 2 thư mục thay vì hard-code
         exposeDirectory("product-images", registry);
+        exposeDirectory("user-photos", registry);
     }
 
     private void exposeDirectory(String dirName, ResourceHandlerRegistry registry) {
@@ -23,7 +24,5 @@ public class MvcConfig implements WebMvcConfigurer {
 
         registry.addResourceHandler("/" + dirName + "/**")
                 .addResourceLocations("file:///" + uploadPath + "/"); 
-        registry.addResourceHandler("/product-images/**")
-                .addResourceLocations("file:product-images/");
     }
 }

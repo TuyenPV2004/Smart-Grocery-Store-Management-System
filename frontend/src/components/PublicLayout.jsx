@@ -15,16 +15,16 @@ const PublicLayout = () => {
     <div className="font-poppins text-slate-600 bg-[#F8FAFC]">
       <Navbar />
 
-      <main className="min-h-screen">
+      <main className="min-h-[calc(100vh-300px)]">
         <Outlet />
       </main>
 
       {/* Footer */}
-      <footer className="bg-white border-t border-slate-100 pt-16 pb-8">
+      <footer className="bg-white border-t border-slate-100 pt-8 pb-4">
         <div className="max-w-7xl mx-auto px-6">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
             <div>
-              <div className="flex items-center gap-2 mb-6">
+              <div className="flex items-center gap-2 mb-4">
                 <div className="w-8 h-8 bg-green-600 rounded-lg flex items-center justify-center text-white font-bold">
                   G
                 </div>
@@ -32,7 +32,7 @@ const PublicLayout = () => {
                   Grocery Store
                 </span>
               </div>
-              <p className="text-slate-500 mb-6">
+              <p className="text-slate-500 mb-4">
                 Mang đến những sản phẩm tươi ngon nhất cho gia đình bạn mỗi
                 ngày.
               </p>
@@ -50,8 +50,8 @@ const PublicLayout = () => {
             </div>
 
             <div>
-              <h3 className="font-bold text-slate-900 mb-6">Liên kết nhanh</h3>
-              <ul className="space-y-4">
+              <h3 className="font-bold text-slate-900 mb-4">Liên kết nhanh</h3>
+              <ul className="space-y-2">
                 {["Về chúng tôi", "Sản phẩm", "Blog", "Liên hệ"].map((item) => (
                   <li key={item}>
                     <a
@@ -66,10 +66,10 @@ const PublicLayout = () => {
             </div>
 
             <div>
-              <h3 className="font-bold text-slate-900 mb-6">
+              <h3 className="font-bold text-slate-900 mb-4">
                 Hỗ trợ khách hàng
               </h3>
-              <ul className="space-y-4">
+              <ul className="space-y-2">
                 {[
                   "Trung tâm trợ giúp",
                   "Chính sách đổi trả",
@@ -89,8 +89,8 @@ const PublicLayout = () => {
             </div>
 
             <div>
-              <h3 className="font-bold text-slate-900 mb-6">Liên hệ</h3>
-              <ul className="space-y-4">
+              <h3 className="font-bold text-slate-900 mb-4">Liên hệ</h3>
+              <ul className="space-y-2">
                 <li className="flex items-start gap-3">
                   <MapPin size={20} className="text-green-600 shrink-0" />
                   <span className="text-slate-500">
@@ -109,7 +109,7 @@ const PublicLayout = () => {
             </div>
           </div>
 
-          <div className="border-t border-slate-100 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
+          <div className="border-t border-slate-100 pt-4 flex flex-col md:flex-row justify-between items-center gap-4">
             <p className="text-sm text-slate-500">
               © 2026 Grocery Store. All rights reserved.
             </p>

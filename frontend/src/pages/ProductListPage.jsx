@@ -470,7 +470,7 @@ const ProductListPage = () => {
           <option value="OUT_OF_STOCK">Hết hàng</option>
         </select>
         <button
-          onClick={() => setCheckModalOpen(true)}
+          onClick={handleProductNotFound}
           className="bg-green-600 text-white px-5 py-2 rounded-xl flex items-center shadow-sm hover:bg-green-700 transition-all font-medium whitespace-nowrap"
         >
           Thêm sản phẩm

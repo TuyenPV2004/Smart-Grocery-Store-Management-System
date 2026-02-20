@@ -29,14 +29,13 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/v1/auth/**").permitAll()
+                        .requestMatchers("/api/v1/auth/**", "/product-images/**", "/user-photos/**").permitAll()
                         .requestMatchers("/user-photos/**").permitAll()
                         .requestMatchers("/product-images/**").permitAll()
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/v1/products/**").permitAll()
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/v1/products/*").permitAll()
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/v1/categories/**").permitAll()
-                        .requestMatchers("/api/v1/users/profile", "/api/v1/users/profile/**",
-                                "/api/v1/users/change-password")
+                        .requestMatchers("/api/v1/users/profile", "/api/v1/users/profile/**", "/api/v1/users/change-password")
                         .authenticated()
                         .requestMatchers("/api/v1/users/**").hasAnyAuthority("ADMIN", "STAFF")
                         .requestMatchers("/api/v1/inventory/**").hasAnyAuthority("ADMIN", "STAFF")
@@ -54,9 +53,6 @@ public class SecurityConfig {
         // Cho phép frontend từ localhost
         configuration.setAllowedOrigins(List.of("http://localhost:5173", "http://localhost:3000"));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-
-        // SỬA: Chỉ giữ lại một dòng setAllowedHeaders("*") để cho phép mọi header
-        // Dòng setAllowedHeaders cụ thể phía dưới đã bị xóa để tránh ghi đè quyền hạn
         configuration.setAllowedHeaders(List.of("*"));
 
         configuration.setAllowCredentials(true);

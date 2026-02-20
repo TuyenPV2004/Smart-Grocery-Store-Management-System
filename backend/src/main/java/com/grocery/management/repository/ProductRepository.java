@@ -22,7 +22,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
             +
             "(:status IS NULL OR p.status = :status) AND "
             +
-            "(:categoryId IS NULL OR EXISTS (SELECT l FROM p.labels l WHERE l.id = :categoryId))")
+            "(:categoryId IS NULL OR EXISTS (SELECT l FROM p.labels l WHERE l.id = :categoryId OR l.parent.id = :categoryId))")
     List<Product> searchProducts(String keyword, ProductStatus status, Long categoryId);
 
     Optional<Product> findBySku(String sku);

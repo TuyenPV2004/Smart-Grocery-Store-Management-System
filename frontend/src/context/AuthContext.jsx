@@ -7,6 +7,7 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const navigate = useNavigate();
+
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
     const token = localStorage.getItem("token");
@@ -21,15 +22,15 @@ export const AuthProvider = ({ children }) => {
     localStorage.setItem("token", token);
     setUser(userData);
     setIsAuthenticated(true);
-    setUser(userData);
-    setIsAuthenticated(true);
-
-    // Role-based redirect
     if (userData.role === "ADMIN" || userData.role === "STAFF") {
       navigate("/dashboard");
     } else {
       navigate("/");
     }
+  };
+  const updateUser = (newUserData) => {
+    setUser(newUserData);
+    localStorage.setItem("user", JSON.stringify(newUserData));
   };
 
   const logout = () => {
@@ -39,9 +40,10 @@ export const AuthProvider = ({ children }) => {
     setIsAuthenticated(false);
     navigate("/login");
   };
-
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated, login, logout }}>
+    <AuthContext.Provider
+      value={{ user, isAuthenticated, login, logout, updateUser }}
+    >
       {children}
     </AuthContext.Provider>
   );

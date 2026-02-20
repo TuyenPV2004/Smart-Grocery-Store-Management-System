@@ -39,42 +39,48 @@ const CustomerProductPage = () => {
     setLoading(true);
     try {
       const params = {
-        status: "ACTIVE",
-        keyword: currentSearch || undefined,
-        categoryId: currentCategory || undefined,
+        status: "ACTIVE", 
+        pageSize: 1000,   
       };
+      if (currentSearch) params.keyword = currentSearch;
+      if (currentCategory) params.categoryId = currentCategory;
+
       const res = await productService.getAll(params);
-      setProducts(res.data);
+      const productList = res.data?.content || res.data || [];
+      setProducts(Array.isArray(productList) ? productList : []);
+      
     } catch (error) {
       console.error("Error fetching products:", error);
+      setProducts([]); 
     } finally {
       setLoading(false);
     }
   };
 
   const handleCategorySelect = (categoryId) => {
+    const newParams = new URLSearchParams(searchParams);
     if (categoryId) {
-      searchParams.set("category", categoryId);
+      newParams.set("category", categoryId);
     } else {
-      searchParams.delete("category");
+      newParams.delete("category");
     }
-    setSearchParams(searchParams);
-    setShowFilters(false); // Close mobile filter on select
+    setSearchParams(newParams);
+    setShowFilters(false); 
   };
 
   const handleSearch = (e) => {
     e.preventDefault();
     const formData = new FormData(e.target);
     const query = formData.get("search");
-    if (query) {
-      searchParams.set("search", query);
-    } else {
-      searchParams.delete("search");
-    }
-    setSearchParams(searchParams);
-  };
+    const newParams = new URLSearchParams(searchParams);
 
-  // Recursive category renderer
+    if (query) {
+      newParams.set("search", query);
+    } else {
+      newParams.delete("search");
+    }
+    setSearchParams(newParams);
+  };
   const renderCategories = (cats, level = 0) => {
     return (
       <ul

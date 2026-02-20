@@ -7,6 +7,12 @@ import {
   ShieldCheck,
   Headphones,
   Star,
+  Apple,
+  Leaf,
+  Coffee,
+  Package,
+  Heart,
+  Tag,
 } from "lucide-react";
 import productService from "../services/productService";
 import categoryService from "../services/categoryService";
@@ -21,11 +27,10 @@ const HomePage = () => {
     const fetchData = async () => {
       try {
         const [productsRes, categoriesRes] = await Promise.all([
-          productService.getAll({ pageSize: 8 }), // Fetch first 8 products for "Featured"
-          categoryService.getFlat(),
+          productService.getAll({ pageSize: 8 }),
+          categoryService.getTree(),
         ]);
-
-        setProducts(productsRes.data || []);
+        setProducts(productsRes.data?.content || productsRes.data || []);
         setCategories(categoriesRes.data || []);
       } catch (error) {
         console.error("Error fetching home data:", error);
@@ -130,19 +135,23 @@ const HomePage = () => {
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
-            {categories.slice(0, 6).map((cat) => (
-              <div key={cat.id} className="group cursor-pointer">
-                <div className="bg-white rounded-[2rem] p-4 border border-slate-100 shadow-sm aspect-square flex flex-col items-center justify-center gap-4 hover:shadow-lg hover:border-green-200 transition-all duration-300 group-hover:-translate-y-1">
-                  <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center text-slate-400 group-hover:bg-green-50 group-hover:text-green-600 transition-colors">
-                    {/* Placeholder icon if no image */}
-                    <ShoppingBag size={28} />
+            {categories.slice(0, 6).map((cat, index) => {
+              const categoryIcons = [Apple, Leaf, Coffee, Package, Heart, Tag];
+              const IconToRender = categoryIcons[index] || ShoppingBag;
+              return (
+                <div key={cat.id} className="group cursor-pointer">
+                  <div className="bg-white rounded-[2rem] p-4 border border-slate-100 shadow-sm aspect-square flex flex-col items-center justify-center gap-4 hover:shadow-lg hover:border-green-200 transition-all duration-300 group-hover:-translate-y-1">
+                    <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center text-slate-400 group-hover:bg-green-50 group-hover:text-green-600 transition-colors">
+                      {/* Placeholder icon if no image */}
+                      <IconToRender size={28} />
+                    </div>
+                    <h3 className="font-bold text-center text-slate-700 group-hover:text-green-700 transition-colors">
+                      {cat.name}
+                    </h3>
                   </div>
-                  <h3 className="font-bold text-center text-slate-700 group-hover:text-green-700 transition-colors">
-                    {cat.name}
-                  </h3>
                 </div>
-              </div>
-            ))}
+              );
+            })}
             {loading &&
               Array(6)
                 .fill(0)
@@ -194,7 +203,7 @@ const HomePage = () => {
             </div>
             <Link
               to="/products"
-              className="px-5 py-2.5 bg-white border border-slate-200 rounded-xl font-medium text-slate-600 hover:bg-slate-50 transition-colors shadow-sm"
+              className="text-green-600 font-medium hover:text-green-700 flex items-center gap-1 group"
             >
               Xem tất cả sản phẩm
             </Link>

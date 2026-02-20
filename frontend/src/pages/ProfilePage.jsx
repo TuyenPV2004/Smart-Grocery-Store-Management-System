@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import userService from "../services/userService";
+import { useAuth } from "../context/AuthContext";
 import {
   User,
   Mail,
@@ -15,14 +16,13 @@ import {
   Shield,
 } from "lucide-react";
 
-const getAvatarUrl = (path) => {
-  if (!path) return null;
-  return `http://localhost:8080/${path}`;
-};
-
 const ProfilePage = () => {
   const [user, setUser] = useState({});
+  const { updateUser } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
+
+  const BACKEND_URL = "http://localhost:8080/";
+  const avatarPath = user?.avatarUrl || user?.avatar_url || user?.avatar;
 
   const [formData, setFormData] = useState({
     fullName: "",
@@ -46,6 +46,8 @@ const ProfilePage = () => {
     try {
       const res = await userService.getProfile();
       setUser(res.data);
+      updateUser(res.data); // ĐỒNG BỘ: Cập nhật Navbar ngay khi tải trang
+
       setFormData({
         fullName: res.data.fullName || "",
         email: res.data.email || "",
@@ -64,7 +66,13 @@ const ProfilePage = () => {
       formData.append("image", file);
       try {
         const res = await userService.uploadAvatar(formData);
-        setUser((prev) => ({ ...prev, avatarUrl: res.data }));
+
+        // Cập nhật state local
+        const updatedUser = { ...user, avatarUrl: res.data };
+        setUser(updatedUser);
+
+        updateUser(updatedUser); // ĐỒNG BỘ: Cập nhật Navbar ngay khi đổi Avatar
+
         alert("Cập nhật ảnh đại diện thành công!");
       } catch (error) {
         alert("Lỗi upload ảnh.");
@@ -77,6 +85,9 @@ const ProfilePage = () => {
     try {
       const res = await userService.updateProfile(formData);
       setUser(res.data);
+
+      updateUser(res.data); // ĐỒNG BỘ: Cập nhật Navbar ngay khi sửa thông tin
+
       setIsEditing(false);
       alert("Cập nhật thành công!");
     } catch (error) {
@@ -125,19 +136,19 @@ const ProfilePage = () => {
 
               <div className="px-6 pb-8 -mt-14 text-center">
                 <div className="relative inline-block">
-                  <div className="w-28 h-28 rounded-3xl overflow-hidden border-4 border-white shadow-lg bg-slate-200 flex items-center justify-center">
-                    {user.avatarUrl ? (
+                  <div className="relative w-24 h-24 sm:w-32 sm:h-32 rounded-full border-4 border-white shadow-lg bg-slate-100 flex items-center justify-center overflow-hidden">
+                    {avatarPath ? (
                       <img
-                        src={getAvatarUrl(user.avatarUrl)}
-                        alt="Avatar"
+                        src={
+                          avatarPath.startsWith("http")
+                            ? avatarPath
+                            : `${BACKEND_URL}${avatarPath}`
+                        }
+                        alt={user?.fullname || user?.fullName || "Profile"}
                         className="w-full h-full object-cover"
                       />
                     ) : (
-                      <span className="text-4xl font-medium text-slate-500">
-                        {user.fullName
-                          ? user.fullName.charAt(0).toUpperCase()
-                          : "U"}
-                      </span>
+                      <User size={48} className="text-slate-400" />
                     )}
                   </div>
                   <label className="absolute bottom-1 right-1 p-2 bg-green-600 rounded-xl shadow-lg border border-white cursor-pointer text-white hover:bg-green-700 transition-all">
