@@ -110,7 +110,6 @@ const CustomerProductPage = () => {
   return (
     <div className="min-h-screen bg-[#F8FAFC] py-8 px-4 font-poppins">
       <div className="max-w-7xl mx-auto">
-        {/* Header & Search */}
         <div className="flex flex-col md:flex-row gap-4 items-center justify-between mb-8">
           <h1 className="text-2xl font-bold text-slate-800">Tất cả sản phẩm</h1>
 
@@ -127,7 +126,7 @@ const CustomerProductPage = () => {
                 name="search"
                 type="text"
                 defaultValue={currentSearch}
-                placeholder="Tìm kiếm sản phẩm..."
+                placeholder="Tìm kiếm sản phẩm"
                 className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl outline-none focus:border-green-500 focus:ring-2 focus:ring-green-100 transition-all font-medium text-slate-700"
               />
               <Search
@@ -139,7 +138,6 @@ const CustomerProductPage = () => {
         </div>
 
         <div className="flex gap-8">
-          {/* Sidebar - Desktop */}
           <aside className="hidden md:block w-64 shrink-0">
             <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 sticky top-24">
               <div className="flex items-center justify-between mb-4">

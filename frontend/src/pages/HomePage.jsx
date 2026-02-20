@@ -139,7 +139,11 @@ const HomePage = () => {
               const categoryIcons = [Apple, Leaf, Coffee, Package, Heart, Tag];
               const IconToRender = categoryIcons[index] || ShoppingBag;
               return (
-                <div key={cat.id} className="group cursor-pointer">
+                <Link
+                  to={`/products?category=${cat.id}`}
+                  key={cat.id}
+                  className="group cursor-pointer"
+                >
                   <div className="bg-white rounded-[2rem] p-4 border border-slate-100 shadow-sm aspect-square flex flex-col items-center justify-center gap-4 hover:shadow-lg hover:border-green-200 transition-all duration-300 group-hover:-translate-y-1">
                     <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center text-slate-400 group-hover:bg-green-50 group-hover:text-green-600 transition-colors">
                       {/* Placeholder icon if no image */}
@@ -149,7 +153,7 @@ const HomePage = () => {
                       {cat.name}
                     </h3>
                   </div>
-                </div>
+                </Link>
               );
             })}
             {loading &&
