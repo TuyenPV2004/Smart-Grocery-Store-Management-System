@@ -22,15 +22,14 @@ public interface ProductBatchRepository extends JpaRepository<ProductBatch, Long
         boolean existsByProduct(Product product);
 
         @Query("SELECT new com.grocery.management.dto.StockSummaryDTO(" +
-                        "p.id, p.sku, p.name, p.unit, c.name, " +
+                        "p.id, p.sku, p.name, p.unit, 'Khong co Danh muc', " +
                         "COALESCE(CAST(SUM(b.quantity) AS long), 0L), " +
                         "COALESCE(SUM(CAST(b.quantity AS BigDecimal) * b.importPrice), 0), " +
                         "MIN(b.expiryDate), " +
                         "p.brand, p.thumbnail) " +
                         "FROM Product p " +
-                        "LEFT JOIN p.category c " +
                         "LEFT JOIN ProductBatch b ON p.id = b.product.id AND b.quantity > 0 " +
-                        "GROUP BY p.id, p.sku, p.name, p.unit, c.name, p.brand, p.thumbnail")
+                        "GROUP BY p.id, p.sku, p.name, p.unit, p.brand, p.thumbnail")
         List<StockSummaryDTO> getStockSummary();
 
         @Query("SELECT new com.grocery.management.dto.BatchExpiryDTO(" +
@@ -57,7 +56,6 @@ public interface ProductBatchRepository extends JpaRepository<ProductBatch, Long
         Page<ProductBatch> findAll(@NonNull Pageable pageable);
 
         List<ProductBatch> findByProductIdAndQuantityGreaterThanOrderByExpiryDateAsc(Long productId, int quantity);
-        
 
         // Find available batches by product SKU for export selection (FEFO ordering)
         List<ProductBatch> findByProduct_SkuAndQuantityGreaterThanOrderByExpiryDateAsc(String sku, int minQuantity);

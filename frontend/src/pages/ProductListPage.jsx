@@ -537,6 +537,22 @@ const ProductListPage = () => {
                         <div className="text-[12px] text-slate-500 font-medium mt-1">
                           {p.brand} - {p.unit}
                         </div>
+                        {p.labels && p.labels.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mt-1.5">
+                            {p.labels.map((label) => (
+                              <span
+                                key={label.id}
+                                className="px-2 py-0.5 rounded text-[10px] font-medium text-white shadow-sm"
+                                style={{
+                                  backgroundColor:
+                                    label.labelColor || "#000000",
+                                }}
+                              >
+                                {label.label}
+                              </span>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     </div>
                   </td>

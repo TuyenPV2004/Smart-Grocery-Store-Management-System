@@ -7,6 +7,8 @@ import com.grocery.management.repository.CategoryRepository;
 import com.grocery.management.repository.CategoryHistoryRepository;
 import com.grocery.management.repository.ProductRepository;
 import com.grocery.management.repository.UserRepository; // Import UserRepository
+import jakarta.annotation.PostConstruct;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -41,27 +43,28 @@ public class CategoryService {
             throw new RuntimeException("Tên danh mục đã tồn tại");
         }
         Category saved = categoryRepository.save(category);
-        
+
         // Ghi lịch sử hành động thêm mới
         saveHistory(saved.getId(), saved.getName(), "THÊM MỚI");
-        
+
         return saved;
     }
 
     public Category updateCategory(@NonNull Long id, Category input) {
         Category existing = categoryRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy danh mục"));
-        
+
         existing.setName(input.getName());
         existing.setSlug(input.getSlug());
         existing.setDescription(input.getDescription());
         existing.setStatus(input.getStatus());
         existing.setParent(input.getParent());
-        
-        // Cập nhật nhãn và màu sắc (màu hiện tại có thể là mã Hex hoặc tên màu từ frontend)
+
+        // Cập nhật nhãn và màu sắc (màu hiện tại có thể là mã Hex hoặc tên màu từ
+        // frontend)
         existing.setLabel(input.getLabel());
         existing.setLabelColor(input.getLabelColor());
-        
+
         Category saved = categoryRepository.save(existing);
 
         // Ghi lịch sử hành động cập nhật
@@ -77,10 +80,10 @@ public class CategoryService {
         if (categoryRepository.existsByParentId(id)) {
             throw new RuntimeException("Không thể xóa danh mục này vì đang chứa danh mục con.");
         }
-        if (productRepository.existsByCategoryId(id)) {
+        if (productRepository.existsByLabelsId(id)) {
             throw new RuntimeException("Không thể xóa danh mục này vì đang có sản phẩm thuộc về nó.");
         }
-        
+
         // Lưu lịch sử trước khi thực hiện xóa
         saveHistory(existing.getId(), existing.getName(), "XÓA");
 
@@ -88,10 +91,12 @@ public class CategoryService {
     }
 
     /**
-     * Helper lưu lịch sử chi tiết: Lấy FullName từ Database và Role từ SecurityContext
+     * Helper lưu lịch sử chi tiết: Lấy FullName từ Database và Role từ
+     * SecurityContext
      */
     /**
-     * Helper lưu lịch sử chi tiết: Lấy FullName từ Database và Role từ SecurityContext
+     * Helper lưu lịch sử chi tiết: Lấy FullName từ Database và Role từ
+     * SecurityContext
      */
     private void saveHistory(Long catId, String catName, String action) {
         try {
@@ -102,15 +107,15 @@ public class CategoryService {
             var auth = SecurityContextHolder.getContext().getAuthentication();
             if (auth != null && auth.isAuthenticated()) {
                 username = auth.getName(); // Trả về "admin"
-                
+
                 // 1. Lấy Role
                 if (!auth.getAuthorities().isEmpty()) {
-                    role = auth.getAuthorities().iterator().next().getAuthority(); 
+                    role = auth.getAuthorities().iterator().next().getAuthority();
                 }
 
                 // 2. SỬA Ở ĐÂY: Tìm bằng findByUsername thay vì findByEmail
                 User user = userRepository.findByUsername(username).orElse(null);
-                
+
                 if (user != null) {
                     fullName = user.getFullName(); // Lấy được "Administrator"
                 } else {
@@ -124,10 +129,10 @@ public class CategoryService {
             history.setCategoryId(catId);
             history.setCategoryName(catName);
             history.setAction(action);
-            history.setPerformedBy(fullName); 
-            history.setRole(role);            
+            history.setPerformedBy(fullName);
+            history.setRole(role);
             history.setTimestamp(LocalDateTime.now());
-            
+
             categoryHistoryRepository.save(history);
         } catch (Exception e) {
             System.err.println("Lỗi lưu lịch sử danh mục: " + e.getMessage());

@@ -13,6 +13,7 @@ import RegisterPage from "./pages/RegisterPage";
 import OtpVerifyPage from "./pages/OtpVerifyPage";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import ProductListPage from "./pages/ProductListPage";
+import CustomerProductPage from "./pages/CustomerProductPage";
 import CategoryPage from "./pages/CategoryPage";
 import InventoryEntryPage from "./pages/InventoryEntryPage";
 import SupplierPage from "./pages/SupplierPage";
@@ -36,6 +37,7 @@ function App() {
             <Route path="/" element={<HomePage />} />
             <Route path="/cart" element={<CartPage />} />
             <Route path="/products/:id" element={<ProductDetailPage />} />
+            <Route path="/products" element={<CustomerProductPage />} />
             <Route element={<ProtectedRoute />}>
               <Route path="/profile" element={<ProfilePage />} />
             </Route>
@@ -43,7 +45,7 @@ function App() {
           <Route element={<ProtectedRoute allowedRoles={["ADMIN", "STAFF"]} />}>
             <Route element={<MainLayout />}>
               <Route path="/dashboard" element={<DashboardPage />} />
-              <Route path="/products" element={<ProductListPage />} />
+              <Route path="/admin/products" element={<ProductListPage />} />
               <Route path="/suppliers" element={<SupplierPage />} />
               <Route path="/inventory/entry" element={<InventoryEntryPage />} />
               <Route path="/inventory/list" element={<InventoryListPage />} />

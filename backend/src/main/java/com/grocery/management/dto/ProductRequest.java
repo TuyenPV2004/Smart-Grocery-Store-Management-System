@@ -9,13 +9,12 @@ public class ProductRequest {
     private String name;
     private String barcode;
     private String description;
-    private BigDecimal sellPrice; 
+    private BigDecimal sellPrice;
     private BigDecimal importPrice;
     private Integer minStockLevel;
-    private Long categoryId;
     private Long supplierId;
-    private String image; 
+    private String image;
     private ProductStatus status;
-    private String sku; 
+    private String sku;
     private Integer shelfLife;
 }

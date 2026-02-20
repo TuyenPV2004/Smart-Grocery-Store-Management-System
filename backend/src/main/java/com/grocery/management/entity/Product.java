@@ -48,10 +48,6 @@ public class Product {
     @Column(name = "updated_at", insertable = false, updatable = false)
     private LocalDateTime updatedAt;
 
-    @ManyToOne
-    @JoinColumn(name = "category_id")
-    private Category category;
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "supplier_id")
     @com.fasterxml.jackson.annotation.JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
@@ -66,4 +62,8 @@ public class Product {
 
     @Column(name = "shelf_life")
     private Integer shelfLife;
+
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(name = "product_labels", joinColumns = @JoinColumn(name = "product_id"), inverseJoinColumns = @JoinColumn(name = "label_id"))
+    private java.util.Set<Category> labels = new java.util.HashSet<>();
 }

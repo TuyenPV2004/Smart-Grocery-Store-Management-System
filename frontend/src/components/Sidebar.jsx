@@ -41,7 +41,7 @@ const Sidebar = ({ isCollapsed, onToggle }) => {
     },
     {
       id: "products",
-      path: "/products",
+      path: "/admin/products",
       label: "Quản lý sản phẩm",
       icon: Package,
       roles: ["ADMIN", "STAFF"],

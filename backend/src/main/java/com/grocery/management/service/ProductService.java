@@ -43,8 +43,8 @@ public class ProductService {
     /**
      * Tìm kiếm và lọc sản phẩm
      */
-    public List<Product> getAllProducts(String keyword, ProductStatus status) {
-        return productRepository.searchProducts(keyword, status);
+    public List<Product> getAllProducts(String keyword, ProductStatus status, Long categoryId) {
+        return productRepository.searchProducts(keyword, status, categoryId);
     }
 
     public Product getProductById(Long id) {
@@ -180,6 +180,7 @@ public class ProductService {
         existing.setImportPrice(input.getImportPrice());
         existing.setSellPrice(input.getSellPrice());
         existing.setStatus(input.getStatus());
+        existing.setLabels(input.getLabels());
 
         if (imageFile != null && !imageFile.isEmpty()) {
             String fileName = System.currentTimeMillis() + "_" + imageFile.getOriginalFilename();

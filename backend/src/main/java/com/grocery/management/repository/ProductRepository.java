@@ -14,15 +14,16 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
     boolean existsByBarcode(String barcode);
 
-    boolean existsByCategoryId(Long categoryId);
+    boolean existsByLabelsId(Long labelId);
 
     @Query("SELECT DISTINCT p FROM Product p " +
             "LEFT JOIN FETCH p.supplier " +
-            "LEFT JOIN FETCH p.category " +
             "WHERE (:keyword IS NULL OR p.name LIKE %:keyword% OR p.brand LIKE %:keyword% OR p.barcode LIKE %:keyword%) AND "
             +
-            "(:status IS NULL OR p.status = :status)")
-    List<Product> searchProducts(String keyword, ProductStatus status);
+            "(:status IS NULL OR p.status = :status) AND "
+            +
+            "(:categoryId IS NULL OR EXISTS (SELECT l FROM p.labels l WHERE l.id = :categoryId))")
+    List<Product> searchProducts(String keyword, ProductStatus status, Long categoryId);
 
     Optional<Product> findBySku(String sku);
 

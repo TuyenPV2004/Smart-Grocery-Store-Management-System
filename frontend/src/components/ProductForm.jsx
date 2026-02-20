@@ -7,11 +7,11 @@ import {
   Upload,
   Package,
   Image as ImageIcon,
-  FileText,
-  Save,
+  Tag,
   ChevronUp,
 } from "lucide-react";
 import supplierService from "../services/supplierService";
+import categoryService from "../services/categoryService";
 const productSchema = z.object({
   name: z.string().min(10, "Tên sản phẩm phải có ít nhất 10 ký tự"),
   brand: z.string().min(1, "Thương hiệu không được để trống"),
@@ -32,31 +32,81 @@ const ProductForm = ({ existingProduct, onClose, onSuccess }) => {
   );
   const [imageFile, setImageFile] = useState(null);
   const [suppliers, setSuppliers] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [availableLabels, setAvailableLabels] = useState([]);
+  const [selectedLabelIds, setSelectedLabelIds] = useState([]);
 
   const {
     register,
     handleSubmit,
     setValue,
+    watch,
     formState: { errors },
   } = useForm({
     resolver: zodResolver(productSchema),
-    defaultValues: existingProduct || {
-      status: "ACTIVE",
-      importPrice: 0,
-      sellPrice: 0,
-    },
+    defaultValues: existingProduct
+      ? {
+          ...existingProduct,
+        }
+      : {
+          status: "ACTIVE",
+          importPrice: 0,
+          sellPrice: 0,
+        },
   });
 
+  // Initialize selected labels from existing product
   useEffect(() => {
-    const fetchSuppliers = async () => {
+    if (existingProduct && existingProduct.labels) {
+      setSelectedLabelIds(existingProduct.labels.map((l) => l.id));
+    }
+  }, [existingProduct]);
+
+  // Xóa phần này vì chúng ta sẽ lấy tất cả nhãn ngay từ đầu
+
+  useEffect(() => {
+    const fetchData = async () => {
       try {
-        const res = await supplierService.getAll();
-        setSuppliers(res.data || []);
+        const [supplierRes, categoryRes] = await Promise.all([
+          supplierService.getAll(),
+          categoryService.getTree(),
+        ]);
+        setSuppliers(supplierRes.data || []);
+
+        // Flatten the tree to get only sub-categories (children of roots)
+        const roots = categoryRes.data || [];
+        const subCategories = [];
+
+        const flatten = (nodes) => {
+          nodes.forEach((node) => {
+            subCategories.push(node);
+            if (node.children && node.children.length > 0) {
+              flatten(node.children);
+            }
+          });
+        };
+
+        roots.forEach((root) => {
+          if (root.children && root.children.length > 0) {
+            flatten(root.children);
+          }
+        });
+
+        setCategories(subCategories);
+
+        // All categories can serve as Labels
+        const labelsFromCategories = subCategories.map((cat) => ({
+          id: cat.id,
+          name: cat.name,
+          labelName: cat.label,
+          color: cat.labelColor || "#000000",
+        }));
+        setAvailableLabels(labelsFromCategories);
       } catch (error) {
-        console.error("Error fetching suppliers:", error);
+        console.error("Error fetching data:", error);
       }
     };
-    fetchSuppliers();
+    fetchData();
   }, []);
 
   const generateSkuAndBarcode = () => {
@@ -103,12 +153,27 @@ const ProductForm = ({ existingProduct, onClose, onSuccess }) => {
     }
   };
 
+  const handleLabelToggle = (labelId) => {
+    setSelectedLabelIds((prev) => {
+      if (prev.includes(labelId)) {
+        return prev.filter((id) => id !== labelId);
+      } else {
+        return [...prev, labelId];
+      }
+    });
+  };
+
   const onSubmit = async (data) => {
     try {
+      const payload = {
+        ...data,
+        labels: selectedLabelIds.map((id) => ({ id })),
+      };
+
       if (existingProduct) {
-        await onSuccess(existingProduct.id, data, imageFile);
+        await onSuccess(existingProduct.id, payload, imageFile);
       } else {
-        await onSuccess(null, data, imageFile);
+        await onSuccess(null, payload, imageFile);
       }
       onClose();
     } catch (error) {
@@ -119,7 +184,7 @@ const ProductForm = ({ existingProduct, onClose, onSuccess }) => {
   return (
     <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-5xl max-h-[95vh] overflow-hidden flex flex-col border border-slate-200 animate-in fade-in zoom-in duration-200">
-        {/* Header - Tinh tế và gọn gàng */}
+        {/* Header */}
         <div className="flex justify-between items-center p-8 border-b border-slate-100 bg-white">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-green-50 rounded-xl text-green-600">
@@ -172,74 +237,39 @@ const ProductForm = ({ existingProduct, onClose, onSuccess }) => {
                     )}
                   </div>
 
-                  <div className="grid grid-cols-3 gap-5">
-                    <div className="col-span-2">
-                      <label className="block text-[13px] font-medium text-slate-900 mb-2 ml-1">
-                        Thương hiệu
-                      </label>
-                      <div className="relative">
-                        <select
-                          {...register("brand")}
-                          onChange={(e) => {
-                            register("brand").onChange(e);
-                            e.target.blur();
-                          }}
-                          className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-green-50 focus:border-green-400 focus:bg-white outline-none transition-all font-medium text-slate-900 cursor-pointer appearance-none peer"
-                        >
-                          <option value="">Chọn thương hiệu</option>
-                          {suppliers.map((supplier) => (
-                            <option
-                              key={supplier.id}
-                              value={supplier.vietnameseName}
-                            >
-                              {supplier.vietnameseName}
-                            </option>
-                          ))}
-                        </select>
-                        <ChevronUp
-                          size={20}
-                          className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none transition-transform duration-200 peer-focus:rotate-180"
-                        />
-                      </div>
-                      {errors.brand && (
-                        <p className="text-rose-500 text-xs mt-2 ml-1 font-medium">
-                          {errors.brand.message}
-                        </p>
-                      )}
+                  <div className="group">
+                    <label className="block text-[13px] font-medium text-slate-900 mb-2 ml-1">
+                      Thương hiệu
+                    </label>
+                    <div className="relative">
+                      <select
+                        {...register("brand")}
+                        onChange={(e) => {
+                          register("brand").onChange(e);
+                          e.target.blur();
+                        }}
+                        className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-green-50 focus:border-green-400 focus:bg-white outline-none transition-all font-medium text-slate-900 cursor-pointer appearance-none peer"
+                      >
+                        <option value="">Chọn thương hiệu</option>
+                        {suppliers.map((supplier) => (
+                          <option
+                            key={supplier.id}
+                            value={supplier.vietnameseName}
+                          >
+                            {supplier.vietnameseName}
+                          </option>
+                        ))}
+                      </select>
+                      <ChevronUp
+                        size={20}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none transition-transform duration-200 peer-focus:rotate-180"
+                      />
                     </div>
-                    <div className="col-span-1">
-                      <label className="block text-[13px] font-medium text-slate-900 mb-2 ml-1">
-                        Đơn vị
-                      </label>
-                      <div className="relative">
-                        <select
-                          {...register("unit")}
-                          onChange={(e) => {
-                            register("unit").onChange(e);
-                            e.target.blur();
-                          }}
-                          className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-green-50 focus:border-green-400 focus:bg-white outline-none transition-all font-medium text-slate-900 cursor-pointer appearance-none peer"
-                        >
-                          <option value="">Chọn đơn vị</option>
-                          <option value="Thùng">Thùng</option>
-                          <option value="Hộp">Hộp</option>
-                          <option value="Cái">Cái</option>
-                          <option value="Chiếc">Chiếc</option>
-                          <option value="Chai">Chai</option>
-                          <option value="Lốc">Lốc</option>
-                          <option value="Kg">Kg</option>
-                        </select>
-                        <ChevronUp
-                          size={20}
-                          className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none transition-transform duration-200 peer-focus:rotate-180"
-                        />
-                      </div>
-                      {errors.unit && (
-                        <p className="text-rose-500 text-xs mt-2 ml-1 font-medium">
-                          {errors.unit.message}
-                        </p>
-                      )}
-                    </div>
+                    {errors.brand && (
+                      <p className="text-rose-500 text-xs mt-2 ml-1 font-medium">
+                        {errors.brand.message}
+                      </p>
+                    )}
                   </div>
 
                   <div className="grid grid-cols-2 gap-5">
@@ -290,6 +320,103 @@ const ProductForm = ({ existingProduct, onClose, onSuccess }) => {
                       )}
                     </div>
                   </div>
+
+                  <div className="grid grid-cols-2 gap-5">
+                    <div>
+                      <label className="block text-[13px] font-medium text-slate-900 mb-2 ml-1">
+                        Nhãn sản phẩm
+                      </label>
+                      <div className="relative">
+                        <select
+                          className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-green-50 focus:border-green-400 focus:bg-white outline-none transition-all font-medium text-slate-900 cursor-pointer appearance-none peer"
+                          value=""
+                          onChange={(e) => {
+                            if (e.target.value) {
+                              handleLabelToggle(parseInt(e.target.value));
+                            }
+                          }}
+                        >
+                          <option value="">Chọn nhãn sản phẩm</option>
+                          {availableLabels.map((label) => (
+                            <option key={label.id} value={label.id}>
+                              {label.name}{" "}
+                              {label.labelName ? `(${label.labelName})` : ""}
+                            </option>
+                          ))}
+                        </select>
+                        <ChevronUp
+                          size={20}
+                          className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none transition-transform duration-200 peer-focus:rotate-180"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-[13px] font-medium text-slate-900 mb-2 ml-1">
+                        Đơn vị
+                      </label>
+                      <div className="relative">
+                        <select
+                          {...register("unit")}
+                          onChange={(e) => {
+                            register("unit").onChange(e);
+                            e.target.blur();
+                          }}
+                          className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-green-50 focus:border-green-400 focus:bg-white outline-none transition-all font-medium text-slate-900 cursor-pointer appearance-none peer"
+                        >
+                          <option value="">Chọn đơn vị</option>
+                          <option value="Thùng">Thùng</option>
+                          <option value="Hộp">Hộp</option>
+                          <option value="Cái">Cái</option>
+                          <option value="Chiếc">Chiếc</option>
+                          <option value="Chai">Chai</option>
+                          <option value="Lốc">Lốc</option>
+                          <option value="Kg">Kg</option>
+                        </select>
+                        <ChevronUp
+                          size={20}
+                          className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none transition-transform duration-200 peer-focus:rotate-180"
+                        />
+                      </div>
+                      {errors.unit && (
+                        <p className="text-rose-500 text-xs mt-2 ml-1 font-medium">
+                          {errors.unit.message}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Label Selection Render */}
+                  {selectedLabelIds.length > 0 && (
+                    <div className="group mt-4">
+                      <label className="block text-[13px] font-medium text-slate-900 mb-2 ml-1 flex items-center gap-2">
+                        Danh sách nhãn
+                      </label>
+                      <div className="flex flex-wrap gap-2 p-4 bg-slate-50 rounded-2xl border border-slate-200">
+                        {selectedLabelIds.map((id) => {
+                          const label = availableLabels.find(
+                            (l) => l.id === id,
+                          );
+                          if (!label) return null;
+                          return (
+                            <div
+                              key={label.id}
+                              onClick={() => handleLabelToggle(label.id)}
+                              className="cursor-pointer transition-transform hover:scale-95"
+                            >
+                              <span
+                                className="px-3 py-1.5 rounded-lg text-[11px] font-medium text-white shadow-sm flex items-center gap-1"
+                                style={{ backgroundColor: label.color }}
+                              >
+                                {label.name}{" "}
+                                {label.labelName ? `(${label.labelName})` : ""}
+                                <X size={12} className="ml-1 opacity-70" />
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </section>
 
