@@ -1,8 +1,78 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
 import orderService from "../services/orderService";
+import bankAccountService from "../services/bankAccountService";
+
+const bankOptions = [
+  {
+    name: "Ngân hàng Quân đội",
+    code: "MB",
+    logo: "https://api.vietqr.io/img/MB.png",
+    brand: "MB Bank",
+  },
+  {
+    name: "Ngân hàng TMCP Công Thương Việt Nam",
+    code: "ICB",
+    logo: "https://rabbitcare.vn/_next/image?url=https%3A%2F%2Fstorage.googleapis.com%2Fround-fold%2FVietinbank_logo_40f464dd33%2FVietinbank_logo_40f464dd33.jpg&w=3840&q=25",
+    brand: "VietinBank",
+  },
+  {
+    name: "Ngân hàng TMCP Phát triển TP. Hồ Chí Minh",
+    code: "HDB",
+    logo: "https://api.vietqr.io/img/HDB.png",
+    brand: "HDBank",
+  },
+  {
+    name: "Ngân hàng TMCP Đại Dương",
+    code: "OJB",
+    logo: "https://api.vietqr.io/img/OJB.png",
+    brand: "OceanBank",
+  },
+  {
+    name: "Ngân hàng TMCP Việt Nam Thịnh Vượng",
+    code: "VPB",
+    logo: "https://api.vietqr.io/img/VPB.png",
+    brand: "VPBank",
+  },
+  {
+    name: "Ngân hàng TMCP Xuất nhập khẩu Việt Nam",
+    code: "EIB",
+    logo: "https://api.vietqr.io/img/EIB.png",
+    brand: "Eximbank",
+  },
+  {
+    name: "Ngân hàng TMCP Đông Nam Á",
+    code: "SEAB",
+    logo: "https://api.vietqr.io/img/SEAB.png",
+    brand: "SeABank",
+  },
+  {
+    name: "Ngân hàng TMCP Sài Gòn",
+    code: "SCB",
+    logo: "https://api.vietqr.io/img/SCB.png",
+    brand: "Saigonbank",
+  },
+  {
+    name: "Ngân hàng TMCP Tiên Phong",
+    code: "TPB",
+    logo: "https://api.vietqr.io/img/TPB.png",
+    brand: "TPBank",
+  },
+];
+
+const findBank = (bankName) => {
+  if (!bankName) return null;
+  const normalized = bankName.toLowerCase();
+  return bankOptions.find(
+    (b) =>
+      normalized.includes(b.name.toLowerCase()) ||
+      normalized.includes(b.brand.toLowerCase()) ||
+      b.name.toLowerCase().includes(normalized) ||
+      b.brand.toLowerCase().includes(normalized),
+  );
+};
 import {
   Trash2,
   Plus,
@@ -25,6 +95,34 @@ const CartPage = () => {
   const [showCheckoutModal, setShowCheckoutModal] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [orderSuccess, setOrderSuccess] = useState(false);
+  const [bankAccounts, setBankAccounts] = useState([]);
+  const [generatedOrderCode, setGeneratedOrderCode] = useState("");
+  const [selectedQR, setSelectedQR] = useState(null);
+  const generateOrderCode = () => {
+    const now = new Date();
+    const yy = now.getFullYear().toString().slice(-2);
+    const mm = (now.getMonth() + 1).toString().padStart(2, "0");
+    const dd = now.getDate().toString().padStart(2, "0");
+    const hh = now.getHours().toString().padStart(2, "0");
+    const min = now.getMinutes().toString().padStart(2, "0");
+    const ss = now.getSeconds().toString().padStart(2, "0");
+    return `ORD${yy}${mm}${dd}${hh}${min}${ss}`;
+  };
+
+  useEffect(() => {
+    const fetchBankAccounts = async () => {
+      try {
+        const res = await bankAccountService.getAll();
+        const activeAccounts = res.data.filter(
+          (acc) => acc.status === "ACTIVE",
+        );
+        setBankAccounts(activeAccounts);
+      } catch (error) {
+        console.error("Lỗi tải danh sách ngân hàng:", error);
+      }
+    };
+    fetchBankAccounts();
+  }, []);
 
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat("vi-VN", {
@@ -240,7 +338,10 @@ const CartPage = () => {
 
               {/* Nút Kích hoạt Modal Thanh toán */}
               <button
-                onClick={() => setShowCheckoutModal(true)}
+                onClick={() => {
+                  setGeneratedOrderCode(generateOrderCode());
+                  setShowCheckoutModal(true);
+                }}
                 className="w-full py-4 bg-green-600 text-white rounded-2xl font-medium hover:bg-green-700 transition-all shadow-lg shadow-green-200 active:scale-95 flex items-center justify-center gap-2"
               >
                 Tiến hành thanh toán
@@ -265,38 +366,74 @@ const CartPage = () => {
                 <QrCode size={20} />
                 Chuyển khoản QR
               </div>
-              <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 mb-6 w-48 h-48 flex items-center justify-center">
-                <img
-                  src={`https://img.vietqr.io/image/MB-0987654321-compact2.png?amount=${cartTotal}&addInfo=Thanh toan don hang ${user?.phone}`}
-                  alt="QR Code"
-                  className="w-full h-full object-contain"
-                />
-              </div>
 
-              <div className="w-full space-y-3 text-sm">
-                <div className="flex justify-between border-b border-slate-200 pb-2">
-                  <span className="text-slate-500">Ngân hàng:</span>
-                  <span className="font-medium text-slate-800">MB Bank</span>
-                </div>
-                <div className="flex justify-between border-b border-slate-200 pb-2">
-                  <span className="text-slate-500">Chủ tài khoản:</span>
-                  <span className="font-medium text-slate-800">
-                    PHAM VAN TUYEN
-                  </span>
-                </div>
-                <div className="flex justify-between border-b border-slate-200 pb-2">
-                  <span className="text-slate-500">Số tài khoản:</span>
-                  <span className="font-medium text-slate-800 text-indigo-600">
-                    0987 654 321
-                  </span>
-                </div>
-                <div className="flex justify-between pt-1">
-                  <span className="text-slate-500">Nội dung CK:</span>
-                  <span className="font-medium text-rose-500">
-                    TT {user?.phone || "DH"}
-                  </span>
-                </div>
-              </div>
+              {(() => {
+                const selectedAcc =
+                  bankAccounts.length > 0 ? bankAccounts[0] : null;
+                if (!selectedAcc) {
+                  return (
+                    <div className="text-slate-500 text-sm mt-4">
+                      Chưa có tài khoản nhận tiền nào đang được sử dụng. Vui
+                      lòng kiểm tra lại cấu hình.
+                    </div>
+                  );
+                }
+
+                const bankInfo = findBank(selectedAcc.bankName);
+                const bankCode = bankInfo ? bankInfo.code : "MB";
+                const orderCodeStr = generatedOrderCode; // Dùng mã đơn giả lập đã gen
+
+                // qr code format: https://img.vietqr.io/image/<BANK_BIN>-<ACCOUNT_NO>-<TEMPLATE>.png?amount=<AMOUNT>&addInfo=<DESCRIPTION>&accountName=<ACCOUNT_NAME>
+                const qrUrl = `https://img.vietqr.io/image/${bankCode}-${selectedAcc.accountNumber}-compact2.png?amount=${cartTotal}&addInfo=${encodeURIComponent(orderCodeStr)}&accountName=${encodeURIComponent(selectedAcc.accountOwner)}`;
+
+                return (
+                  <>
+                    <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 mb-6 w-48 h-48 flex items-center justify-center relative group">
+                      {bankInfo && (
+                        <img
+                          src={bankInfo.logo}
+                          alt="Bank Logo"
+                          className="absolute -top-3 -right-3 w-10 h-10 object-contain rounded-full shadow-md bg-white border border-slate-100 p-0.5"
+                        />
+                      )}
+                      <img
+                        src={qrUrl}
+                        alt="QR Code"
+                        className="w-full h-full object-contain cursor-pointer hover:scale-105 transition-transform"
+                        onClick={() => setSelectedQR(qrUrl)}
+                        title="Nhấn để phóng to"
+                      />
+                    </div>
+
+                    <div className="w-full space-y-3 text-sm">
+                      <div className="flex justify-between border-b border-slate-200 pb-2">
+                        <span className="text-slate-500">Ngân hàng:</span>
+                        <span className="font-medium text-slate-800">
+                          {bankInfo ? bankInfo.name : selectedAcc.bankName}
+                        </span>
+                      </div>
+                      <div className="flex justify-between border-b border-slate-200 pb-2">
+                        <span className="text-slate-500">Chủ tài khoản:</span>
+                        <span className="font-medium text-slate-800 uppercase">
+                          {selectedAcc.accountOwner}
+                        </span>
+                      </div>
+                      <div className="flex justify-between border-b border-slate-200 pb-2">
+                        <span className="text-slate-500">Số tài khoản:</span>
+                        <span className="font-medium text-slate-800 text-indigo-600">
+                          {selectedAcc.accountNumber}
+                        </span>
+                      </div>
+                      <div className="flex justify-between pt-1">
+                        <span className="text-slate-500">Nội dung CK:</span>
+                        <span className="font-medium text-rose-500">
+                          {orderCodeStr}
+                        </span>
+                      </div>
+                    </div>
+                  </>
+                );
+              })()}
             </div>
 
             {/* Cột phải: Thông tin đơn hàng & Xác nhận */}
@@ -362,6 +499,36 @@ const CartPage = () => {
                   Hủy bỏ
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Full screen QR Modal */}
+      {selectedQR && (
+        <div
+          className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
+          onClick={() => setSelectedQR(null)}
+        >
+          <div className="relative animate-in zoom-in-95 duration-200 flex flex-col items-center">
+            <button
+              onClick={() => setSelectedQR(null)}
+              className="absolute -top-12 -right-4 text-white hover:text-red-400 p-2 transition-colors z-[120] bg-black/40 rounded-full"
+            >
+              <X size={28} />
+            </button>
+            <div
+              className="bg-white p-6 rounded-3xl shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <img
+                src={selectedQR}
+                alt="QR Code Full"
+                className="w-80 md:w-96 md:h-96 h-80 object-contain rounded-xl"
+              />
+              <p className="text-center font-medium text-slate-600 mt-4">
+                Quét mã để chuyển khoản
+              </p>
             </div>
           </div>
         </div>

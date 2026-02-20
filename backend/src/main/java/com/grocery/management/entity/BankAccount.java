@@ -21,6 +21,9 @@ public class BankAccount {
     @Column(name = "bank_name", nullable = false, length = 100)
     private String bankName;
 
+    @Column(name = "brand")
+    private String brand;
+
     @Column(name = "account_number", nullable = false, length = 50, unique = true)
     private String accountNumber;
 
@@ -29,7 +32,7 @@ public class BankAccount {
 
     @Column(length = 20)
     @Builder.Default
-    private String status = "ACTIVE"; // ACTIVE, INACTIVE
+    private String status = "ACTIVE";
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)

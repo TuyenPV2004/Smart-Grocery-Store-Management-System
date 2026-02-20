@@ -46,6 +46,7 @@ public class BankAccountServiceImpl implements BankAccountService {
         }
 
         existingAccount.setBankName(updatedAccount.getBankName());
+        existingAccount.setBrand(updatedAccount.getBrand());
         existingAccount.setAccountNumber(updatedAccount.getAccountNumber());
         existingAccount.setAccountOwner(updatedAccount.getAccountOwner());
         if (updatedAccount.getStatus() != null) {
