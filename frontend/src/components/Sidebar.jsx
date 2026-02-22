@@ -20,6 +20,7 @@ import {
   Database,
   Wallet,
   Tag,
+  Ticket,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -110,6 +111,13 @@ const Sidebar = ({ isCollapsed, onToggle }) => {
       path: "/promotions",
       label: "Khuyến mãi",
       icon: Tag,
+      roles: ["ADMIN"],
+    },
+    {
+      id: "vouchers",
+      path: "/vouchers",
+      label: "Mã giảm giá",
+      icon: Ticket,
       roles: ["ADMIN"],
     },
     {

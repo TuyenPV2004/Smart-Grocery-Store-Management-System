@@ -62,8 +62,21 @@ export const CartProvider = ({ children }) => {
   };
 
   const cartCount = cartItems.reduce((total, item) => total + item.quantity, 0);
+  const getProductPrice = (product) => {
+    let price = product.sellPrice;
+    if (product.activePromotion && product.status === "ACTIVE") {
+      if (product.activePromotion.discountType === "PERCENTAGE") {
+        price = price - (price * product.activePromotion.discountValue) / 100;
+      } else {
+        price = price - product.activePromotion.discountValue;
+        if (price < 0) price = 0;
+      }
+    }
+    return price;
+  };
+
   const cartTotal = cartItems.reduce(
-    (total, item) => total + item.product.sellPrice * item.quantity,
+    (total, item) => total + getProductPrice(item.product) * item.quantity,
     0,
   );
 
@@ -77,6 +90,7 @@ export const CartProvider = ({ children }) => {
         clearCart,
         cartCount,
         cartTotal,
+        getProductPrice,
       }}
     >
       {children}

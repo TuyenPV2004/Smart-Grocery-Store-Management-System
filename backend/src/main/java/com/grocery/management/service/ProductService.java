@@ -12,6 +12,9 @@ import com.grocery.management.repository.PriceHistoryRepository;
 // SỬA: Thêm import Repository
 import com.grocery.management.repository.InventoryNoteDetailRepository;
 import com.grocery.management.repository.ProductBatchRepository;
+import com.grocery.management.entity.Promotion;
+import com.grocery.management.repository.PromotionRepository;
+import java.util.HashMap;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -39,17 +42,61 @@ public class ProductService {
     // SỬA: Inject thêm 2 repository này để kiểm tra ràng buộc
     private final InventoryNoteDetailRepository inventoryNoteDetailRepository;
     private final ProductBatchRepository productBatchRepository;
+    private final PromotionRepository promotionRepository;
+
+    /**
+     * Map active promotion vao Product
+     */
+    private void enrichWithActivePromotions(List<Product> products) {
+        if (products == null || products.isEmpty())
+            return;
+        List<Promotion> activePromotions = promotionRepository.findActivePromotions(LocalDateTime.now());
+        for (Product product : products) {
+            for (Promotion promo : activePromotions) {
+                if (promo.getProducts().contains(product)) {
+                    java.util.Map<String, Object> promoData = new HashMap<>();
+                    promoData.put("id", promo.getId());
+                    promoData.put("name", promo.getName());
+                    promoData.put("discountType", promo.getDiscountType());
+                    promoData.put("discountValue", promo.getDiscountValue());
+                    product.setActivePromotion(promoData);
+                    break;
+                }
+            }
+        }
+    }
+
+    private void enrichWithActivePromotion(Product product) {
+        if (product == null)
+            return;
+        List<Promotion> activePromotions = promotionRepository.findActivePromotions(LocalDateTime.now());
+        for (Promotion promo : activePromotions) {
+            if (promo.getProducts().contains(product)) {
+                java.util.Map<String, Object> promoData = new HashMap<>();
+                promoData.put("id", promo.getId());
+                promoData.put("name", promo.getName());
+                promoData.put("discountType", promo.getDiscountType());
+                promoData.put("discountValue", promo.getDiscountValue());
+                product.setActivePromotion(promoData);
+                break;
+            }
+        }
+    }
 
     /**
      * Tìm kiếm và lọc sản phẩm
      */
     public List<Product> getAllProducts(String keyword, ProductStatus status, Long categoryId) {
-        return productRepository.searchProducts(keyword, status, categoryId);
+        List<Product> products = productRepository.searchProducts(keyword, status, categoryId);
+        enrichWithActivePromotions(products);
+        return products;
     }
 
     public Product getProductById(Long id) {
-        return productRepository.findById(id)
+        Product product = productRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy sản phẩm với ID: " + id));
+        enrichWithActivePromotion(product);
+        return product;
     }
 
     /**

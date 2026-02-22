@@ -28,6 +28,7 @@ import PublicLayout from "./components/PublicLayout";
 import RoleBasedLayout from "./components/RoleBasedLayout";
 import CashFlowManagementPage from "./pages/CashFlowManagementPage";
 import PromotionsPage from "./pages/PromotionsPage";
+import VouchersPage from "./pages/VouchersPage";
 
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -77,6 +78,7 @@ function App() {
               <Route path="/categories" element={<CategoryPage />} />
               <Route path="/cash-flow" element={<CashFlowManagementPage />} />
               <Route path="/promotions" element={<PromotionsPage />} />
+              <Route path="/vouchers" element={<VouchersPage />} />
             </Route>
           </Route>
           <Route path="*" element={<Navigate to="/" />} />{" "}

@@ -1,4 +1,4 @@
-import { toast } from 'react-toastify';
+import { toast } from "react-toastify";
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ShoppingCart, Heart, Eye } from "lucide-react";
@@ -24,6 +24,26 @@ const ProductCard = ({ product }) => {
 
   const isOutOfStock = product.status === "OUT_OF_STOCK";
 
+  // Calculate discounted price
+  let discountedPrice = product.sellPrice;
+  let hasDiscount = false;
+  let discountDisplay = "";
+
+  if (product.activePromotion && product.status === "ACTIVE") {
+    hasDiscount = true;
+    if (product.activePromotion.discountType === "PERCENTAGE") {
+      discountedPrice =
+        product.sellPrice -
+        (product.sellPrice * product.activePromotion.discountValue) / 100;
+      discountDisplay = `-${product.activePromotion.discountValue}%`;
+    } else {
+      discountedPrice =
+        product.sellPrice - product.activePromotion.discountValue;
+      if (discountedPrice < 0) discountedPrice = 0;
+      discountDisplay = `-${formatCurrency(product.activePromotion.discountValue)}`;
+    }
+  }
+
   return (
     <div className="group bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col h-full relative">
       {/* Badge */}
@@ -35,6 +55,33 @@ const ProductCard = ({ product }) => {
             }`}
           >
             {isOutOfStock ? "Hết hàng" : "Ngừng kinh doanh"}
+          </span>
+        </div>
+      )}
+
+      {/* Discount Badge */}
+      {hasDiscount && (
+        <div className="absolute top-3 right-3 z-10">
+          <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-500 text-white shadow-sm flex items-center gap-1">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="12"
+              height="12"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="m11.5 15.5 3-3" />
+              <path d="m21.5 9-1.5-1.5" />
+              <path d="m3 3 1.5 1.5" />
+              <path d="m8.5 21.5-1.5-1.5" />
+              <path d="m9 10.5 3-3" />
+              <path d="M4 11V4h7l10 10-7 7-10-10Z" />
+            </svg>
+            {discountDisplay}
           </span>
         </div>
       )}
@@ -79,9 +126,14 @@ const ProductCard = ({ product }) => {
         <div className="mt-auto pt-3 flex items-end justify-between border-t border-slate-50">
           <div>
             <p className="text-lg font-medium text-green-600">
-              {formatCurrency(product.sellPrice)}
+              {formatCurrency(discountedPrice)}
             </p>
-            {product.importPrice > 0 && (
+            {hasDiscount && (
+              <p className="text-xs text-slate-400 line-through">
+                {formatCurrency(product.sellPrice)}
+              </p>
+            )}
+            {!hasDiscount && product.importPrice > 0 && (
               <p className="text-xs text-slate-400 line-through">
                 {formatCurrency(product.sellPrice * 1.2)}
               </p>

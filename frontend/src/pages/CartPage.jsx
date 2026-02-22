@@ -1,10 +1,11 @@
-import { toast } from 'react-toastify';
+import { toast } from "react-toastify";
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
 import orderService from "../services/orderService";
 import bankAccountService from "../services/bankAccountService";
+import voucherService from "../services/voucherService";
 
 const bankOptions = [
   {
@@ -88,8 +89,14 @@ import {
 } from "lucide-react";
 
 const CartPage = () => {
-  const { cartItems, removeFromCart, updateQuantity, cartTotal, clearCart } =
-    useCart();
+  const {
+    cartItems,
+    removeFromCart,
+    updateQuantity,
+    cartTotal,
+    clearCart,
+    getProductPrice,
+  } = useCart();
   const { user } = useAuth(); // Lấy thông tin user đang đăng nhập
   const navigate = useNavigate();
 
@@ -100,6 +107,13 @@ const CartPage = () => {
   const [bankAccounts, setBankAccounts] = useState([]);
   const [generatedOrderCode, setGeneratedOrderCode] = useState("");
   const [selectedQR, setSelectedQR] = useState(null);
+
+  // Thêm State Cho Voucher
+  const [voucherCode, setVoucherCode] = useState("");
+  const [appliedVoucher, setAppliedVoucher] = useState(null);
+  const [voucherError, setVoucherError] = useState("");
+  const [isApplyingVoucher, setIsApplyingVoucher] = useState(false);
+
   const generateOrderCode = () => {
     const now = new Date();
     const yy = now.getFullYear().toString().slice(-2);
@@ -139,6 +153,57 @@ const CartPage = () => {
     return `http://localhost:8080/${path}`;
   };
 
+  const calculateDiscount = () => {
+    if (!appliedVoucher) return 0;
+    let discount = 0;
+    if (appliedVoucher.discountType === "PERCENTAGE") {
+      discount = (cartTotal * appliedVoucher.discountValue) / 100;
+      if (
+        appliedVoucher.maxDiscountAmount &&
+        discount > appliedVoucher.maxDiscountAmount
+      ) {
+        discount = appliedVoucher.maxDiscountAmount;
+      }
+    } else {
+      discount = appliedVoucher.discountValue;
+    }
+    return discount > cartTotal ? cartTotal : discount;
+  };
+
+  const handleApplyVoucher = async () => {
+    if (!voucherCode.trim()) return;
+    setIsApplyingVoucher(true);
+    setVoucherError("");
+    setAppliedVoucher(null);
+    try {
+      const res = await voucherService.validate(voucherCode.trim());
+      const resVoucher = res.data;
+      if (resVoucher.minOrderValue && cartTotal < resVoucher.minOrderValue) {
+        setVoucherError(
+          `Đơn hàng cần đạt tối thiểu ${formatCurrency(resVoucher.minOrderValue)}`,
+        );
+        return;
+      }
+      setAppliedVoucher(resVoucher);
+      toast.success("Áp dụng mã giảm giá thành công!");
+    } catch (error) {
+      setVoucherError(
+        error.response?.data || "Mã giảm giá không hợp lệ hoặc đã hết hạn",
+      );
+    } finally {
+      setIsApplyingVoucher(false);
+    }
+  };
+
+  const handleRemoveVoucher = () => {
+    setAppliedVoucher(null);
+    setVoucherCode("");
+    setVoucherError("");
+  };
+
+  const cartDiscount = calculateDiscount();
+  const finalTotal = cartTotal - cartDiscount;
+
   // Hàm xử lý khi ấn Xác nhận thanh toán
   const handleConfirmCheckout = async () => {
     if (!user) {
@@ -154,11 +219,12 @@ const CartPage = () => {
       customerName: user.fullName || user.username || "Khách hàng",
       customerPhone: user.phone || "Đang cập nhật",
       paymentMethod: "CHUYEN_KHOAN", // Phương thức chuyển khoản
-      discount: 0,
+      discount: cartDiscount,
+      voucherCode: appliedVoucher ? appliedVoucher.code : "",
       items: cartItems.map((item) => ({
         productId: item.product.id,
         quantity: item.quantity,
-        price: item.product.sellPrice,
+        price: getProductPrice(item.product),
       })),
     };
 
@@ -321,9 +387,21 @@ const CartPage = () => {
                         <Plus size={14} />
                       </button>
                     </div>
-                    <p className="font-medium text-slate-900 text-lg">
-                      {formatCurrency(item.product.sellPrice * item.quantity)}
-                    </p>
+                    <div className="text-right">
+                      <p className="font-medium text-slate-900 text-lg">
+                        {formatCurrency(
+                          getProductPrice(item.product) * item.quantity,
+                        )}
+                      </p>
+                      {item.product.sellPrice >
+                        getProductPrice(item.product) && (
+                        <p className="text-xs text-slate-400 line-through mt-1">
+                          {formatCurrency(
+                            item.product.sellPrice * item.quantity,
+                          )}
+                        </p>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -351,13 +429,58 @@ const CartPage = () => {
                 </div>
                 <div className="flex justify-between text-slate-500">
                   <span>Giảm giá</span>
-                  <span className="font-medium text-slate-900">0 ₫</span>
+                  <span className="font-medium text-rose-500">
+                    -{formatCurrency(cartDiscount)}
+                  </span>
                 </div>
                 <div className="h-px bg-slate-100 my-4"></div>
+
+                {/* Voucher Section */}
+                <div className="mb-4">
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      className="w-full border-slate-200 rounded-xl px-4 py-2.5 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 font-medium text-slate-700 text-sm uppercase placeholder:normal-case"
+                      placeholder="Nhập mã ưu đãi..."
+                      value={voucherCode}
+                      onChange={(e) =>
+                        setVoucherCode(e.target.value.toUpperCase())
+                      }
+                      disabled={!!appliedVoucher || isApplyingVoucher}
+                    />
+                    {appliedVoucher ? (
+                      <button
+                        onClick={handleRemoveVoucher}
+                        className="px-4 bg-rose-50 text-rose-600 rounded-xl font-medium hover:bg-rose-100 transition-all text-sm shrink-0"
+                      >
+                        Hủy
+                      </button>
+                    ) : (
+                      <button
+                        onClick={handleApplyVoucher}
+                        disabled={isApplyingVoucher || !voucherCode.trim()}
+                        className="px-4 bg-indigo-600 text-white rounded-xl font-medium hover:bg-indigo-700 transition-all text-sm shrink-0 disabled:opacity-50"
+                      >
+                        {isApplyingVoucher ? "..." : "Áp dụng"}
+                      </button>
+                    )}
+                  </div>
+                  {voucherError && (
+                    <p className="text-rose-500 text-xs font-medium mt-2">
+                      {voucherError}
+                    </p>
+                  )}
+                  {appliedVoucher && (
+                    <p className="text-green-600 text-xs font-medium mt-2">
+                      Đã áp dụng mã: {appliedVoucher.code}
+                    </p>
+                  )}
+                </div>
+
                 <div className="flex justify-between items-end">
                   <span className="font-medium text-slate-800">Tổng cộng</span>
                   <span className="text-2xl font-medium text-green-600">
-                    {formatCurrency(cartTotal)}
+                    {formatCurrency(finalTotal)}
                   </span>
                 </div>
               </div>
@@ -410,7 +533,7 @@ const CartPage = () => {
                 const orderCodeStr = generatedOrderCode; // Dùng mã đơn giả lập đã gen
 
                 // qr code format: https://img.vietqr.io/image/<BANK_BIN>-<ACCOUNT_NO>-<TEMPLATE>.png?amount=<AMOUNT>&addInfo=<DESCRIPTION>&accountName=<ACCOUNT_NAME>
-                const qrUrl = `https://img.vietqr.io/image/${bankCode}-${selectedAcc.accountNumber}-compact2.png?amount=${cartTotal}&addInfo=${encodeURIComponent(orderCodeStr)}&accountName=${encodeURIComponent(selectedAcc.accountOwner)}`;
+                const qrUrl = `https://img.vietqr.io/image/${bankCode}-${selectedAcc.accountNumber}-compact2.png?amount=${finalTotal}&addInfo=${encodeURIComponent(orderCodeStr)}&accountName=${encodeURIComponent(selectedAcc.accountOwner)}`;
 
                 return (
                   <>
@@ -499,7 +622,7 @@ const CartPage = () => {
                     Số tiền cần thanh toán:
                   </p>
                   <p className="text-2xl font-medium text-green-600">
-                    {formatCurrency(cartTotal)}
+                    {formatCurrency(finalTotal)}
                   </p>
                 </div>
                 <p className="text-xs text-slate-500 italic mt-2">

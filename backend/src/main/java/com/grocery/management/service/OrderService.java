@@ -21,6 +21,7 @@ public class OrderService {
     private final ProductRepository productRepository;
     private final ProductBatchRepository productBatchRepository;
     private final UserRepository userRepository;
+    private final VoucherService voucherService;
 
     @Transactional
     public Order createOrder(OrderRequest request, String username) {
@@ -89,8 +90,34 @@ public class OrderService {
 
         order.setDetails(details);
         order.setTotalAmount(totalAmount);
-        order.setDiscount(request.getDiscount() != null ? request.getDiscount() : BigDecimal.ZERO);
-        order.setFinalAmount(totalAmount.subtract(order.getDiscount()));
+
+        BigDecimal discount = BigDecimal.ZERO;
+        if (request.getVoucherCode() != null && !request.getVoucherCode().trim().isEmpty()) {
+            Voucher voucher = voucherService.validateVoucher(request.getVoucherCode());
+            if (voucher.getMinOrderValue() != null && totalAmount.compareTo(voucher.getMinOrderValue()) < 0) {
+                throw new RuntimeException(
+                        "Đơn hàng chưa đạt giá trị tối thiểu để dùng voucher này: " + voucher.getMinOrderValue());
+            }
+
+            if ("PERCENTAGE".equals(voucher.getDiscountType())) {
+                discount = totalAmount.multiply(voucher.getDiscountValue()).divide(BigDecimal.valueOf(100));
+                if (voucher.getMaxDiscountAmount() != null && discount.compareTo(voucher.getMaxDiscountAmount()) > 0) {
+                    discount = voucher.getMaxDiscountAmount();
+                }
+            } else {
+                discount = voucher.getDiscountValue();
+            }
+
+            // if discount is greater than total, cap it
+            if (discount.compareTo(totalAmount) > 0)
+                discount = totalAmount;
+
+            voucherService.incrementUsage(voucher.getId());
+            order.setVoucherCode(voucher.getCode());
+        }
+
+        order.setDiscount(discount);
+        order.setFinalAmount(totalAmount.subtract(discount));
 
         return orderRepository.save(order);
     }

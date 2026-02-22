@@ -21,6 +21,7 @@ public class Order {
     private BigDecimal totalAmount;
     private BigDecimal discount;
     private BigDecimal finalAmount;
+    private String voucherCode;
     private String status;
     private LocalDateTime createdAt;
 

@@ -10,6 +10,7 @@ public class OrderRequest {
     private String customerPhone;
     private String paymentMethod;
     private BigDecimal discount;
+    private String voucherCode;
     private List<OrderItem> items;
 
     @Data

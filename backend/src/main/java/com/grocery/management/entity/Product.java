@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.Data;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Map;
 
 @Entity
 @Table(name = "products")
@@ -66,4 +67,7 @@ public class Product {
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(name = "product_labels", joinColumns = @JoinColumn(name = "product_id"), inverseJoinColumns = @JoinColumn(name = "label_id"))
     private java.util.Set<Category> labels = new java.util.HashSet<>();
+
+    @Transient
+    private Map<String, Object> activePromotion;
 }
