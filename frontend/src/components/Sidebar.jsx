@@ -19,6 +19,7 @@ import {
   Upload,
   Database,
   Wallet,
+  Tag,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -105,6 +106,13 @@ const Sidebar = ({ isCollapsed, onToggle }) => {
       roles: ["ADMIN"],
     },
     {
+      id: "promotions",
+      path: "/promotions",
+      label: "Khuyến mãi",
+      icon: Tag,
+      roles: ["ADMIN"],
+    },
+    {
       id: "cash-flow",
       path: "/cash-flow",
       label: "Quản lý dòng tiền",
@@ -175,7 +183,7 @@ const Sidebar = ({ isCollapsed, onToggle }) => {
         </button>
 
         {/* Menu */}
-        <nav className="flex-1 px-4 space-y-1.5 overflow-y-auto custom-scrollbar overflow-x-hidden">
+        <nav className="flex-1 px-4 space-y-1.5 overflow-y-auto overflow-x-hidden [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
           {menuItems.map((item, index) => {
             if (!item.roles.includes(user?.role)) return null;
 
