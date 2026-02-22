@@ -1,3 +1,4 @@
+import { toast } from 'react-toastify';
 import { useEffect, useState } from "react";
 import categoryService from "../services/categoryService";
 import {
@@ -77,15 +78,15 @@ const CategoryPage = () => {
     try {
       if (formData.id) {
         await categoryService.update(formData.id, payload);
-        alert("Cập nhật thành công!");
+        toast.success("Cập nhật thành công!");
       } else {
         await categoryService.create(payload);
-        alert("Tạo mới thành công!");
+        toast.success("Tạo mới thành công!");
       }
       setShowModal(false);
       fetchData();
     } catch (error) {
-      alert("Lỗi: " + (error.response?.data || "Có lỗi xảy ra"));
+      toast.error("Lỗi: " + (error.response?.data || "Có lỗi xảy ra"));
     }
   };
 
@@ -95,7 +96,7 @@ const CategoryPage = () => {
         await categoryService.delete(id);
         fetchData();
       } catch (error) {
-        alert(error.response?.data || "Lỗi khi xóa");
+        toast.error(error.response?.data || "Lỗi khi xóa");
       }
     }
   };
@@ -120,7 +121,7 @@ const CategoryPage = () => {
       setShowHistoryModal(true);
     } catch (error) {
       console.error("Lỗi tải lịch sử", error);
-      alert("Không thể tải lịch sử");
+      toast.error("Không thể tải lịch sử");
     }
   };
 

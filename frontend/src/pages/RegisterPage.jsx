@@ -1,3 +1,4 @@
+import { toast } from "react-toastify";
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import userService from "../services/userService";
@@ -28,15 +29,18 @@ const RegisterPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (formData.password !== formData.confirmPassword) {
-      alert("Mật khẩu nhập lại không khớp!");
+      toast.error("Mật khẩu nhập lại không khớp!");
       return;
     }
     setLoading(true);
     try {
       await userService.register(formData);
+      toast.success(
+        "Đăng ký thành công! Vui lòng kiểm tra email để lấy mã OTP.",
+      );
       navigate("/verify-otp", { state: { email: formData.email } });
     } catch (error) {
-      alert(error.response?.data || "Đăng ký thất bại");
+      toast.error(error.response?.data || "Đăng ký thất bại");
     } finally {
       setLoading(false);
     }

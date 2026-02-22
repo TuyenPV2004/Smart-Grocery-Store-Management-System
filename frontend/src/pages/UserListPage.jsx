@@ -1,3 +1,4 @@
+import { toast } from 'react-toastify';
 import { useEffect, useState } from "react";
 import userService from "../services/userService";
 import {
@@ -60,15 +61,15 @@ const UserListPage = () => {
     try {
       if (isEdit) {
         await userService.updateUser(formData.id, formData);
-        alert("Cập nhật thành công");
+        toast.success("Cập nhật thành công");
       } else {
         await userService.createUser(formData);
-        alert("Thêm mới thành công");
+        toast.success("Thêm mới thành công");
       }
       setShowModal(false);
       fetchUsers();
     } catch (error) {
-      alert("Có lỗi xảy ra, vui lòng kiểm tra lại thông tin.");
+      toast.error("Có lỗi xảy ra, vui lòng kiểm tra lại thông tin.");
     }
   };
 
@@ -78,7 +79,7 @@ const UserListPage = () => {
         await userService.deleteUser(id);
         fetchUsers();
       } catch (error) {
-        alert("Không thể xóa người dùng này.");
+        toast.error("Không thể xóa người dùng này.");
       }
     }
   };
@@ -113,7 +114,7 @@ const UserListPage = () => {
         await userService.updateStatus(user.id, newStatus);
         fetchUsers();
       } catch (error) {
-        alert("Lỗi cập nhật trạng thái");
+        toast.error("Lỗi cập nhật trạng thái");
       }
     }
   };
@@ -128,11 +129,11 @@ const UserListPage = () => {
     if (!selectedUserForRole) return;
     try {
       await userService.updateRole(selectedUserForRole.id, newRole);
-      alert(`Cập nhật quyền thành công`);
+      toast.success(`Cập nhật quyền thành công`);
       setShowRoleModal(false);
       fetchUsers();
     } catch (error) {
-      alert("Lỗi: " + (error.response?.data || "Vui lòng thử lại"));
+      toast.error("Lỗi: " + (error.response?.data || "Vui lòng thử lại"));
     }
   };
 

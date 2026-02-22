@@ -1,3 +1,4 @@
+import { toast } from 'react-toastify';
 import React, { useState, useEffect } from "react";
 import {
   X,
@@ -42,12 +43,12 @@ const PriceManagementModal = ({ isOpen, onClose, product, onPriceUpdated }) => {
 
   const handleUpdateImportPrice = async () => {
     if (!newImportPrice || parseFloat(newImportPrice) < 0) {
-      alert("Vui lòng nhập giá nhập hợp lệ!");
+      toast.warning("Vui lòng nhập giá nhập hợp lệ!");
       return;
     }
 
     if (parseFloat(newImportPrice) === parseFloat(product.importPrice)) {
-      alert("Giá nhập mới phải khác giá hiện tại!");
+      toast.info("Giá nhập mới phải khác giá hiện tại!");
       return;
     }
 
@@ -57,11 +58,11 @@ const PriceManagementModal = ({ isOpen, onClose, product, onPriceUpdated }) => {
         product.id,
         parseFloat(newImportPrice),
       );
-      alert("Cập nhật giá nhập thành công!");
+      toast.success("Cập nhật giá nhập thành công!");
       fetchPriceHistory();
       onPriceUpdated();
     } catch (error) {
-      alert(
+      toast.error(
         "Lỗi cập nhật giá nhập: " + (error.response?.data || error.message),
       );
     } finally {
@@ -71,23 +72,23 @@ const PriceManagementModal = ({ isOpen, onClose, product, onPriceUpdated }) => {
 
   const handleUpdateSellPrice = async () => {
     if (!newSellPrice || parseFloat(newSellPrice) < 0) {
-      alert("Vui lòng nhập giá bán hợp lệ!");
+      toast.warning("Vui lòng nhập giá bán hợp lệ!");
       return;
     }
 
     if (parseFloat(newSellPrice) === parseFloat(product.sellPrice)) {
-      alert("Giá bán mới phải khác giá hiện tại!");
+      toast.info("Giá bán mới phải khác giá hiện tại!");
       return;
     }
 
     setIsSavingSell(true);
     try {
       await priceService.updateSellPrice(product.id, parseFloat(newSellPrice));
-      alert("Cập nhật giá bán thành công!");
+      toast.success("Cập nhật giá bán thành công!");
       fetchPriceHistory();
       onPriceUpdated();
     } catch (error) {
-      alert("Lỗi cập nhật giá bán: " + (error.response?.data || error.message));
+      toast.error("Lỗi cập nhật giá bán: " + (error.response?.data || error.message));
     } finally {
       setIsSavingSell(false);
     }

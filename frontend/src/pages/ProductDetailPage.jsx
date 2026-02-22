@@ -1,3 +1,4 @@
+import { toast } from 'react-toastify';
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
@@ -55,13 +56,13 @@ const ProductDetailPage = () => {
 
   const handleAddToCart = () => {
     if (!user) {
-      alert("Vui lòng đăng nhập để có thể thêm sản phẩm vào giỏ hàng.");
+      toast.warning("Vui lòng đăng nhập để có thể thêm sản phẩm vào giỏ hàng.");
       navigate("/login");
       return;
     }
     if (product) {
       addToCart(product, quantity);
-      alert("Đã thêm vào giỏ hàng!");
+      toast.success("Đã thêm vào giỏ hàng!");
     }
   };
 

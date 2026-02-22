@@ -5,6 +5,7 @@ import { useAuth } from "../context/AuthContext";
 import userService from "../services/userService";
 import { User, Lock, Store, Loader2, Check } from "lucide-react";
 import HomePage from "./HomePage";
+import { toast } from "react-toastify";
 
 const LoginPage = () => {
   const [username, setUsername] = useState("");
@@ -30,9 +31,11 @@ const LoginPage = () => {
         const profileRes = await userService.getProfile();
         const fullUserData = { ...res.data, ...profileRes.data };
         login(fullUserData, token);
+        toast.success("Đăng nhập thành công!");
       } catch (profileError) {
         console.error("Không tải được profile:", profileError);
         login(res.data, token);
+        toast.success("Đăng nhập thành công!");
       }
     } catch (err) {
       console.error(err);

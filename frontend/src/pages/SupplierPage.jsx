@@ -1,3 +1,4 @@
+import { toast } from 'react-toastify';
 import React, { useEffect, useState } from "react";
 import supplierService from "../services/supplierService";
 import {
@@ -51,15 +52,15 @@ const SupplierPage = () => {
     try {
       if (isEditing) {
         await supplierService.update(selectedId, formData);
-        alert("Cập nhật thành công!");
+        toast.success("Cập nhật thành công!");
       } else {
         await supplierService.create(formData);
-        alert("Thêm mới thành công!");
+        toast.success("Thêm mới thành công!");
       }
       fetchSuppliers();
       closeModal();
     } catch (error) {
-      alert("Lỗi: " + (error.response?.data || "Có lỗi xảy ra"));
+      toast.error("Lỗi: " + (error.response?.data || "Có lỗi xảy ra"));
     }
   };
 

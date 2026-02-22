@@ -1,3 +1,4 @@
+import { toast } from 'react-toastify';
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import batchService from "../services/batchService";
@@ -166,10 +167,10 @@ const BatchListPage = () => {
 
     try {
       await batchService.deleteBatch(batchId);
-      alert("Đã xóa lô hàng thành công!");
+      toast.success("Đã xóa lô hàng thành công!");
       fetchBatches(); // Refresh list
     } catch (error) {
-      alert("Lỗi xóa lô hàng: " + (error.response?.data || error.message));
+      toast.error("Lỗi xóa lô hàng: " + (error.response?.data || error.message));
     }
   };
 

@@ -1,3 +1,4 @@
+import { toast } from 'react-toastify';
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -65,7 +66,7 @@ const ProductCheckModal = ({
 
   const handleSearch = async () => {
     if (!searchTerm.trim()) {
-      alert("Vui lòng nhập tên sản phẩm hoặc mã SKU!");
+      toast.warning("Vui lòng nhập tên sản phẩm hoặc mã SKU!");
       return;
     }
 
@@ -370,7 +371,7 @@ const QuickProductModal = ({
 
   const handleSubmit = () => {
     if (!formData.name) {
-      alert("Vui lòng nhập tên sản phẩm!");
+      toast.warning("Vui lòng nhập tên sản phẩm!");
       return;
     }
     onSuccess(formData);
@@ -1347,7 +1348,7 @@ const InventoryEntryPage = () => {
     if (row.isSaved) return;
 
     if (!row.tempData) {
-      alert("Chưa có thông tin sản phẩm để lưu!");
+      toast.info("Chưa có thông tin sản phẩm để lưu!");
       return;
     }
 
@@ -1375,9 +1376,9 @@ const InventoryEntryPage = () => {
       newDetails[index].shelfLife = newProduct.shelfLife;
       setDetails(newDetails);
 
-      alert("Sản phẩm đã được lưu");
+      toast.info("Sản phẩm đã được lưu");
     } catch (error) {
-      alert(
+      toast.error(
         "Lỗi lưu sản phẩm: " + (error.response?.data?.message || error.message),
       );
     }
@@ -1397,17 +1398,17 @@ const InventoryEntryPage = () => {
       link.click();
       link.remove();
     } catch (error) {
-      alert("Lỗi xuất file: " + error.message);
+      toast.error("Lỗi xuất file: " + error.message);
     }
   };
 
   const handlePreSave = () => {
     if (!header.staffId || !isValidStaff) {
-      alert("Vui lòng nhập đúng Mã nhân viên!");
+      toast.warning("Vui lòng nhập đúng Mã nhân viên!");
       return;
     }
     if (details.length === 0) {
-      alert("Phiếu nhập phải có ít nhất 1 sản phẩm!");
+      toast.warning("Phiếu nhập phải có ít nhất 1 sản phẩm!");
       return;
     }
     setPreviewOpen(true);
@@ -1480,7 +1481,7 @@ const InventoryEntryPage = () => {
 
     // Kiểm tra chặn lỗi trước khi gửi
     if (!derivedSupplierId) {
-      alert(
+      toast.error(
         "Lỗi: Không xác định được Nhà cung cấp! Vui lòng chọn Nhà cung cấp ở thông tin chung hoặc kiểm tra lại thông tin sản phẩm.",
       );
       return;
@@ -1508,11 +1509,11 @@ const InventoryEntryPage = () => {
 
     try {
       const res = await inventoryService.createImportNote(requestData);
-      alert("Lưu phiếu thành công!");
+      toast.success("Lưu phiếu thành công!");
       setPreviewOpen(false);
       navigate("/inventory/list");
     } catch (err) {
-      alert("Lỗi lưu phiếu: " + (err.response?.data?.message || err.message));
+      toast.error("Lỗi lưu phiếu: " + (err.response?.data?.message || err.message));
     }
   };
 

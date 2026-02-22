@@ -1,3 +1,4 @@
+import { toast } from 'react-toastify';
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import userService from "../services/userService";
@@ -39,11 +40,11 @@ const ForgotPasswordPage = () => {
     setLoading(true);
     try {
       await userService.forgotPassword(email);
-      alert("Mã OTP đã được gửi! Vui lòng kiểm tra email.");
+      toast.warning("Mã OTP đã được gửi! Vui lòng kiểm tra email.");
       setCountdown(60); // Reset bộ đếm về 60s
       setStep(2);
     } catch (error) {
-      alert(error.response?.data || "Không tìm thấy email này.");
+      toast.error(error.response?.data || "Không tìm thấy email này.");
     } finally {
       setLoading(false);
     }
@@ -54,10 +55,10 @@ const ForgotPasswordPage = () => {
     setLoading(true);
     try {
       await userService.resetPassword({ email, otp, newPassword });
-      alert("Đổi mật khẩu thành công! Bạn có thể đăng nhập ngay.");
+      toast.success("Đổi mật khẩu thành công! Bạn có thể đăng nhập ngay.");
       navigate("/login");
     } catch (error) {
-      alert(error.response?.data || "Lỗi đặt lại mật khẩu. Kiểm tra lại OTP.");
+      toast.error(error.response?.data || "Lỗi đặt lại mật khẩu. Kiểm tra lại OTP.");
     } finally {
       setLoading(false);
     }
@@ -69,9 +70,9 @@ const ForgotPasswordPage = () => {
     try {
       await userService.forgotPassword(email);
       setCountdown(60);
-      alert("Đã gửi lại mã OTP mới.");
+      toast.info("Đã gửi lại mã OTP mới.");
     } catch (error) {
-      alert("Gửi lại mã thất bại.");
+      toast.error("Gửi lại mã thất bại.");
     } finally {
       setLoading(false);
     }

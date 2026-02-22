@@ -1,3 +1,4 @@
+import { toast } from 'react-toastify';
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import inventoryService from "../services/inventoryService";
@@ -217,7 +218,7 @@ const InventoryListPage = () => {
       setSelectedNote(res.data);
       setIsModalOpen(true);
     } catch (error) {
-      alert("Lỗi tải chi tiết phiếu: " + error.message);
+      toast.error("Lỗi tải chi tiết phiếu: " + error.message);
     }
   };
 
@@ -233,7 +234,7 @@ const InventoryListPage = () => {
       link.click();
       link.remove();
     } catch (error) {
-      alert("Lỗi xuất file: " + error.message);
+      toast.error("Lỗi xuất file: " + error.message);
     }
   };
   const handleDelete = async (id) => {
@@ -245,9 +246,9 @@ const InventoryListPage = () => {
       try {
         await inventoryService.delete(id);
         setNotes((prevNotes) => prevNotes.filter((note) => note.id !== id));
-        alert("Xóa phiếu thành công!");
+        toast.success("Xóa phiếu thành công!");
       } catch (error) {
-        alert("Lỗi xóa phiếu: " + (error.response?.data || error.message));
+        toast.error("Lỗi xóa phiếu: " + (error.response?.data || error.message));
       }
     }
   };

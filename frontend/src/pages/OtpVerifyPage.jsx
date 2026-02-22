@@ -1,3 +1,4 @@
+import { toast } from 'react-toastify';
 import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import userService from '../services/userService';
@@ -12,10 +13,10 @@ const OtpVerifyPage = () => {
         e.preventDefault();
         try {
             await userService.verifyOtp({ email, otp });
-            alert("Xác thực thành công! Vui lòng đăng nhập.");
+            toast.success("Xác thực thành công! Vui lòng đăng nhập.");
             navigate('/login');
         } catch (error) {
-            alert(error.response?.data || "Mã OTP không đúng hoặc đã hết hạn.");
+            toast.error(error.response?.data || "Mã OTP không đúng hoặc đã hết hạn.");
         }
     };
 

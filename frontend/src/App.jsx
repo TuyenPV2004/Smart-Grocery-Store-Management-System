@@ -28,10 +28,14 @@ import PublicLayout from "./components/PublicLayout";
 import RoleBasedLayout from "./components/RoleBasedLayout";
 import CashFlowManagementPage from "./pages/CashFlowManagementPage";
 
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+
 function App() {
   return (
     <AuthProvider>
       <CartProvider>
+        <ToastContainer position="top-right" autoClose={3000} />
         <Routes>
           <Route path="/login" element={<LoginPage />} />
           {/* Public Routes */}

@@ -1,3 +1,4 @@
+import { toast } from 'react-toastify';
 import { useState, useEffect, useRef } from "react";
 import {
   Search,
@@ -41,7 +42,7 @@ const PosPage = () => {
   // Thêm vào giỏ
   const addToCart = (product) => {
     if (product.stockQuantity <= 0) {
-      alert("Sản phẩm đã hết hàng!");
+      toast.warning("Sản phẩm đã hết hàng!");
       return;
     }
 
@@ -49,7 +50,7 @@ const PosPage = () => {
       const exist = prev.find((item) => item.id === product.id);
       if (exist) {
         if (exist.cartQty >= product.stockQuantity) {
-          alert(`Chỉ còn ${product.stockQuantity} sản phẩm trong kho!`);
+          toast.warning(`Chỉ còn ${product.stockQuantity} sản phẩm trong kho!`);
           return prev;
         }
         return prev.map((item) =>
@@ -88,7 +89,7 @@ const PosPage = () => {
 
   // Thanh toán
   const handleCheckout = async () => {
-    if (cart.length === 0) return alert("Giỏ hàng trống!");
+    if (cart.length === 0) return toast.error("Giỏ hàng trống!");
     if (!window.confirm("Xác nhận thanh toán?")) return;
 
     setLoading(true);
@@ -106,12 +107,12 @@ const PosPage = () => {
       };
 
       await orderService.create(payload);
-      alert("Thanh toán thành công!");
+      toast.success("Thanh toán thành công!");
       setCart([]);
       setCustomerName("Khách lẻ");
       setCustomerPhone("");
     } catch (error) {
-      alert(error.response?.data || "Lỗi thanh toán");
+      toast.error(error.response?.data || "Lỗi thanh toán");
     } finally {
       setLoading(false);
     }

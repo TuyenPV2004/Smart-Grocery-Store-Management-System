@@ -1,3 +1,4 @@
+import { toast } from 'react-toastify';
 import React, { useState, useEffect } from "react";
 import { Edit, Trash2, Search, X, CheckCircle } from "lucide-react";
 import bankAccountService from "../services/bankAccountService";
@@ -117,10 +118,10 @@ const CashFlowManagementPage = () => {
     try {
       if (editId) {
         await bankAccountService.update(editId, formData);
-        alert("Cập nhật tài khoản thành công!");
+        toast.success("Cập nhật tài khoản thành công!");
       } else {
         await bankAccountService.create(formData);
-        alert("Thêm tài khoản thành công!");
+        toast.success("Thêm tài khoản thành công!");
       }
       setShowModal(false);
       setEditId(null);
@@ -132,7 +133,7 @@ const CashFlowManagementPage = () => {
       });
       fetchAccounts();
     } catch (error) {
-      alert(
+      toast.error(
         `Lỗi khi ${editId ? "cập nhật" : "thêm"} tài khoản: ` +
           (error.response?.data || error.message),
       );
@@ -154,10 +155,10 @@ const CashFlowManagementPage = () => {
     if (window.confirm("Bạn có chắc chắn muốn xóa tài khoản này?")) {
       try {
         await bankAccountService.delete(id);
-        alert("Xóa thành công!");
+        toast.success("Xóa thành công!");
         fetchAccounts();
       } catch (error) {
-        alert("Lỗi khi xóa tài khoản.");
+        toast.error("Lỗi khi xóa tài khoản.");
       }
     }
   };
@@ -186,7 +187,7 @@ const CashFlowManagementPage = () => {
       fetchAccounts();
     } catch (error) {
       console.error("Lỗi cập nhật trạng thái:", error);
-      alert("Lỗi khi cập nhật trạng thái tài khoản.");
+      toast.error("Lỗi khi cập nhật trạng thái tài khoản.");
     }
   };
 

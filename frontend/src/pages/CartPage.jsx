@@ -1,3 +1,4 @@
+import { toast } from 'react-toastify';
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useCart } from "../context/CartContext";
@@ -141,7 +142,7 @@ const CartPage = () => {
   // Hàm xử lý khi ấn Xác nhận thanh toán
   const handleConfirmCheckout = async () => {
     if (!user) {
-      alert("Vui lòng đăng nhập để thanh toán!");
+      toast.warning("Vui lòng đăng nhập để thanh toán!");
       navigate("/login");
       return;
     }
@@ -167,7 +168,7 @@ const CartPage = () => {
       clearCart(); // Xóa giỏ hàng sau khi đặt thành công
     } catch (error) {
       console.error("Lỗi khi đặt hàng:", error);
-      alert("Có lỗi xảy ra khi đặt hàng. Vui lòng thử lại!");
+      toast.error("Có lỗi xảy ra khi đặt hàng. Vui lòng thử lại!");
     } finally {
       setIsProcessing(false);
     }

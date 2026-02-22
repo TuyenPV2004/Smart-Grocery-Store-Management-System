@@ -1,3 +1,4 @@
+import { toast } from 'react-toastify';
 import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import productService from "../services/productService";
@@ -41,7 +42,7 @@ const ProductCheckModal = ({
 
   const handleSearch = async () => {
     if (!searchTerm.trim()) {
-      alert("Vui lòng nhập tên sản phẩm hoặc mã SKU!");
+      toast.warning("Vui lòng nhập tên sản phẩm hoặc mã SKU!");
       return;
     }
 
@@ -356,12 +357,12 @@ const ProductListPage = () => {
     try {
       const updatedProduct = { ...productToDelete, status: "INACTIVE" };
       await productService.update(productToDelete.id, updatedProduct, null);
-      alert("Đã chuyển trạng thái sang ngừng kinh doanh!");
+      toast.success("Đã chuyển trạng thái sang ngừng kinh doanh!");
       setDeleteStep(0);
       setProductToDelete(null);
       fetchProducts();
     } catch (error) {
-      alert("Lỗi cập nhật: " + (error.response?.data || "Có lỗi xảy ra"));
+      toast.error("Lỗi cập nhật: " + (error.response?.data || "Có lỗi xảy ra"));
     }
   };
 
@@ -373,12 +374,12 @@ const ProductListPage = () => {
     if (!productToDelete) return;
     try {
       const res = await productService.delete(productToDelete.id);
-      alert(res.data);
+      toast.info(res.data);
       setDeleteStep(0);
       setProductToDelete(null);
       fetchProducts();
     } catch (error) {
-      alert("Lỗi xóa: " + (error.response?.data || "Có lỗi xảy ra"));
+      toast.error("Lỗi xóa: " + (error.response?.data || "Có lỗi xảy ra"));
     }
   };
 
@@ -425,7 +426,7 @@ const ProductListPage = () => {
       }
       fetchProducts();
     } catch (error) {
-      alert("Lỗi: " + (error.response?.data || "Vui lòng kiểm tra lại"));
+      toast.error("Lỗi: " + (error.response?.data || "Vui lòng kiểm tra lại"));
       throw error;
     }
   };

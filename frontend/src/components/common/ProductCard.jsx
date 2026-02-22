@@ -1,3 +1,4 @@
+import { toast } from 'react-toastify';
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ShoppingCart, Heart, Eye } from "lucide-react";
@@ -90,7 +91,7 @@ const ProductCard = ({ product }) => {
           <button
             onClick={() => {
               if (!user) {
-                alert(
+                toast.warning(
                   "Vui lòng đăng nhập để có thể thêm sản phẩm vào giỏ hàng.",
                 );
                 navigate("/login");

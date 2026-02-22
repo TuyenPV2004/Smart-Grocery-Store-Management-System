@@ -1,3 +1,4 @@
+import { toast } from 'react-toastify';
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -40,7 +41,7 @@ const ProductCheckModal = ({
 
   const handleSearch = async () => {
     if (!searchTerm.trim()) {
-      alert("Vui lòng nhập tên sản phẩm hoặc mã SKU!");
+      toast.warning("Vui lòng nhập tên sản phẩm hoặc mã SKU!");
       return;
     }
 
@@ -344,7 +345,7 @@ const QuickProductModal = ({
 
   const handleSubmit = () => {
     if (!formData.name) {
-      alert("Vui lòng nhập tên sản phẩm!");
+      toast.warning("Vui lòng nhập tên sản phẩm!");
       return;
     }
     onSuccess(formData);
@@ -775,7 +776,7 @@ const InventoryExportPage = () => {
       const product = res.data.find((p) => p.sku === sku);
 
       if (!product) {
-        alert("Không tìm thấy sản phẩm với mã SKU: " + sku);
+        toast.error("Không tìm thấy sản phẩm với mã SKU: " + sku);
         return;
       }
 
@@ -784,7 +785,7 @@ const InventoryExportPage = () => {
       const batches = batchRes.data || [];
 
       if (batches.length === 0) {
-        alert("Sản phẩm này không có lô hàng nào khả dụng trong kho!");
+        toast.info("Sản phẩm này không có lô hàng nào khả dụng trong kho!");
         return;
       }
 
@@ -804,7 +805,7 @@ const InventoryExportPage = () => {
       setBatchModalOpen(true);
     } catch (error) {
       console.error("Error searching product:", error);
-      alert("Lỗi tìm kiếm sản phẩm");
+      toast.error("Lỗi tìm kiếm sản phẩm");
     }
   };
 
@@ -861,7 +862,7 @@ const InventoryExportPage = () => {
       const batches = batchRes.data || [];
 
       if (batches.length === 0) {
-        alert("Sản phẩm này không có lô hàng nào khả dụng trong kho!");
+        toast.info("Sản phẩm này không có lô hàng nào khả dụng trong kho!");
         return;
       }
 
@@ -905,7 +906,7 @@ const InventoryExportPage = () => {
       setBatchModalOpen(true);
     } catch (error) {
       console.error("Error loading batches:", error);
-      alert("Lỗi khi tải danh sách lô hàng");
+      toast.error("Lỗi khi tải danh sách lô hàng");
     }
   };
 
@@ -916,7 +917,7 @@ const InventoryExportPage = () => {
     const maxQty = newDetails[index].selectedBatch?.availableQty || 0;
 
     if (qty > maxQty) {
-      alert(`Lô hàng này chỉ còn ${maxQty} sản phẩm!`);
+      toast.warning(`Lô hàng này chỉ còn ${maxQty} sản phẩm!`);
       newDetails[index].quantity = maxQty;
     } else {
       newDetails[index].quantity = qty;
@@ -956,7 +957,7 @@ const InventoryExportPage = () => {
   // Remove row
   const handleRemoveRow = (index) => {
     if (exportDetails.length === 1) {
-      alert("Phải có ít nhất 1 sản phẩm!");
+      toast.warning("Phải có ít nhất 1 sản phẩm!");
       return;
     }
     setExportDetails(exportDetails.filter((_, i) => i !== index));
@@ -965,12 +966,12 @@ const InventoryExportPage = () => {
   // Submit export note
   const handleSubmit = async () => {
     if (!header.staffId || !isValidStaff) {
-      alert("Vui lòng nhập đúng Mã nhân viên!");
+      toast.warning("Vui lòng nhập đúng Mã nhân viên!");
       return;
     }
 
     if (!header.customerName && header.exportReason === "Xuất bán") {
-      alert("Vui lòng nhập tên khách hàng!");
+      toast.warning("Vui lòng nhập tên khách hàng!");
       return;
     }
 
@@ -978,7 +979,7 @@ const InventoryExportPage = () => {
       (d) => d.selectedBatch && d.quantity > 0,
     );
     if (validDetails.length === 0) {
-      alert("Vui lòng chọn ít nhất 1 sản phẩm với lô hàng và số lượng hợp lệ!");
+      toast.warning("Vui lòng chọn ít nhất 1 sản phẩm với lô hàng và số lượng hợp lệ!");
       return;
     }
 
@@ -1001,10 +1002,10 @@ const InventoryExportPage = () => {
     try {
       setIsSaving(true);
       await inventoryService.createExport(payload);
-      alert("Xuất kho thành công!");
+      toast.success("Xuất kho thành công!");
       navigate("/inventory/list");
     } catch (error) {
-      alert(error.response?.data || "Có lỗi xảy ra khi xuất kho");
+      toast.error(error.response?.data || "Có lỗi xảy ra khi xuất kho");
     } finally {
       setIsSaving(false);
     }

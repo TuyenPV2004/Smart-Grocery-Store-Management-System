@@ -1,3 +1,4 @@
+import { toast } from 'react-toastify';
 import { useState, useEffect } from "react";
 import userService from "../services/userService";
 import { useAuth } from "../context/AuthContext";
@@ -73,9 +74,9 @@ const ProfilePage = () => {
 
         updateUser(updatedUser); // ĐỒNG BỘ: Cập nhật Navbar ngay khi đổi Avatar
 
-        alert("Cập nhật ảnh đại diện thành công!");
+        toast.success("Cập nhật ảnh đại diện thành công!");
       } catch (error) {
-        alert("Lỗi upload ảnh.");
+        toast.error("Lỗi upload ảnh.");
       }
     }
   };
@@ -89,21 +90,21 @@ const ProfilePage = () => {
       updateUser(res.data); // ĐỒNG BỘ: Cập nhật Navbar ngay khi sửa thông tin
 
       setIsEditing(false);
-      alert("Cập nhật thành công!");
+      toast.success("Cập nhật thành công!");
     } catch (error) {
-      alert("Lỗi cập nhật profile.");
+      toast.error("Lỗi cập nhật profile.");
     }
   };
 
   const handleChangePassword = async (e) => {
     e.preventDefault();
     if (passData.newPassword !== passData.confirmPassword) {
-      alert("Mật khẩu xác nhận không khớp!");
+      toast.error("Mật khẩu xác nhận không khớp!");
       return;
     }
     try {
       await userService.changePassword(passData);
-      alert("Đổi mật khẩu thành công!");
+      toast.success("Đổi mật khẩu thành công!");
       setShowPasswordModal(false);
       setPassData({
         currentPassword: "",
@@ -111,7 +112,7 @@ const ProfilePage = () => {
         confirmPassword: "",
       });
     } catch (error) {
-      alert(error.response?.data || "Đổi mật khẩu thất bại.");
+      toast.error(error.response?.data || "Đổi mật khẩu thất bại.");
     }
   };
 

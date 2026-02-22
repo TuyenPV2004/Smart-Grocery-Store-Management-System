@@ -1,3 +1,4 @@
+import { toast } from 'react-toastify';
 import React, { useState, useEffect } from "react";
 import {
   Package,
@@ -496,11 +497,11 @@ const StockManagementPage = () => {
 
     try {
       await productService.delete(product.productId);
-      alert("Đã xóa sản phẩm thành công!");
+      toast.success("Đã xóa sản phẩm thành công!");
       fetchStockSummary();
       fetchDashboardStats();
     } catch (error) {
-      alert("Lỗi xóa sản phẩm: " + (error.response?.data || "Có lỗi xảy ra"));
+      toast.error("Lỗi xóa sản phẩm: " + (error.response?.data || "Có lỗi xảy ra"));
     }
   };
 
