@@ -1,4 +1,4 @@
-import { toast } from 'react-toastify';
+import { toast } from "react-toastify";
 import { useEffect, useState } from "react";
 import userService from "../services/userService";
 import {
@@ -13,6 +13,7 @@ import {
   ChevronDown,
   UserCircle,
 } from "lucide-react";
+import Swal from "sweetalert2";
 
 const UserListPage = () => {
   const [users, setUsers] = useState([]);
@@ -74,7 +75,18 @@ const UserListPage = () => {
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm("Bạn có chắc muốn xóa nhân viên này không?")) {
+    const result = await Swal.fire({
+      title: "Xác nhận xóa?",
+      text: "Bạn có chắc muốn xóa nhân viên này không?",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#ef4444",
+      cancelButtonColor: "#94a3b8",
+      confirmButtonText: "Xóa",
+      cancelButtonText: "Hủy bỏ",
+    });
+
+    if (result.isConfirmed) {
       try {
         await userService.deleteUser(id);
         fetchUsers();
@@ -105,11 +117,18 @@ const UserListPage = () => {
 
   const handleToggleStatus = async (user) => {
     const newStatus = user.status === "ACTIVE" ? "INACTIVE" : "ACTIVE";
-    if (
-      window.confirm(
-        `Bạn có chắc chắn muốn thay đổi trạng thái của ${user.username}?`,
-      )
-    ) {
+    const result = await Swal.fire({
+      title: "Xác nhận trạng thái?",
+      text: `Bạn có chắc chắn muốn thay đổi trạng thái của ${user.username}?`,
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonColor: "#4f46e5",
+      cancelButtonColor: "#94a3b8",
+      confirmButtonText: "Đồng ý",
+      cancelButtonText: "Hủy bỏ",
+    });
+
+    if (result.isConfirmed) {
       try {
         await userService.updateStatus(user.id, newStatus);
         fetchUsers();

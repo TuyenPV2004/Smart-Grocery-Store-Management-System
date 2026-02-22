@@ -1,4 +1,4 @@
-import { toast } from 'react-toastify';
+import { toast } from "react-toastify";
 import { useState, useEffect, useRef } from "react";
 import {
   Search,
@@ -11,6 +11,7 @@ import {
   User,
   ChevronRight,
 } from "lucide-react";
+import Swal from "sweetalert2";
 import productService from "../services/productService";
 import orderService from "../services/orderService";
 
@@ -90,7 +91,18 @@ const PosPage = () => {
   // Thanh toán
   const handleCheckout = async () => {
     if (cart.length === 0) return toast.error("Giỏ hàng trống!");
-    if (!window.confirm("Xác nhận thanh toán?")) return;
+    const result = await Swal.fire({
+      title: "Xác nhận thanh toán?",
+      text: "Bạn có chắc chắn muốn thanh toán đơn hàng này?",
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonColor: "#22c55e",
+      cancelButtonColor: "#94a3b8",
+      confirmButtonText: "Thanh toán",
+      cancelButtonText: "Hủy",
+    });
+
+    if (!result.isConfirmed) return;
 
     setLoading(true);
     try {

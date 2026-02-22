@@ -1,4 +1,4 @@
-import { toast } from 'react-toastify';
+import { toast } from "react-toastify";
 import React, { useEffect, useState } from "react";
 import supplierService from "../services/supplierService";
 import {
@@ -13,6 +13,7 @@ import {
   Truck,
   X,
 } from "lucide-react";
+import Swal from "sweetalert2";
 
 const SupplierPage = () => {
   const [suppliers, setSuppliers] = useState([]);
@@ -82,7 +83,18 @@ const SupplierPage = () => {
   };
 
   const handleToggleStatus = async (id) => {
-    if (window.confirm("Bạn muốn thay đổi trạng thái NCC này?")) {
+    const result = await Swal.fire({
+      title: "Xác nhận trạng thái?",
+      text: "Bạn muốn thay đổi trạng thái NCC này?",
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonColor: "#4f46e5",
+      cancelButtonColor: "#94a3b8",
+      confirmButtonText: "Đồng ý",
+      cancelButtonText: "Hủy bỏ",
+    });
+
+    if (result.isConfirmed) {
       await supplierService.toggleStatus(id);
       fetchSuppliers();
     }

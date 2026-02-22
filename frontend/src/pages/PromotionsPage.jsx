@@ -13,6 +13,7 @@ import {
   Info,
 } from "lucide-react";
 import moment from "moment";
+import Swal from "sweetalert2";
 
 const PromotionsPage = () => {
   const [promotions, setPromotions] = useState([]);
@@ -110,7 +111,18 @@ const PromotionsPage = () => {
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm("Bạn có chắc muốn xóa khuyến mãi này?")) {
+    const result = await Swal.fire({
+      title: "Xác nhận xóa?",
+      text: "Bạn sẽ không thể khôi phục lại khuyến mãi này!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#ef4444",
+      cancelButtonColor: "#94a3b8",
+      confirmButtonText: "Xóa",
+      cancelButtonText: "Hủy bỏ",
+    });
+
+    if (result.isConfirmed) {
       try {
         await promotionService.delete(id);
         toast.success("Xóa thành công!");
@@ -370,7 +382,7 @@ const PromotionsPage = () => {
                         required
                         name="discountValue"
                         className="w-full border-slate-200 rounded-xl px-4 py-3 bg-slate-50 focus:bg-white focus:border-indigo-400 transition-all font-medium text-slate-700 text-sm"
-                        value={formData.discountValue} 
+                        value={formData.discountValue}
                         onChange={handleChange}
                         placeholder="Nhập số"
                         min="0"

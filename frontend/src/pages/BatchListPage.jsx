@@ -1,4 +1,4 @@
-import { toast } from 'react-toastify';
+import { toast } from "react-toastify";
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import batchService from "../services/batchService";
@@ -13,6 +13,7 @@ import {
   Clock,
   Trash2,
 } from "lucide-react";
+import Swal from "sweetalert2";
 
 // Detail Modal Component
 const DetailModal = ({ isOpen, onClose, batch }) => {
@@ -163,14 +164,27 @@ const BatchListPage = () => {
   };
 
   const handleDeleteBatch = async (batchId) => {
-    if (!window.confirm("Bạn có chắc chắn muốn xóa lô hàng này?")) return;
+    const result = await Swal.fire({
+      title: "Xác nhận xóa?",
+      text: "Bạn có chắc chắn muốn xóa lô hàng này?",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#ef4444",
+      cancelButtonColor: "#94a3b8",
+      confirmButtonText: "Xóa",
+      cancelButtonText: "Hủy",
+    });
+
+    if (!result.isConfirmed) return;
 
     try {
       await batchService.deleteBatch(batchId);
       toast.success("Đã xóa lô hàng thành công!");
       fetchBatches(); // Refresh list
     } catch (error) {
-      toast.error("Lỗi xóa lô hàng: " + (error.response?.data || error.message));
+      toast.error(
+        "Lỗi xóa lô hàng: " + (error.response?.data || error.message),
+      );
     }
   };
 

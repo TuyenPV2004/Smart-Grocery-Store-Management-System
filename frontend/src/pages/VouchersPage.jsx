@@ -11,6 +11,7 @@ import {
   Info,
 } from "lucide-react";
 import moment from "moment";
+import Swal from "sweetalert2";
 
 const VouchersPage = () => {
   const [vouchers, setVouchers] = useState([]);
@@ -88,7 +89,18 @@ const VouchersPage = () => {
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm("Bạn có chắc muốn xóa mã giảm giá này?")) {
+    const result = await Swal.fire({
+      title: "Xác nhận xóa?",
+      text: "Bạn sẽ không thể khôi phục lại mã giảm giá này!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#ef4444",
+      cancelButtonColor: "#94a3b8",
+      confirmButtonText: "Xóa",
+      cancelButtonText: "Hủy bỏ",
+    });
+
+    if (result.isConfirmed) {
       try {
         await voucherService.delete(id);
         toast.success("Xóa thành công!");

@@ -1,4 +1,4 @@
-import { toast } from 'react-toastify';
+import { toast } from "react-toastify";
 import { useEffect, useState } from "react";
 import categoryService from "../services/categoryService";
 import {
@@ -13,6 +13,7 @@ import {
   Info,
   X,
 } from "lucide-react";
+import Swal from "sweetalert2";
 import HistoryModal from "../components/HistoryModal";
 
 const CategoryPage = () => {
@@ -91,10 +92,22 @@ const CategoryPage = () => {
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm("Bạn có chắc muốn xóa danh mục này?")) {
+    const result = await Swal.fire({
+      title: "Xác nhận xóa?",
+      text: "Bạn có chắc muốn xóa danh mục này?",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#ef4444",
+      cancelButtonColor: "#94a3b8",
+      confirmButtonText: "Xóa",
+      cancelButtonText: "Hủy",
+    });
+
+    if (result.isConfirmed) {
       try {
         await categoryService.delete(id);
         fetchData();
+        toast.success("Xóa thành công!");
       } catch (error) {
         toast.error(error.response?.data || "Lỗi khi xóa");
       }

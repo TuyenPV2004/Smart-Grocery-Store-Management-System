@@ -1,4 +1,4 @@
-import { toast } from 'react-toastify';
+import { toast } from "react-toastify";
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import inventoryService from "../services/inventoryService";
@@ -12,6 +12,7 @@ import {
   Calendar,
   Trash2, // 1. Import thêm icon Trash2
 } from "lucide-react";
+import Swal from "sweetalert2";
 
 // --- MODAL XEM CHI TIẾT (Giữ nguyên như cũ) ---
 const DetailModal = ({ isOpen, onClose, note }) => {
@@ -238,17 +239,26 @@ const InventoryListPage = () => {
     }
   };
   const handleDelete = async (id) => {
-    if (
-      window.confirm(
-        "Bạn có chắc chắn muốn xóa phiếu nhập này không? Hành động này không thể hoàn tác.",
-      )
-    ) {
+    const result = await Swal.fire({
+      title: "Xác nhận xóa?",
+      text: "Bạn có chắc chắn muốn xóa phiếu nhập này không? Hành động này không thể hoàn tác.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#ef4444",
+      cancelButtonColor: "#94a3b8",
+      confirmButtonText: "Xóa",
+      cancelButtonText: "Hủy",
+    });
+
+    if (result.isConfirmed) {
       try {
         await inventoryService.delete(id);
         setNotes((prevNotes) => prevNotes.filter((note) => note.id !== id));
         toast.success("Xóa phiếu thành công!");
       } catch (error) {
-        toast.error("Lỗi xóa phiếu: " + (error.response?.data || error.message));
+        toast.error(
+          "Lỗi xóa phiếu: " + (error.response?.data || error.message),
+        );
       }
     }
   };
@@ -262,14 +272,14 @@ const InventoryListPage = () => {
             Danh sách phiếu nhập xuất kho
           </h1>
           <p className="text-slate-500 text-sm mt-1.5 font-medium">
-                Tạo phiếu nhập, quản lý thông tin phiếu nhập xuất kho
-              </p>
+            Tạo phiếu nhập, quản lý thông tin phiếu nhập xuất kho
+          </p>
         </div>
         <button
           onClick={() => navigate("/inventory/entry")}
           className="bg-green-600 text-white px-5 py-2 rounded-xl flex items-center shadow-sm hover:bg-green-700 transition-all font-medium"
         >
-        Tạo phiếu nhập
+          Tạo phiếu nhập
         </button>
       </div>
 

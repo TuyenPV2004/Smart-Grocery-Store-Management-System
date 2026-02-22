@@ -19,6 +19,7 @@ import {
   Upload,
   ImageIcon,
 } from "lucide-react";
+import Swal from "sweetalert2";
 import productService from "../services/productService";
 import inventoryService from "../services/inventoryService";
 import userService from "../services/userService";
@@ -983,7 +984,18 @@ const InventoryExportPage = () => {
       return;
     }
 
-    if (!window.confirm("Bạn có chắc chắn muốn lưu phiếu xuất?")) return;
+    const result = await Swal.fire({
+      title: "Xác nhận xuất kho?",
+      text: "Bạn có chắc chắn muốn lưu phiếu xuất này?",
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonColor: "#16a34a",
+      cancelButtonColor: "#94a3b8",
+      confirmButtonText: "Đồng ý xuất",
+      cancelButtonText: "Hủy bỏ",
+    });
+
+    if (!result.isConfirmed) return;
 
     const payload = {
       code: header.code,

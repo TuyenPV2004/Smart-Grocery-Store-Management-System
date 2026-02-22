@@ -23,7 +23,11 @@ import {
   Upload,
   AlertCircle,
   ChevronUp,
+  Pencil,
+  FileCheck2,
 } from "lucide-react";
+import Swal from "sweetalert2";
+import styled, { createGlobalStyle } from "styled-components";
 import productService from "../services/productService";
 import userService from "../services/userService";
 import supplierService from "../services/supplierService";
@@ -1352,10 +1356,18 @@ const InventoryEntryPage = () => {
       return;
     }
 
-    const isConfirmed = window.confirm(
-      "Bạn có muốn lưu sản phẩm vào Quản lý sản phẩm không?",
-    );
-    if (!isConfirmed) return;
+    const result = await Swal.fire({
+      title: "Xác nhận lưu?",
+      text: "Bạn có muốn lưu sản phẩm vào Quản lý sản phẩm không?",
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonColor: "#22c55e",
+      cancelButtonColor: "#94a3b8",
+      confirmButtonText: "Đồng ý",
+      cancelButtonText: "Hủy",
+    });
+
+    if (!result.isConfirmed) return;
 
     try {
       // Clean tempData: extract supplierId from supplier object
@@ -1415,7 +1427,18 @@ const InventoryEntryPage = () => {
   };
 
   const handleConfirmSave = async () => {
-    if (!window.confirm("Bạn có muốn lưu phiếu nhập?")) return;
+    const result = await Swal.fire({
+      title: "Xác nhận lưu?",
+      text: "Bạn có muốn lưu phiếu nhập?",
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonColor: "#22c55e",
+      cancelButtonColor: "#94a3b8",
+      confirmButtonText: "Lưu phiếu",
+      cancelButtonText: "Hủy",
+    });
+
+    if (!result.isConfirmed) return;
 
     // Helper function to convert dd/MM/yyyy to yyyy-MM-dd
     const convertToISODate = (dateStr) => {

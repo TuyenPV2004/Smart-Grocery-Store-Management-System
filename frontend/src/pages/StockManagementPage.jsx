@@ -1,4 +1,4 @@
-import { toast } from 'react-toastify';
+import { toast } from "react-toastify";
 import React, { useState, useEffect } from "react";
 import {
   Package,
@@ -11,6 +11,7 @@ import {
   Trash2,
   Info,
 } from "lucide-react";
+import Swal from "sweetalert2";
 import stockService from "../services/stockService";
 import productService from "../services/productService";
 
@@ -488,12 +489,18 @@ const StockManagementPage = () => {
   };
 
   const handleDeleteProduct = async (product) => {
-    if (
-      !window.confirm(
-        `Bạn có chắc chắn muốn xóa vĩnh viễn sản phẩm "${product.productName}" không?`,
-      )
-    )
-      return;
+    const result = await Swal.fire({
+      title: "Cảnh báo nguy hiểm!",
+      text: `Bạn có chắc chắn muốn xóa vĩnh viễn sản phẩm "${product.productName}" không?`,
+      icon: "error",
+      showCancelButton: true,
+      confirmButtonColor: "#ef4444",
+      cancelButtonColor: "#94a3b8",
+      confirmButtonText: "Xóa vĩnh viễn",
+      cancelButtonText: "Hủy",
+    });
+
+    if (!result.isConfirmed) return;
 
     try {
       await productService.delete(product.productId);
@@ -501,7 +508,9 @@ const StockManagementPage = () => {
       fetchStockSummary();
       fetchDashboardStats();
     } catch (error) {
-      toast.error("Lỗi xóa sản phẩm: " + (error.response?.data || "Có lỗi xảy ra"));
+      toast.error(
+        "Lỗi xóa sản phẩm: " + (error.response?.data || "Có lỗi xảy ra"),
+      );
     }
   };
 

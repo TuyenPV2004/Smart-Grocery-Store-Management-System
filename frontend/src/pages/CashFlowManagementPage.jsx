@@ -1,6 +1,7 @@
-import { toast } from 'react-toastify';
+import { toast } from "react-toastify";
 import React, { useState, useEffect } from "react";
 import { Edit, Trash2, Search, X, CheckCircle } from "lucide-react";
+import Swal from "sweetalert2";
 import bankAccountService from "../services/bankAccountService";
 
 const bankOptions = [
@@ -152,7 +153,18 @@ const CashFlowManagementPage = () => {
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm("Bạn có chắc chắn muốn xóa tài khoản này?")) {
+    const result = await Swal.fire({
+      title: "Xác nhận xóa?",
+      text: "Bạn có chắc chắn muốn xóa tài khoản này?",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#ef4444",
+      cancelButtonColor: "#94a3b8",
+      confirmButtonText: "Xóa",
+      cancelButtonText: "Hủy",
+    });
+
+    if (result.isConfirmed) {
       try {
         await bankAccountService.delete(id);
         toast.success("Xóa thành công!");
