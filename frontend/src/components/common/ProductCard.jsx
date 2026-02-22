@@ -1,10 +1,13 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { ShoppingCart, Heart, Eye } from "lucide-react";
 import { useCart } from "../../context/CartContext";
+import { useAuth } from "../../context/AuthContext";
 
 const ProductCard = ({ product }) => {
   const { addToCart } = useCart();
+  const { user } = useAuth();
+  const navigate = useNavigate();
   const getImageUrl = (path) => {
     if (!path) return "https://via.placeholder.com/300x300?text=No+Image";
     if (path.startsWith("http")) return path;
@@ -27,9 +30,7 @@ const ProductCard = ({ product }) => {
         <div className="absolute top-3 left-3 z-10">
           <span
             className={`px-3 py-1 rounded-full text-[10px] font-medium uppercase tracking-wider ${
-              isOutOfStock
-                ? "bg-rose-400 text-white"
-                : "bg-rose-400 text-white"
+              isOutOfStock ? "bg-rose-400 text-white" : "bg-rose-400 text-white"
             }`}
           >
             {isOutOfStock ? "Hết hàng" : "Ngừng kinh doanh"}
@@ -87,7 +88,16 @@ const ProductCard = ({ product }) => {
           </div>
 
           <button
-            onClick={() => addToCart(product)}
+            onClick={() => {
+              if (!user) {
+                alert(
+                  "Vui lòng đăng nhập để có thể thêm sản phẩm vào giỏ hàng.",
+                );
+                navigate("/login");
+                return;
+              }
+              addToCart(product);
+            }}
             className={`p-2.5 rounded-xl transition-all shadow-sm active:scale-95 ${
               isOutOfStock
                 ? "bg-slate-100 text-slate-400 cursor-not-allowed"

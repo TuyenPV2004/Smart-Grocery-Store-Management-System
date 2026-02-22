@@ -83,6 +83,7 @@ import {
   X,
   CheckCircle,
   Loader2,
+  User,
 } from "lucide-react";
 
 const CartPage = () => {
@@ -171,6 +172,30 @@ const CartPage = () => {
       setIsProcessing(false);
     }
   };
+
+  // Giao diện khi chưa đăng nhập
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-[#F8FAFC] flex flex-col items-center justify-center p-4 font-poppins">
+        <div className="w-24 h-24 bg-emerald-100 rounded-full flex items-center justify-center mb-6 text-emerald-500">
+          <User size={48} />
+        </div>
+        <h2 className="text-2xl font-medium text-slate-800 mb-2">
+          Yêu cầu đăng nhập
+        </h2>
+        <p className="text-slate-500 mb-8 text-center max-w-md">
+          Bạn cần đăng nhập tài khoản hệ thống để truy cập giỏ hàng và thanh
+          toán.
+        </p>
+        <Link
+          to="/login"
+          className="px-8 py-3 bg-emerald-600 text-white rounded-xl font-medium hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-200"
+        >
+          Quay về trang đăng nhập
+        </Link>
+      </div>
+    );
+  }
 
   // Giao diện khi giỏ hàng trống
   if (cartItems.length === 0 && !orderSuccess) {

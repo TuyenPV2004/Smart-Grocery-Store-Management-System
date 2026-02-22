@@ -12,11 +12,13 @@ import {
 } from "lucide-react";
 import productService from "../services/productService";
 import { useCart } from "../context/CartContext";
+import { useAuth } from "../context/AuthContext";
 
 const ProductDetailPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { addToCart } = useCart();
+  const { user } = useAuth();
 
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -52,6 +54,11 @@ const ProductDetailPage = () => {
   };
 
   const handleAddToCart = () => {
+    if (!user) {
+      alert("Vui lòng đăng nhập để có thể thêm sản phẩm vào giỏ hàng.");
+      navigate("/login");
+      return;
+    }
     if (product) {
       addToCart(product, quantity);
       alert("Đã thêm vào giỏ hàng!");
