@@ -1,4 +1,4 @@
-import { toast } from 'react-toastify';
+import { toast } from "react-toastify";
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
@@ -14,6 +14,8 @@ import {
 import productService from "../services/productService";
 import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
+import ImageGallery from "react-image-gallery";
+import "react-image-gallery/styles/image-gallery.css";
 
 const ProductDetailPage = () => {
   const { id } = useParams();
@@ -107,28 +109,115 @@ const ProductDetailPage = () => {
         <div className="bg-white rounded-[2.5rem] p-6 md:p-10 shadow-xl shadow-slate-200/50 border border-slate-100">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20">
             {/* Left Column - Images */}
-            <div className="space-y-6">
-              <div className="aspect-square bg-slate-50 rounded-[2rem] overflow-hidden border border-slate-100 flex items-center justify-center relative group">
-                {mainImage ? (
-                  <img
-                    src={mainImage}
-                    alt={product.name}
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+            <div className="space-y-6 relative">
+              {/* Status Badge */}
+              {product.status === "OUT_OF_STOCK" && (
+                <div className="absolute top-6 left-6 z-10 bg-red-500 text-white px-4 py-1.5 rounded-full text-sm font-medium shadow-lg shadow-red-500/30">
+                  Hết hàng
+                </div>
+              )}
+
+              {mainImage ? (
+                <div className="gallery-wrapper rounded-[2rem] overflow-hidden border border-slate-100 bg-white">
+                  <style>
+                    {`
+                      .image-gallery-thumbnail {
+                        border-radius: 0.5rem;
+                        overflow: hidden;
+                        transition: all 0.2s;
+                      }
+                      .image-gallery-thumbnail.active,
+                      .image-gallery-thumbnail:hover {
+                        border: 2px solid #16a34a;
+                      }
+                      .image-gallery-icon {
+                        color: rgba(255, 255, 255, 0.8);
+                      }
+                      .image-gallery-icon:hover {
+                        color: #fff;
+                      }
+
+                      /* Cấu hình mũi tên chuyển ảnh */
+                      .gallery-wrapper .image-gallery-left-nav,
+                      .gallery-wrapper .image-gallery-right-nav {
+                        opacity: 0;
+                        transition: opacity 0.3s ease-in-out;
+                      }
+
+                      .gallery-wrapper .image-gallery-slide-wrapper:hover .image-gallery-left-nav,
+                      .gallery-wrapper .image-gallery-slide-wrapper:hover .image-gallery-right-nav {
+                        opacity: 1;
+                      }
+
+                      /* Giảm kích thước và tăng độ đậm mũi tên */
+                      .gallery-wrapper .image-gallery-left-nav .image-gallery-svg,
+                      .gallery-wrapper .image-gallery-right-nav .image-gallery-svg {
+                        height: 48px;
+                        width: 24px;
+                        stroke-width: 4px; /* Tăng độ đậm */
+                        stroke: currentColor;
+                      }
+
+                      /* Giảm khoảng cách giữa ảnh chính và ảnh phụ */
+                      .image-gallery-thumbnails-wrapper.bottom {
+                        margin-top: 8px !important;
+                      }
+                      .image-gallery-slide-wrapper {
+                        margin-bottom: 0px !important;
+                      }
+
+                      /* Khung ảnh chính vuông (giống BHX), không còn dư trắng */
+                      .gallery-wrapper .image-gallery-slide-wrapper {
+                        aspect-ratio: 1 / 1;
+                      }
+
+                      /* Bảo đảm các lớp con ăn theo chiều cao khung */
+                      .gallery-wrapper .image-gallery-swipe,
+                      .gallery-wrapper .image-gallery-slides,
+                      .gallery-wrapper .image-gallery-slide {
+                        height: 100% !important;
+                      }
+
+                      /* Ảnh lấp khung */
+                      .gallery-wrapper .image-gallery-image {
+                        width: 100% !important;
+                        height: 100% !important;
+                        object-fit: cover; /* cover sẽ không bị khoảng trắng */
+                        display: block;
+                      }
+                    `}
+                  </style>
+                  <ImageGallery
+                    items={[
+                      {
+                        original: mainImage,
+                        thumbnail: mainImage,
+                        originalClass:
+                          "aspect-square w-full object-cover rounded-t-[2rem]",
+                        thumbnailClass: "h-20 w-20 object-cover",
+                      },
+                      ...(product.images || []).map((img) => ({
+                        original: `http://localhost:8080/${img.imageUrl}`,
+                        thumbnail: `http://localhost:8080/${img.imageUrl}`,
+                        originalClass:
+                          "aspect-square w-full object-cover rounded-t-[2rem]",
+                        thumbnailClass: "h-20 w-20 object-cover",
+                      })),
+                    ]}
+                    showPlayButton={false}
+                    showFullscreenButton={false}
+                    thumbnailPosition="bottom"
                   />
-                ) : (
+                </div>
+              ) : (
+                <div className="aspect-square bg-slate-50 rounded-[2rem] border border-slate-100 flex items-center justify-center">
                   <div className="text-slate-300 flex flex-col items-center">
                     <span className="text-6xl font-black opacity-20 select-none">
                       IMG
                     </span>
                   </div>
-                )}
-                {/* Status Badge */}
-                {product.status === "OUT_OF_STOCK" && (
-                  <div className="absolute top-6 left-6 bg-red-500 text-white px-4 py-1.5 rounded-full text-sm font-medium shadow-lg shadow-red-500/30">
-                    Hết hàng
-                  </div>
-                )}
-              </div>
+                </div>
+              )}
             </div>
 
             {/* Right Column - Info */}

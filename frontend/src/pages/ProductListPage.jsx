@@ -6,6 +6,7 @@ import priceService from "../services/priceService";
 import ProductForm from "../components/ProductForm";
 import HistoryModal from "../components/HistoryModal";
 import PriceManagementModal from "../components/PriceManagementModal";
+import ProductImageModal from "../components/ProductImageModal";
 import {
   Plus,
   Search,
@@ -26,6 +27,7 @@ import {
   ChartNoAxesCombined,
   TrendingUp,
   TrendingDown,
+  Image as ImageIcon,
 } from "lucide-react";
 
 // Product Check Modal Component
@@ -265,6 +267,8 @@ const ProductListPage = () => {
   const [isCheckModalOpen, setCheckModalOpen] = useState(false);
   const [showPriceModal, setShowPriceModal] = useState(false);
   const [selectedProductForPrice, setSelectedProductForPrice] = useState(null);
+  const [showImageModal, setShowImageModal] = useState(false);
+  const [selectedProductForImage, setSelectedProductForImage] = useState(null);
 
   // Auto-open add form if navigated from inventory entry
   useEffect(() => {
@@ -613,6 +617,18 @@ const ProductListPage = () => {
                         <ChartNoAxesCombined size={18} />
                       </button>
 
+                      {/* Quản lý ảnh sản phẩm */}
+                      <button
+                        onClick={() => {
+                          setSelectedProductForImage(p);
+                          setShowImageModal(true);
+                        }}
+                        className="text-purple-600 hover:text-purple-800 transition-colors"
+                        title="Quản lý ảnh sản phẩm"
+                      >
+                        <ImageIcon size={18} />
+                      </button>
+
                       {/* Nút Xóa Mới */}
                       <button
                         onClick={() => handleDeleteClick(p)}
@@ -778,6 +794,15 @@ const ProductListPage = () => {
           onClose={() => setShowPriceModal(false)}
           product={selectedProductForPrice}
           onPriceUpdated={handlePriceUpdated}
+        />
+      )}
+
+      {showImageModal && (
+        <ProductImageModal
+          isOpen={showImageModal}
+          onClose={() => setShowImageModal(false)}
+          product={selectedProductForImage}
+          onUpdate={fetchProducts}
         />
       )}
     </div>

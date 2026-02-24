@@ -70,4 +70,7 @@ public class Product {
 
     @Transient
     private Map<String, Object> activePromotion;
+
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    private java.util.List<ProductImage> images = new java.util.ArrayList<>();
 }

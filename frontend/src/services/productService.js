@@ -39,6 +39,17 @@ const productService = {
   getHistory: (id) => axiosClient.get(`/products/${id}/history`),
 
   getProductBySku: (sku) => axiosClient.get(`/products/sku/${sku}`),
+
+  uploadImage: (productId, imageFile) => {
+    const formData = new FormData();
+    formData.append("image", imageFile);
+    return axiosClient.post(`/products/${productId}/images`, formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+  },
+
+  deleteImage: (productId, imageId) =>
+    axiosClient.delete(`/products/${productId}/images/${imageId}`),
 };
 
 export default productService;

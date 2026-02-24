@@ -94,6 +94,29 @@ public class ProductController {
         return ResponseEntity.ok(productService.createQuickProduct(request, imageFile));
     }
 
+    @PostMapping(value = "/{id}/images", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<?> uploadImage(
+            @PathVariable Long id,
+            @RequestParam("image") MultipartFile image) {
+        try {
+            return ResponseEntity.ok(productService.uploadImage(id, image));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @DeleteMapping("/{id}/images/{imageId}")
+    public ResponseEntity<?> deleteImage(
+            @PathVariable Long id,
+            @PathVariable Long imageId) {
+        try {
+            productService.deleteImage(id, imageId);
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
     /**
      * Cập nhật giá nhập sản phẩm
      */

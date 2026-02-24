@@ -13,6 +13,7 @@ import com.grocery.management.repository.PriceHistoryRepository;
 import com.grocery.management.repository.InventoryNoteDetailRepository;
 import com.grocery.management.repository.ProductBatchRepository;
 import com.grocery.management.entity.Promotion;
+import com.grocery.management.entity.ProductImage;
 import com.grocery.management.repository.PromotionRepository;
 import java.util.HashMap;
 
@@ -30,11 +31,14 @@ import java.nio.file.*;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import com.grocery.management.repository.ProductImageRepository;
+
 @Service
 @RequiredArgsConstructor
 public class ProductService {
     private final ProductRepository productRepository;
     private final ProductHistoryRepository historyRepository;
+    private final ProductImageRepository productImageRepository;
     private final UserService userService;
     private final SupplierRepository supplierRepository;
     private final PriceHistoryRepository priceHistoryRepository;
@@ -352,5 +356,47 @@ public class ProductService {
             return updatedProduct;
         }
         return product;
+    }
+
+    @Transactional
+    public ProductImage uploadImage(Long productId, MultipartFile imageFile) throws IOException {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy sản phẩm"));
+
+        if (imageFile == null || imageFile.isEmpty()) {
+            throw new RuntimeException("Vui lòng chọn ảnh để tải lên");
+        }
+
+        String fileName = System.currentTimeMillis() + "_" + imageFile.getOriginalFilename();
+        saveImageFile(fileName, imageFile);
+
+        ProductImage productImage = new ProductImage();
+        productImage.setProduct(product);
+        productImage.setImageUrl("product-images/" + fileName);
+
+        return productImageRepository.save(productImage);
+    }
+
+    @Transactional
+    public void deleteImage(Long productId, Long imageId) {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy sản phẩm"));
+
+        ProductImage productImage = productImageRepository.findById(imageId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy ảnh"));
+
+        if (!productImage.getProduct().getId().equals(productId)) {
+            throw new RuntimeException("Ảnh không thuộc sản phẩm này");
+        }
+
+        productImageRepository.delete(productImage);
+
+        try {
+            String fileName = productImage.getImageUrl().replace("product-images/", "");
+            Path filePath = Paths.get("product-images").resolve(fileName);
+            Files.deleteIfExists(filePath);
+        } catch (IOException e) {
+            System.err.println("Không thể xóa file ảnh vật lý: " + e.getMessage());
+        }
     }
 }
