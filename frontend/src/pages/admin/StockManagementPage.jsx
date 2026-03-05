@@ -563,7 +563,7 @@ const StockManagementPage = () => {
   );
 
   return (
-    <div className="p-4 md:p-6 bg-slate-50 min-h-screen">
+    <div className="admin-page-shell p-4 md:p-6 min-h-screen">
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-3xl font-medium text-slate-900 flex items-center gap-3">

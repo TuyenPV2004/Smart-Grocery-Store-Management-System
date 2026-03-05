@@ -168,7 +168,7 @@ const PromotionsPage = () => {
   };
 
   return (
-    <div className="p-6 font-poppins antialiased text-slate-600 bg-slate-50 min-h-screen">
+    <div className="admin-page-shell p-6 font-poppins antialiased text-slate-600 min-h-screen">
       <div className="max-w-[1400px] mx-auto">
         {/* Header Section */}
         <div className="flex justify-between items-center mb-6">

@@ -457,7 +457,7 @@ const ProductListPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] p-6 font-poppins antialiased text-slate-600 relative">
+    <div className="admin-page-shell min-h-screen p-6 font-poppins antialiased text-slate-600 relative">
       {/* Header Section */}
       <div className="max-w-[1400px] mx-auto flex justify-between items-center mb-6">
         <div className="flex items-center gap-3">
@@ -473,8 +473,8 @@ const ProductListPage = () => {
       </div>
 
       {/* Filter Bar */}
-      <div className="max-w-[1400px] mx-auto bg-white p-4 rounded-2xl shadow-sm border border-slate-100 mb-6 flex gap-4">
-        <div className="flex-1 relative">
+      <div className="max-w-[1400px] mx-auto mb-6 flex gap-4">
+        <div className="relative w-[420px]">
           <Search
             className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
             size={18}
@@ -497,7 +497,7 @@ const ProductListPage = () => {
         </select>
         <button
           onClick={handleProductNotFound}
-          className="bg-green-600 text-white px-5 py-2 rounded-xl flex items-center shadow-sm hover:bg-green-700 transition-all font-medium whitespace-nowrap"
+          className="ml-auto bg-green-600 text-white px-5 py-2 rounded-xl flex items-center shadow-sm hover:bg-green-700 transition-all font-medium whitespace-nowrap"
         >
           Thêm sản phẩm
         </button>
@@ -508,29 +508,29 @@ const ProductListPage = () => {
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="bg-slate-50/50 border-b border-slate-100">
-              <th className="px-6 py-4 text-[13px] font-medium text-slate-900">
+              <th className="px-6 py-4 text-sm font-medium text-slate-900">
                 Tên sản phẩm
               </th>
-              <th className="px-6 py-4 text-[13px] font-medium text-slate-900">
+              <th className="px-6 py-4 text-sm font-medium text-slate-900">
                 Mã SKU
               </th>
-              <th className="px-6 py-4 text-[13px] font-medium text-slate-900">
+              <th className="px-6 py-4 text-sm font-medium text-slate-900">
                 Barcode
               </th>
-              <th className="px-4 py-4 text-right text-[13px] font-medium text-slate-900">
+              <th className="px-4 py-4 text-right text-sm font-medium text-slate-900">
                 <div className="flex flex-col items-center ml-auto w-fit">
                   <span className="block">Giá nhập</span>
                 </div>
               </th>
-              <th className="px-4 py-4 text-right text-[13px] font-medium text-slate-900">
+              <th className="px-4 py-4 text-right text-sm font-medium text-slate-900">
                 <div className="flex flex-col items-center ml-auto w-fit">
                   <span className="block">Giá bán</span>
                 </div>
               </th>
-              <th className="px-6 py-4 text-[13px] font-medium text-slate-900">
+              <th className="px-6 py-4 text-sm font-medium text-slate-900">
                 Trạng thái
               </th>
-              <th className="px-6 py-4 text-center text-[13px] font-medium text-slate-900">
+              <th className="px-6 py-4 text-center text-sm font-medium text-slate-900">
                 Thao tác
               </th>
             </tr>
@@ -557,10 +557,10 @@ const ProductListPage = () => {
                         alt=""
                       />
                       <div className="ml-3">
-                        <div className="text-[14px] font-medium text-slate-900 leading-tight">
+                        <div className="text-sm font-medium text-slate-900 leading-tight">
                           {p.name}
                         </div>
-                        <div className="text-[12px] text-slate-500 font-medium mt-1">
+                        <div className="text-sm text-slate-500 font-medium mt-1">
                           {p.brand} - {p.unit}
                         </div>
                         {p.labels && p.labels.length > 0 && (
@@ -583,23 +583,23 @@ const ProductListPage = () => {
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-[13px] font-medium text-slate-900">
+                    <div className="text-sm font-medium text-slate-900">
                       {p.sku}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-[13px] text-slate-900 font-medium">
+                    <div className="text-sm text-slate-900 font-medium">
                       {p.barcode}
                     </div>
                   </td>
                   <td className="px-4 py-4 text-right whitespace-nowrap">
-                    <div className="text-[14px] font-medium text-slate-900">
+                    <div className="text-sm font-medium text-slate-900">
                       {p.importPrice?.toLocaleString()} ₫
                     </div>
                   </td>
 
                   <td className="px-4 py-4 text-right whitespace-nowrap">
-                    <div className="text-[14px] font-medium text-slate-900">
+                    <div className="text-sm font-medium text-slate-900">
                       {p.sellPrice?.toLocaleString()} ₫
                     </div>
                   </td>
@@ -681,11 +681,10 @@ const ProductListPage = () => {
       {deleteStep === 1 && productToDelete && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 animate-in fade-in zoom-in duration-200">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold text-slate-900">
-                Xóa sản phẩm:{" "}
-                <span className="text-indigo-600">{productToDelete.name}</span>
-              </h3>
+            <div className="flex justify-between items-start mb-6 gap-3">
+              <p className="text-slate-600">
+                Bạn muốn xử lý sản phẩm này như thế nào ?
+              </p>
               <button
                 onClick={handleCloseDeleteModal}
                 className="text-slate-400 hover:text-slate-600"
@@ -693,10 +692,6 @@ const ProductListPage = () => {
                 <X size={20} />
               </button>
             </div>
-
-            <p className="text-slate-600 mb-6">
-              Bạn muốn xử lý sản phẩm này như thế nào?
-            </p>
 
             <div className="space-y-3">
               <button
@@ -781,7 +776,6 @@ const ProductListPage = () => {
 
       <div className="max-w-[1400px] mx-auto mt-6 flex flex-col gap-4 md:flex-row md:justify-between md:items-center">
         <div className="flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-200 bg-white text-slate-700 font-medium shadow-sm">
-          <Layers size={18} className="text-indigo-600" />
           <span>Tổng sản phẩm:</span>
           <span className="text-slate-900">{products.length}</span>
         </div>

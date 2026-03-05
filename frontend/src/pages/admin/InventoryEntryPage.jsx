@@ -1,4 +1,4 @@
-import { toast } from 'react-toastify';
+import { toast } from "react-toastify";
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -59,20 +59,18 @@ const GlobalStyles = () => (
 // Product Check Modal Component
 const ProductCheckModal = ({
   isOpen,
+  searchKeyword,
   onClose,
   onProductFound,
   onProductNotFound,
 }) => {
-  const [searchTerm, setSearchTerm] = useState("");
   const [searchResult, setSearchResult] = useState(null);
   const [isSearching, setIsSearching] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
 
-  const handleSearch = async () => {
-    if (!searchTerm.trim()) {
-      toast.warning("Vui lòng nhập tên sản phẩm hoặc mã SKU!");
-      return;
-    }
+  const handleSearch = async (keyword) => {
+    const normalizedKeyword = (keyword || "").trim();
+    if (!normalizedKeyword) return;
 
     setIsSearching(true);
     setHasSearched(false);
@@ -91,13 +89,16 @@ const ProductCheckModal = ({
 
       // Check SKU match (case-insensitive, partial match)
       let found = res.data.find(
-        (p) => p.sku && p.sku.toLowerCase().includes(searchTerm.toLowerCase()),
+        (p) =>
+          p.sku &&
+          p.sku.toLowerCase().includes(normalizedKeyword.toLowerCase()),
       );
 
       // If not found, check case-insensitive name match
       if (!found) {
         found = res.data.find(
-          (p) => p.name && p.name.toLowerCase() === searchTerm.toLowerCase(),
+          (p) =>
+            p.name && p.name.toLowerCase() === normalizedKeyword.toLowerCase(),
         );
       }
 
@@ -112,6 +113,20 @@ const ProductCheckModal = ({
     }
   };
 
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const normalizedKeyword = (searchKeyword || "").trim();
+    if (!normalizedKeyword) {
+      setSearchResult(null);
+      setHasSearched(false);
+      setIsSearching(false);
+      return;
+    }
+
+    handleSearch(normalizedKeyword);
+  }, [isOpen, searchKeyword]);
+
   const handleUseProduct = () => {
     onProductFound(searchResult);
     handleClose();
@@ -123,7 +138,6 @@ const ProductCheckModal = ({
   };
 
   const handleClose = () => {
-    setSearchTerm("");
     setSearchResult(null);
     setHasSearched(false);
     onClose();
@@ -136,9 +150,6 @@ const ProductCheckModal = ({
       <div className="bg-white rounded-[2rem] shadow-2xl w-full max-w-[750px] max-h flex flex-col border border-slate-200 animate-in zoom-in duration-200 overflow-hidden">
         <div className="flex justify-between items-center p-6 border-b border-slate-100 flex-shrink-0">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-green-50 rounded-xl text-green-600">
-              <Search size={24} />
-            </div>
             <div>
               <h2 className="text-2xl font-medium text-slate-900 leading-none">
                 Kiểm tra sản phẩm
@@ -147,81 +158,59 @@ const ProductCheckModal = ({
           </div>
           <button
             onClick={handleClose}
-            className="p-2 hover:bg-green-50 hover:text-green-600 rounded-full text-slate-400 transition-all"
+            className="text-slate-400 hover:text-green-600 transition-colors"
           >
             <X size={28} />
           </button>
         </div>
 
-        {/* Body - Search Input (Dàn ngang để giảm chiều cao) */}
-        <div className="px-8 py-5 flex-shrink-0 bg-slate-50/30 border-b border-slate-100">
-          <div className="flex items-end gap-3">
-            <div className="flex-1">
-              <label className="block text-[13px] font-medium text-slate-600 mb-2 ml-1">
-                Tên sản phẩm hoặc mã SKU
-              </label>
-              <input
-                type="text"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                onKeyPress={(e) => e.key === "Enter" && handleSearch()}
-                className="w-full px-5 py-3 bg-white border border-slate-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-green-50 focus:border-green-400 transition-all font-medium text-slate-900"
-                placeholder="Tìm kiếm tên hoặc mã SKU"
-                disabled={isSearching}
-              />
-            </div>
-            <button
-              onClick={handleSearch}
-              disabled={isSearching}
-              className="px-8 py-3 bg-green-600 text-white rounded-2xl hover:bg-green-700 transition-all font-medium shadow-lg shadow-green-100 active:scale-95 flex items-center gap-2 disabled:opacity-50 h-[48px]"
-            >
-              <Search size={18} />
-              {isSearching ? "Đang tìm..." : "Tìm kiếm"}
-            </button>
-          </div>
-        </div>
-
         {/* Body - Results (Cuộn mượt mà bên trong) */}
         <div className="px-8 py-6 flex-auto min-h-0 overflow-y-auto custom-scrollbar">
-          {hasSearched && (
+          {isSearching && (
+            <div className="bg-slate-50 rounded-2xl p-8 border border-slate-200 text-center text-slate-600 font-medium">
+              Đang kiểm tra sản phẩm
+            </div>
+          )}
+
+          {!isSearching && hasSearched && (
             <div className="animate-in fade-in slide-in-from-top-4 duration-300">
               {searchResult ? (
                 <div className="space-y-5">
                   <div className="flex items-center gap-3 p-4 bg-emerald-50 rounded-2xl border border-emerald-100">
                     <CheckCircle className="text-emerald-600" size={24} />
                     <h3 className="text-lg font-medium text-slate-900">
-                      Đã tìm thấy sản phẩm!
+                      Đã tìm thấy sản phẩm phù hợp
                     </h3>
                   </div>
 
                   {/* Grid 2 cột cho thông tin chi tiết */}
                   <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm grid grid-cols-2 gap-x-10 gap-y-6">
                     <div className="col-span-2 md:col-span-1">
-                      <p className="text-xs text-slate-500 font-medium uppercase mb-1">
+                      <p className="text-sm text-slate-900 font-medium mb-1">
                         Tên sản phẩm
                       </p>
-                      <p className="font-medium text-slate-900">
+                      <p className="text-sm font-medium text-slate-900">
                         {searchResult.name}
                       </p>
                     </div>
                     <div className="col-span-2 md:col-span-1">
-                      <p className="text-xs text-slate-500 font-medium uppercase mb-1">
+                      <p className="text-sm text-slate-900 font-medium mb-1">
                         Mã SKU
                       </p>
-                      <p className="font-medium text-slate-600">
+                      <p className="font-medium text-slate-900">
                         {searchResult.sku}
                       </p>
                     </div>
                     <div className="pt-3 border-t border-slate-50">
-                      <p className="text-xs text-slate-500 font-medium uppercase mb-1">
+                      <p className="text-sm text-slate-900 font-medium mb-1">
                         Thương hiệu
                       </p>
-                      <p className="font-medium text-slate-700">
+                      <p className="font-medium text-slate-900">
                         {searchResult.brand || "---"}
                       </p>
                     </div>
                     <div className="pt-3 border-t border-slate-50">
-                      <p className="text-xs text-slate-500 font-medium uppercase mb-1">
+                      <p className="text-sm text-slate-900 font-medium mb-1">
                         Giá nhập
                       </p>
                       <p className="font-medium text-slate-600">
@@ -229,12 +218,6 @@ const ProductCheckModal = ({
                       </p>
                     </div>
                     <div className="col-span-2 pt-4 flex gap-3">
-                      <button
-                        onClick={handleClose}
-                        className="flex-1 px-6 py-3.5 text-slate-600 bg-white border border-slate-200 rounded-2xl hover:bg-slate-100 transition-all font-medium text-sm"
-                      >
-                        Kiểm tra lại
-                      </button>
                       <button
                         onClick={handleUseProduct}
                         className="flex-[2] px-6 py-3.5 bg-green-600 text-white rounded-2xl hover:bg-green-700 transition-all font-medium shadow-lg shadow-green-100 active:scale-95"
@@ -390,13 +373,7 @@ const QuickProductModal = ({
         {/* Header */}
         <div className="flex justify-between items-center p-8 border-b border-slate-100 bg-white">
           <div className="flex items-center gap-4 group">
-            <div className="flex-shrink-0 transition-all duration-300 group-hover:scale-110">
-              <PackagePlus
-                size={32}
-                className="text-green-600"
-                strokeWidth={2.25}
-              />
-            </div>
+            <div className="flex-shrink-0 transition-all duration-300 group-hover:scale-110"></div>
             <div className="flex flex-col">
               <h2 className="text-2xl font-medium text-slate-900 leading-tight tracking-tight">
                 {initialData
@@ -410,7 +387,7 @@ const QuickProductModal = ({
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-green-50 hover:text-green-600 rounded-full text-slate-400 transition-all"
+            className="text-slate-400 hover:text-green-600 transition-colors"
           >
             <X size={28} />
           </button>
@@ -618,7 +595,7 @@ const QuickProductModal = ({
                         >
                           <option value="Thùng">Thùng</option>
                           <option value="Lốc">Lốc</option>
-                          <option value ="Hộp">Hộp</option>
+                          <option value="Hộp">Hộp</option>
                           <option value="Vỉ">Vỉ</option>
                           <option value="Chai">Chai</option>
                           <option value="Cái">Cái</option>
@@ -705,23 +682,15 @@ const QuickProductModal = ({
               </div>
             </div>
           </div>
-        </div>
 
-        {/* Footer Buttons */}
-        <div className="p-8 border-t border-slate-100 flex justify-end gap-4 bg-slate-50/50">
-          <button
-            onClick={onClose}
-            className="px-6 py-3 text-slate-600 bg-white border border-slate-200 rounded-2xl hover:bg-slate-100 transition-all font-medium text-sm"
-          >
-            Hủy thao tác
-          </button>
-          <button
-            onClick={handleSubmit}
-            className="px-10 py-3 bg-green-600 text-white rounded-2xl hover:bg-green-700 transition-all font-medium text-sm shadow-lg shadow-green-100 active:scale-95 flex items-center gap-2"
-          >
-            <Save size={18} />
-            {initialData ? "Cập nhật dữ liệu" : "Lưu vào phiếu nhập"}
-          </button>
+          <div className="mt-8 flex justify-end">
+            <button
+              onClick={handleSubmit}
+              className="px-10 py-3 bg-green-600 text-white rounded-2xl hover:bg-green-700 transition-all font-medium text-sm shadow-lg shadow-green-100 active:scale-95 flex items-center gap-2"
+            >
+              {initialData ? "Cập nhật dữ liệu" : "Lưu vào phiếu nhập"}
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -937,6 +906,7 @@ const InventoryEntryPage = () => {
   const [currentRowIndex, setCurrentRowIndex] = useState(null);
   const [isValidStaff, setIsValidStaff] = useState(null);
   const [editingData, setEditingData] = useState(null);
+  const [checkSku, setCheckSku] = useState("");
 
   useEffect(() => {
     const now = new Date();
@@ -1194,51 +1164,19 @@ const InventoryEntryPage = () => {
     setDetails(newDetails);
   };
 
-  const handleSkuBlur = async (index) => {
-    const sku = details[index].sku;
-    if (!sku) return;
-    try {
-      const res = await productService.getAll({ keyword: sku });
-      const product = res.data.find((p) => p.sku === sku);
-
-      if (product) {
-        const newDetails = [...details];
-        newDetails[index].isValidSku = true;
-        newDetails[index].productInfo = product;
-        newDetails[index].isSaved = true;
-        newDetails[index].price = product.importPrice || 0;
-        newDetails[index].shelfLife = product.shelfLife || 0;
-        newDetails[index].total = calculateLineTotal(newDetails[index]);
-
-        if (newDetails[index].manufacturingDate) {
-          newDetails[index].expiryDate = calculateExpiryDate(
-            newDetails[index].manufacturingDate,
-            product.shelfLife,
-          );
-        }
-        setDetails(newDetails);
-
-        // Auto-generate batch code if manufacturing date is already filled
-        if (
-          newDetails[index].manufacturingDate &&
-          newDetails[index].expiryDate
-        ) {
-          setTimeout(() => generateBatchCode(index), 100);
-        }
-      } else {
-        throw new Error("Not found");
-      }
-    } catch (err) {
-      const newDetails = [...details];
-      newDetails[index].isValidSku = false;
-      newDetails[index].productInfo = null;
-      newDetails[index].isSaved = false;
-      setDetails(newDetails);
-    }
+  const handleSkuBlur = (index) => {
+    openCreateModal(index, details[index]?.sku);
   };
 
-  const openCreateModal = (index) => {
+  const openCreateModal = (index, skuValue) => {
+    const sku = (skuValue || "").trim();
+    if (!sku) {
+      toast.warning("Vui lòng nhập mã SKU!");
+      return;
+    }
+
     setCurrentRowIndex(index);
+    setCheckSku(sku);
     setCheckModalOpen(true);
   };
 
@@ -1536,14 +1474,16 @@ const InventoryEntryPage = () => {
       setPreviewOpen(false);
       navigate("/inventory/list");
     } catch (err) {
-      toast.error("Lỗi lưu phiếu: " + (err.response?.data?.message || err.message));
+      toast.error(
+        "Lỗi lưu phiếu: " + (err.response?.data?.message || err.message),
+      );
     }
   };
 
   const grandTotal = details.reduce((sum, item) => sum + item.total, 0);
 
   return (
-    <div className="p-4 md:p-6 bg-slate-50 text-slate-700">
+    <div className="admin-page-shell p-4 md:p-6 text-slate-700">
       <GlobalStyles />
       <div className="flex justify-between items-end mb-6">
         <div>
@@ -1565,8 +1505,8 @@ const InventoryEntryPage = () => {
       </div>
 
       <div className="bg-white p-6 rounded-[2.5rem] shadow-sm border border-slate-100 mb-6">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <div className="space-y-2">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+          <div className="space-y-2 md:col-span-3">
             <label className="text-sm font-medium text-slate-500 flex items-center gap-2">
               <Calendar size={16} className="text-green-500" /> Thời gian nhập
             </label>
@@ -1574,10 +1514,10 @@ const InventoryEntryPage = () => {
               type="datetime-local"
               value={header.importDate}
               readOnly
-              className="w-full bg-slate-50 border border-slate-200 text-slate-600 font-medium rounded-2xl px-4 py-3 focus:outline-none"
+              className="w-full border border-slate-200 text-slate-600 font-medium rounded-2xl px-4 py-3 focus:outline-none"
             />
           </div>
-          <div className="space-y-2">
+          <div className="space-y-2 md:col-span-3">
             <label className="text-sm font-medium text-slate-500 flex items-center gap-2">
               <User size={16} className="text-green-500" /> Mã nhân viên
             </label>
@@ -1585,26 +1525,26 @@ const InventoryEntryPage = () => {
               <input
                 value={header.staffId}
                 onChange={handleStaffIdChange}
-                className={`w-full border font-medium rounded-2xl px-4 py-3 outline-none transition-all ${isValidStaff === true ? "border-emerald-400 bg-emerald-50/50 text-emerald-700" : isValidStaff === false ? "border-green-400 bg-green-50/50 text-green-700" : "border-slate-200 bg-white focus:border-green-400 focus:ring-2 focus:ring-green-100"}`}
-                placeholder="Nhập mã ID..."
+                className={`w-full border font-medium rounded-2xl px-4 py-3 outline-none transition-all ${isValidStaff === true ? "border-emerald-400 bg-emerald-50/50 text-emerald-700" : isValidStaff === false ? "border-red-400 bg-red-50 text-red-700" : "border-slate-200 bg-white focus:border-green-400 focus:ring-2 focus:ring-green-100"}`}
+                placeholder="Nhập mã ID"
               />
               {isValidStaff === true && (
                 <div className="absolute right-4 top-4 w-2 h-2 bg-emerald-500 rounded-full shadow-[0_0_8px_rgba(16,185,129,0.5)]"></div>
               )}
             </div>
           </div>
-          <div className="space-y-2 md:col-span-2">
+          <div className="space-y-2 md:col-span-3">
             <label className="text-sm font-medium text-slate-500 flex items-center gap-2">
               <Smile size={16} className="text-green-500" /> Người thực hiện
             </label>
             <input
               value={header.staffName}
               disabled
-              className="w-full bg-slate-50 border border-slate-200 text-slate-700 font-medium rounded-2xl px-4 py-3"
+              className="w-full border border-slate-200 text-slate-600 font-medium rounded-2xl px-4 py-3"
               placeholder="Tên nhân viên"
             />
           </div>
-          <div className="space-y-2 md:col-span-4">
+          <div className="space-y-2 md:col-span-3">
             <label className="text-sm font-medium text-slate-500 flex items-center gap-2">
               <FileText size={16} className="text-green-500" /> Ghi chú
             </label>
@@ -1667,18 +1607,17 @@ const InventoryEntryPage = () => {
                             onChange={(e) =>
                               handleDetailChange(index, "sku", e.target.value)
                             }
-                            onBlur={() => handleSkuBlur(index)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                e.preventDefault();
+                                handleSkuBlur(index);
+                              }
+                            }}
                             className={`w-44 h-10 border pl-9 pr-3 py-2 rounded-xl text-sm font-medium outline-none transition-all ${row.isSaved ? "border-emerald-200 bg-emerald-50/30 text-emerald-700" : row.isValidSku === false ? "border-green-200 bg-green-50/30 text-green-700" : "border-slate-200 bg-white focus:border-green-400"}`}
                             placeholder="Nhập mã SKU"
                           />
                           <Search className="absolute left-3 top-2.5 text-slate-400 w-4 h-4" />
                         </div>
-                        <button
-                          onClick={() => openCreateModal(index)}
-                          className="bg-green-50 text-green-600 hover:bg-green-100 p-2 rounded-xl transition-colors w-10 h-10 flex items-center justify-center"
-                        >
-                          <Plus size={18} />
-                        </button>
                       </div>
                     ) : (
                       <div className="flex gap-3 bg-white p-2 rounded-xl border border-slate-100 shadow-sm">
@@ -1851,14 +1790,18 @@ const InventoryEntryPage = () => {
             onClick={handlePreSave}
             className="bg-green-600 text-white px-8 py-3 rounded-2xl font-medium hover:bg-green-700 shadow-lg shadow-green-200 transition-all flex items-center gap-2 text-sm"
           >
-            <Save size={20} /> Lưu phiếu nhập
+            Lưu phiếu nhập
           </button>
         </div>
       </div>
 
       <ProductCheckModal
         isOpen={isCheckModalOpen}
-        onClose={() => setCheckModalOpen(false)}
+        searchKeyword={checkSku}
+        onClose={() => {
+          setCheckModalOpen(false);
+          setCheckSku("");
+        }}
         onProductFound={handleProductFound}
         onProductNotFound={handleProductNotFound}
       />

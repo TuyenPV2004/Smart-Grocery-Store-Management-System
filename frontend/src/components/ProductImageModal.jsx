@@ -119,11 +119,8 @@ const ProductImageModal = ({ isOpen, onClose, product, onUpdate }) => {
         {/* Header */}
         <div className="flex justify-between items-center p-6 sm:p-8 border-b border-slate-100 flex-shrink-0">
           <div className="flex items-center gap-4">
-            <div className="p-3 bg-purple-50 rounded-2xl text-purple-600">
-              <ImageIcon size={28} strokeWidth={2} />
-            </div>
             <div>
-              <h2 className="text-xl sm:text-2xl font-semibold text-slate-900">
+              <h2 className="text-xl sm:text-2xl font-medium text-slate-900">
                 Quản lý ảnh sản phẩm
               </h2>
               <p className="text-slate-500 font-medium mt-1">{product.name}</p>
@@ -131,7 +128,7 @@ const ProductImageModal = ({ isOpen, onClose, product, onUpdate }) => {
           </div>
           <button
             onClick={onClose}
-            className="p-2 sm:p-2.5 hover:bg-slate-100 hover:text-slate-700 rounded-full text-slate-400 transition-colors"
+            className="text-slate-400 hover:text-slate-700 transition-colors"
           >
             <X size={24} strokeWidth={2.5} />
           </button>
@@ -143,7 +140,6 @@ const ProductImageModal = ({ isOpen, onClose, product, onUpdate }) => {
             {/* Upload Section */}
             <div className="lg:col-span-1 space-y-4">
               <h3 className="text-[15px] font-semibold text-slate-900 flex items-center gap-2">
-                <Upload size={18} className="text-purple-600" />
                 Thêm ảnh mới
               </h3>
 
@@ -216,7 +212,6 @@ const ProductImageModal = ({ isOpen, onClose, product, onUpdate }) => {
             {/* Gallery Section */}
             <div className="lg:col-span-2 space-y-4">
               <h3 className="text-[15px] font-semibold text-slate-900 flex items-center gap-2">
-                <ImageIcon size={18} className="text-purple-600" />
                 Danh sách ảnh ({images.length})
               </h3>
 

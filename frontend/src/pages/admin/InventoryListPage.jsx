@@ -22,8 +22,7 @@ const DetailModal = ({ isOpen, onClose, note }) => {
     <div className="fixed inset-0 bg-slate-900/50 flex justify-center items-center z-[70] backdrop-blur-sm p-4">
       <div className="bg-white rounded-[2rem] w-full max-w-4xl shadow-2xl border border-white/50 max-h-[90vh] overflow-hidden flex flex-col animate-in fade-in zoom-in duration-200">
         <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
-          <h3 className="text-xl font-bold text-slate-800 flex items-center gap-2">
-            <ClipboardList className="text-green-600" />
+          <h3 className="text-lg font-medium text-slate-800 flex items-center gap-2">
             Chi tiết phiếu nhập: {note.code}
           </h3>
           <button
@@ -41,7 +40,6 @@ const DetailModal = ({ isOpen, onClose, note }) => {
                 Ngày tạo
               </p>
               <div className="flex items-center gap-2 text-slate-700 font-medium">
-                <Calendar size={14} className="text-green-500" />
                 {new Date(note.createdAt).toLocaleString("vi-VN")}
               </div>
             </div>
@@ -58,7 +56,6 @@ const DetailModal = ({ isOpen, onClose, note }) => {
                 Nhân viên thực hiện
               </p>
               <div className="flex items-center gap-2 text-slate-700 font-medium text-sm">
-                <User size={14} className="text-green-500" />
                 <span>{note.createdBy?.fullName}</span>
               </div>
             </div>
@@ -132,9 +129,6 @@ const DetailModal = ({ isOpen, onClose, note }) => {
                           <div className="font-medium text-slate-900 leading-tight">
                             {d.product?.name}
                           </div>
-                          <div className="text-[11px] text-slate-900 mt-1 font-medium">
-                            {d.batchCode}
-                          </div>
                         </div>
                       </div>
                     </td>
@@ -171,15 +165,14 @@ const DetailModal = ({ isOpen, onClose, note }) => {
 
         <div className="p-6 border-t border-slate-100 bg-white flex justify-between items-center">
           <div className="flex items-center gap-2 text-slate-600 font-medium">
-            <Package size={20} className="text-green-600" />
             Tổng sản phẩm:{" "}
-            <span className="text-green-600 font-bold">
+            <span className="text-slate-600 font-medium">
               {note.details?.length || 0}
             </span>
           </div>
           <div className="flex items-center gap-3">
-            <span className="text-slate-500 font-medium">Tổng tiền phiếu:</span>
-            <span className="text-2xl font-medium text-green-600">
+            <span className="text-lg text-slate-600 font-medium">Tổng tiền phiếu:</span>
+            <span className="text-lg font-medium text-slate-600">
               {note.finalAmount?.toLocaleString()} VNĐ
             </span>
           </div>
@@ -355,7 +348,7 @@ const InventoryListPage = () => {
   );
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] p-6 font-poppins text-slate-600">
+    <div className="admin-page-shell min-h-screen p-6 font-poppins text-slate-600">
       <div className="max-w-[1400px] mx-auto mb-6">
         <div>
           <h1 className="text-2xl font-medium text-slate-900 flex items-center">
@@ -367,7 +360,7 @@ const InventoryListPage = () => {
         </div>
 
         <div className="mt-4 flex flex-wrap items-center gap-3">
-          <div className="relative flex-1 min-w-[240px]">
+          <div className="relative w-[420px]">
             <Search
               size={16}
               className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
@@ -381,21 +374,14 @@ const InventoryListPage = () => {
             />
           </div>
 
-          <button
-            onClick={() => navigate("/inventory/entry")}
-            className="bg-green-600 text-white px-5 py-2.5 rounded-xl flex items-center shadow-sm hover:bg-green-700 transition-all font-medium whitespace-nowrap"
-          >
-            Tạo phiếu nhập
-          </button>
-
           <select
             value={typeFilter}
             onChange={(e) => setTypeFilter(e.target.value)}
             className="px-4 py-2.5 border border-slate-200 rounded-xl bg-white text-slate-700 font-medium outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-400"
           >
             <option value="ALL">Tất cả loại phiếu</option>
-            <option value="IMP">Phiếu nhập (IMP)</option>
-            <option value="EXP">Phiếu xuất (EXP)</option>
+            <option value="IMP">Phiếu nhập</option>
+            <option value="EXP">Phiếu xuất</option>
           </select>
 
           <select
@@ -450,14 +436,14 @@ const InventoryListPage = () => {
                       className="hover:bg-slate-50/50 transition-colors"
                     >
                       <td
-                        className={`px-6 py-4 font-semibold ${
+                        className={`px-6 py-4 font-medium ${
                           isExport ? "text-amber-600" : "text-green-600"
                         }`}
                       >
                         {note.code}
                       </td>
 
-                      <td className="px-6 py-4 text-slate-500">
+                      <td className="px-6 py-4 text-slate-800">
                         {new Date(note.createdAt).toLocaleString("vi-VN", {
                           hour: "2-digit",
                           minute: "2-digit",
@@ -485,7 +471,7 @@ const InventoryListPage = () => {
                         <div className="flex justify-center gap-3">
                           <button
                             onClick={() => handleExport(note.id, note.code)}
-                            className="text-emerald-600 hover:bg-emerald-50 p-2 rounded-lg transition-colors"
+                            className="text-emerald-600 hover:text-emerald-800 transition-colors"
                             title="Xuất Excel"
                           >
                             <FileSpreadsheet size={18} />
@@ -493,7 +479,7 @@ const InventoryListPage = () => {
 
                           <button
                             onClick={() => handleViewDetail(note.id)}
-                            className="text-indigo-600 hover:bg-indigo-50 p-2 rounded-lg transition-colors"
+                            className="text-indigo-600 hover:text-indigo-800 transition-colors"
                             title="Xem chi tiết"
                           >
                             <Eye size={18} />
@@ -501,7 +487,7 @@ const InventoryListPage = () => {
 
                           <button
                             onClick={() => handleDelete(note.id)}
-                            className="text-red-600 hover:bg-red-50 p-2 rounded-lg transition-colors"
+                            className="text-red-600 hover:text-red-800 transition-colors"
                             title="Xóa phiếu"
                           >
                             <Trash2 size={18} />

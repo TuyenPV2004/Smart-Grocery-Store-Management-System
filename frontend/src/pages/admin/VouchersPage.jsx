@@ -158,7 +158,7 @@ const VouchersPage = () => {
   };
 
   return (
-    <div className="p-6 font-poppins antialiased text-slate-600 bg-slate-50 min-h-screen">
+    <div className="admin-page-shell p-6 font-poppins antialiased text-slate-600 min-h-screen">
       <div className="max-w-[1400px] mx-auto">
         {/* Header Section */}
         <div className="flex justify-between items-center mb-6">
@@ -172,7 +172,7 @@ const VouchersPage = () => {
           </div>
           <button
             onClick={resetForm}
-            className="bg-indigo-600 text-white px-5 py-2.5 rounded-xl flex items-center shadow-sm hover:bg-indigo-700 transition-all active:scale-95 font-medium gap-2"
+            className="bg-green-600 text-white px-5 py-2.5 rounded-xl flex items-center shadow-sm hover:bg-green-700 transition-all active:scale-95 font-medium gap-2"
           >
             Thêm mã giảm giá
           </button>
@@ -530,7 +530,7 @@ const VouchersPage = () => {
                 form="voucherForm"
                 type="submit"
                 disabled={loading}
-                className="px-6 py-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 font-medium shadow-sm transition-all active:scale-95 disabled:opacity-70 disabled:pointer-events-none flex items-center gap-2"
+                className="px-6 py-2.5 bg-green-600 text-white rounded-xl hover:bg-green-700 font-medium shadow-sm transition-all active:scale-95 disabled:opacity-70 disabled:pointer-events-none flex items-center gap-2"
               >
                 {loading && (
                   <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />

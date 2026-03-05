@@ -1,4 +1,4 @@
-import { toast } from 'react-toastify';
+import { toast } from "react-toastify";
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -31,20 +31,18 @@ import BatchSelectionModal from "../../components/BatchSelectionModal";
 
 const ProductCheckModal = ({
   isOpen,
+  searchKeyword,
   onClose,
   onProductFound,
   onProductNotFound,
 }) => {
-  const [searchTerm, setSearchTerm] = useState("");
   const [searchResult, setSearchResult] = useState(null);
   const [isSearching, setIsSearching] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
 
-  const handleSearch = async () => {
-    if (!searchTerm.trim()) {
-      toast.warning("Vui lòng nhập tên sản phẩm hoặc mã SKU!");
-      return;
-    }
+  const handleSearch = async (keyword) => {
+    const normalizedKeyword = (keyword || "").trim();
+    if (!normalizedKeyword) return;
 
     setIsSearching(true);
     setHasSearched(false);
@@ -59,12 +57,15 @@ const ProductCheckModal = ({
       }
 
       let found = res.data.find(
-        (p) => p.sku && p.sku.toLowerCase().includes(searchTerm.toLowerCase()),
+        (p) =>
+          p.sku &&
+          p.sku.toLowerCase().includes(normalizedKeyword.toLowerCase()),
       );
 
       if (!found) {
         found = res.data.find(
-          (p) => p.name && p.name.toLowerCase() === searchTerm.toLowerCase(),
+          (p) =>
+            p.name && p.name.toLowerCase() === normalizedKeyword.toLowerCase(),
         );
       }
 
@@ -79,6 +80,20 @@ const ProductCheckModal = ({
     }
   };
 
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const normalizedKeyword = (searchKeyword || "").trim();
+    if (!normalizedKeyword) {
+      setSearchResult(null);
+      setHasSearched(false);
+      setIsSearching(false);
+      return;
+    }
+
+    handleSearch(normalizedKeyword);
+  }, [isOpen, searchKeyword]);
+
   const handleUseProduct = () => {
     onProductFound(searchResult);
     handleClose();
@@ -90,7 +105,6 @@ const ProductCheckModal = ({
   };
 
   const handleClose = () => {
-    setSearchTerm("");
     setSearchResult(null);
     setHasSearched(false);
     onClose();
@@ -111,49 +125,27 @@ const ProductCheckModal = ({
                 Kiểm tra sản phẩm
               </h2>
               <p className="text-slate-500 text-sm mt-1.5 font-medium">
-                Tìm kiếm theo tên sản phẩm hoặc mã SKU
+                SKU: {searchKeyword || "---"}
               </p>
             </div>
           </div>
           <button
             onClick={handleClose}
-            className="p-2 hover:bg-green-50 hover:text-green-600 rounded-full text-slate-400 transition-all"
+            className="text-slate-400 hover:text-green-600 transition-colors"
           >
             <X size={28} />
           </button>
         </div>
 
-        {/* Body - Search Input (Dàn ngang để giảm chiều cao) */}
-        <div className="px-8 py-5 flex-shrink-0 bg-slate-50/30 border-b border-slate-100">
-          <div className="flex items-end gap-3">
-            <div className="flex-1">
-              <label className="block text-[13px] font-medium text-slate-600 mb-2 ml-1">
-                Tên sản phẩm hoặc mã SKU
-              </label>
-              <input
-                type="text"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                onKeyPress={(e) => e.key === "Enter" && handleSearch()}
-                className="w-full px-5 py-3 bg-white border border-slate-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-green-50 focus:border-green-400 transition-all font-medium text-slate-900"
-                placeholder="Ví dụ: Sữa tươi Vinamilk hoặc SKU123"
-                disabled={isSearching}
-              />
-            </div>
-            <button
-              onClick={handleSearch}
-              disabled={isSearching}
-              className="px-8 py-3 bg-green-600 text-white rounded-2xl hover:bg-green-700 transition-all font-medium shadow-lg shadow-green-100 active:scale-95 flex items-center gap-2 disabled:opacity-50 h-[48px]"
-            >
-              <Search size={18} />
-              {isSearching ? "Đang tìm..." : "Tìm kiếm"}
-            </button>
-          </div>
-        </div>
-
         {/* Body - Results (Cuộn mượt mà bên trong) */}
         <div className="px-8 py-6 flex-auto min-h-0 overflow-y-auto custom-scrollbar">
-          {hasSearched && (
+          {isSearching && (
+            <div className="bg-slate-50 rounded-2xl p-8 border border-slate-200 text-center text-slate-600 font-medium">
+              Đang kiểm tra sản phẩm...
+            </div>
+          )}
+
+          {!isSearching && hasSearched && (
             <div className="animate-in fade-in slide-in-from-top-4 duration-300">
               {searchResult ? (
                 <div className="space-y-5">
@@ -372,7 +364,7 @@ const QuickProductModal = ({
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-green-50 hover:text-green-600 rounded-full text-slate-400 transition-all"
+            className="text-slate-400 hover:text-green-600 transition-colors"
           >
             <X size={28} />
           </button>
@@ -645,22 +637,16 @@ const QuickProductModal = ({
               </div>
             </div>
           </div>
-        </div>
 
-        <div className="p-8 border-t border-slate-100 flex justify-end gap-4 bg-slate-50/50">
-          <button
-            onClick={onClose}
-            className="px-6 py-3 text-slate-600 bg-white border border-slate-200 rounded-2xl hover:bg-slate-100 transition-all font-medium text-sm"
-          >
-            Hủy thao tác
-          </button>
-          <button
-            onClick={handleSubmit}
-            className="px-10 py-3 bg-green-600 text-white rounded-2xl hover:bg-green-700 transition-all font-medium text-sm shadow-lg shadow-green-100 active:scale-95 flex items-center gap-2"
-          >
-            <Save size={18} />
-            {initialData ? "Cập nhật dữ liệu" : "Lưu vào phiếu xuất"}
-          </button>
+          <div className="mt-8 flex justify-end">
+            <button
+              onClick={handleSubmit}
+              className="px-10 py-3 bg-green-600 text-white rounded-2xl hover:bg-green-700 transition-all font-medium text-sm shadow-lg shadow-green-100 active:scale-95 flex items-center gap-2"
+            >
+              <Save size={18} />
+              {initialData ? "Cập nhật dữ liệu" : "Lưu vào phiếu xuất"}
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -711,6 +697,7 @@ const InventoryExportPage = () => {
   const [isQuickModalOpen, setQuickModalOpen] = useState(false);
   const [suppliers, setSuppliers] = useState([]);
   const [editingData, setEditingData] = useState(null);
+  const [checkSku, setCheckSku] = useState("");
 
   // Auto-generate export code
   useEffect(() => {
@@ -766,48 +753,9 @@ const InventoryExportPage = () => {
     }
   };
 
-  // Handle SKU search and load batches
-  const handleSkuBlur = async (index) => {
-    const sku = exportDetails[index].sku;
-    if (!sku) return;
-
-    try {
-      // Search product
-      const res = await productService.getAll({ keyword: sku });
-      const product = res.data.find((p) => p.sku === sku);
-
-      if (!product) {
-        toast.error("Không tìm thấy sản phẩm với mã SKU: " + sku);
-        return;
-      }
-
-      // Get available batches for this product
-      const batchRes = await batchService.getBatchesByProductSku(sku);
-      const batches = batchRes.data || [];
-
-      if (batches.length === 0) {
-        toast.info("Sản phẩm này không có lô hàng nào khả dụng trong kho!");
-        return;
-      }
-
-      // Update row with product info
-      const newDetails = [...exportDetails];
-      newDetails[index].productId = product.id;
-      newDetails[index].productName = product.name;
-      newDetails[index].thumbnail = product.thumbnail;
-      newDetails[index].barcode = product.barcode;
-      newDetails[index].price = product.sellPrice || 0;
-      setExportDetails(newDetails);
-
-      // Open batch selection modal
-      setCurrentRowIndex(index);
-      setCurrentProductName(product.name);
-      setAvailableBatches(batches);
-      setBatchModalOpen(true);
-    } catch (error) {
-      console.error("Error searching product:", error);
-      toast.error("Lỗi tìm kiếm sản phẩm");
-    }
+  // Open product check modal immediately after SKU input
+  const handleSkuBlur = (index) => {
+    handleOpenCheckModal(index, exportDetails[index]?.sku);
   };
 
   // Handle batch selection
@@ -846,8 +794,15 @@ const InventoryExportPage = () => {
     setQuickModalOpen(true);
   };
 
-  const handleOpenCheckModal = (index) => {
+  const handleOpenCheckModal = (index, skuValue) => {
+    const sku = (skuValue || "").trim();
+    if (!sku) {
+      toast.warning("Vui lòng nhập mã SKU!");
+      return;
+    }
+
     setCurrentRowIndex(index);
+    setCheckSku(sku);
     setCheckModalOpen(true);
   };
 
@@ -980,7 +935,9 @@ const InventoryExportPage = () => {
       (d) => d.selectedBatch && d.quantity > 0,
     );
     if (validDetails.length === 0) {
-      toast.warning("Vui lòng chọn ít nhất 1 sản phẩm với lô hàng và số lượng hợp lệ!");
+      toast.warning(
+        "Vui lòng chọn ít nhất 1 sản phẩm với lô hàng và số lượng hợp lệ!",
+      );
       return;
     }
 
@@ -1026,7 +983,7 @@ const InventoryExportPage = () => {
   const totalAmount = exportDetails.reduce((sum, item) => sum + item.total, 0);
 
   return (
-    <div className="p-4 md:p-6 bg-slate-50 text-slate-700">
+    <div className="admin-page-shell p-4 md:p-6 text-slate-700">
       {/* Header */}
       <div className="flex justify-between items-end mb-6">
         <div>
@@ -1181,17 +1138,15 @@ const InventoryExportPage = () => {
                             newDetails[index].sku = e.target.value;
                             setExportDetails(newDetails);
                           }}
-                          onBlur={() => handleSkuBlur(index)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              e.preventDefault();
+                              handleSkuBlur(index);
+                            }
+                          }}
                           className="w-40 px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 font-medium"
                           placeholder="Nhập SKU..."
                         />
-                        <button
-                          onClick={() => handleOpenCheckModal(index)}
-                          className="p-2 bg-green-50 text-green-600 rounded-lg hover:bg-green-100 transition-all"
-                          title="Kiểm tra sản phẩm"
-                        >
-                          <Plus size={18} />
-                        </button>
                       </div>
                     ) : (
                       <div className="flex gap-3 bg-white p-2 rounded-xl border border-slate-100 shadow-sm">
@@ -1329,7 +1284,11 @@ const InventoryExportPage = () => {
 
       <ProductCheckModal
         isOpen={isCheckModalOpen}
-        onClose={() => setCheckModalOpen(false)}
+        searchKeyword={checkSku}
+        onClose={() => {
+          setCheckModalOpen(false);
+          setCheckSku("");
+        }}
         onProductFound={handleProductFound}
         onProductNotFound={handleProductNotFound}
       />

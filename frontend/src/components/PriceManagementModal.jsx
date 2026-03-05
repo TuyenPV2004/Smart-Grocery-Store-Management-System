@@ -1,4 +1,4 @@
-import { toast } from 'react-toastify';
+import { toast } from "react-toastify";
 import React, { useState, useEffect } from "react";
 import {
   X,
@@ -88,7 +88,9 @@ const PriceManagementModal = ({ isOpen, onClose, product, onPriceUpdated }) => {
       fetchPriceHistory();
       onPriceUpdated();
     } catch (error) {
-      toast.error("Lỗi cập nhật giá bán: " + (error.response?.data || error.message));
+      toast.error(
+        "Lỗi cập nhật giá bán: " + (error.response?.data || error.message),
+      );
     } finally {
       setIsSavingSell(false);
     }
@@ -117,9 +119,6 @@ const PriceManagementModal = ({ isOpen, onClose, product, onPriceUpdated }) => {
       <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col border border-slate-200 animate-in zoom-in duration-200">
         <div className="flex justify-between items-center p-8 border-b border-slate-100">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-indigo-50 rounded-xl text-indigo-600">
-              <ChartNoAxesCombined size={24} />
-            </div>
             <div>
               <h2 className="text-2xl font-medium text-slate-900 leading-none">
                 Quản lý giá sản phẩm
@@ -131,7 +130,7 @@ const PriceManagementModal = ({ isOpen, onClose, product, onPriceUpdated }) => {
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-rose-50 hover:text-rose-600 rounded-full text-slate-400 transition-all"
+            className="text-slate-400 hover:text-rose-600 transition-colors"
           >
             <X size={28} />
           </button>
@@ -166,36 +165,39 @@ const PriceManagementModal = ({ isOpen, onClose, product, onPriceUpdated }) => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {/* Import Price Section */}
-            <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm relative overflow-hidden">
-              <div className="absolute top-0 left-0 w-1 h-full bg-blue-500"></div>
-              <h3 className="text-md font-bold text-slate-800 mb-4 flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-blue-500"></span>
+            <div className="bg-white rounded-[1.75rem] p-6 border border-slate-200 shadow-sm">
+              <h3 className="text-base font-semibold text-slate-900 mb-5">
                 Giá nhập kho
               </h3>
 
-              <div className="space-y-4">
-                <div className="bg-blue-50 rounded-xl p-4 flex justify-between items-center">
-                  <span className="text-sm font-medium text-blue-800">
-                    Hiện tại
-                  </span>
-                  <span className="text-xl font-medium text-blue-700">
-                    {product?.importPrice?.toLocaleString() || "0"} ₫
-                  </span>
+              <div className="space-y-5">
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-slate-800">
+                    Giá hiện tại
+                  </p>
+                  <div className="h-12 px-4 rounded-xl border border-slate-200 bg-slate-50 flex items-center justify-between">
+                    <span className="text-base font-medium text-slate-900">
+                      {product?.importPrice?.toLocaleString() || "0"}
+                    </span>
+                    <span className="text-sm text-slate-500 font-medium">
+                      ₫
+                    </span>
+                  </div>
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-xs font-semibold text-slate-900">
-                    Giá nhập mới
+                  <label className="text-sm font-medium text-slate-800 block">
+                    Giá mới
                   </label>
                   <div className="relative">
                     <input
                       type="number"
                       value={newImportPrice}
                       onChange={(e) => setNewImportPrice(e.target.value)}
-                      className="w-full h-12 pl-4 pr-10 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-medium text-lg"
+                      className="w-full h-12 pl-4 pr-10 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-medium text-base text-slate-900"
                       placeholder="Nhập giá"
                     />
-                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 font-medium">
+                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 font-medium">
                       ₫
                     </span>
                   </div>
@@ -212,36 +214,39 @@ const PriceManagementModal = ({ isOpen, onClose, product, onPriceUpdated }) => {
             </div>
 
             {/* Sell Price Section */}
-            <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm relative overflow-hidden">
-              <div className="absolute top-0 left-0 w-1 h-full bg-emerald-500"></div>
-              <h3 className="text-md font-bold text-slate-800 mb-4 flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+            <div className="bg-white rounded-[1.75rem] p-6 border border-slate-200 shadow-sm">
+              <h3 className="text-base font-semibold text-slate-900 mb-5">
                 Giá bán ra
               </h3>
 
-              <div className="space-y-4">
-                <div className="bg-emerald-50 rounded-xl p-4 flex justify-between items-center">
-                  <span className="text-sm font-medium text-emerald-800">
-                    Hiện tại
-                  </span>
-                  <span className="text-xl font-medium text-emerald-700">
-                    {product?.sellPrice?.toLocaleString() || "0"} ₫
-                  </span>
+              <div className="space-y-5">
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-slate-800">
+                    Giá hiện tại
+                  </p>
+                  <div className="h-12 px-4 rounded-xl border border-slate-200 bg-slate-50 flex items-center justify-between">
+                    <span className="text-base font-medium text-slate-900">
+                      {product?.sellPrice?.toLocaleString() || "0"}
+                    </span>
+                    <span className="text-sm text-slate-500 font-medium">
+                      ₫
+                    </span>
+                  </div>
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-xs font-semibold text-slate-900">
-                    Giá bán mới
+                  <label className="text-sm font-medium text-slate-800 block">
+                    Giá mới
                   </label>
                   <div className="relative">
                     <input
                       type="number"
                       value={newSellPrice}
                       onChange={(e) => setNewSellPrice(e.target.value)}
-                      className="w-full h-12 pl-4 pr-10 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all font-medium text-lg"
+                      className="w-full h-12 pl-4 pr-10 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all font-medium text-base text-slate-900"
                       placeholder="Nhập giá..."
                     />
-                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 font-medium">
+                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 font-medium">
                       ₫
                     </span>
                   </div>
@@ -260,14 +265,9 @@ const PriceManagementModal = ({ isOpen, onClose, product, onPriceUpdated }) => {
 
           {/* Price History */}
           <div>
-            <h3 className="text-lg font-medium text-slate-900 mb-4 flex items-center gap-2">
-              <div className="w-1.5 h-6 bg-slate-400 rounded-full"></div>
-              Lịch sử thay đổi
-            </h3>
-
             {isLoading ? (
               <div className="text-center py-8 text-slate-500">
-                Đang tải lịch sử...
+                Đang tải lịch sử
               </div>
             ) : priceHistory.length === 0 ? (
               <div className="bg-slate-50 rounded-xl p-8 text-center border border-slate-200">

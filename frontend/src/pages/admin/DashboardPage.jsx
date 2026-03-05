@@ -1,10 +1,5 @@
 import React, { useEffect, useState } from "react";
-import {
-  TrendingUp,
-  ShoppingCart,
-  AlertTriangle,
-  Package,
-} from "lucide-react";
+import { TrendingUp, ShoppingCart, AlertTriangle, Package } from "lucide-react";
 import {
   AreaChart,
   Area,
@@ -33,7 +28,14 @@ const TIME_OPTIONS = [
 const DASHBOARD_COLORS = {
   topProductHighlight: "#16a34a",
   topProductScale: ["#34d399", "#6ee7b7", "#a7f3d0", "#d1fae5"],
-  categoryPalette: ["#16a34a", "#0ea5e9", "#f59e0b", "#a855f7", "#ef4444", "#14b8a6"],
+  categoryPalette: [
+    "#16a34a",
+    "#0ea5e9",
+    "#f59e0b",
+    "#a855f7",
+    "#ef4444",
+    "#14b8a6",
+  ],
 };
 
 const PRODUCT_NAME_MAX_LENGTH = 24;
@@ -48,12 +50,15 @@ const normalizeProductName = (name) => {
 
   const cleaned = name.replace(/\s+/g, " ").trim();
   const words = cleaned.split(" ");
-  const unitMatch = cleaned.match(/\d+[.,]?\d*\s?(ml|l|kg|g|gr|lon|chai|hộp|hop|gói|goi)/i);
+  const unitMatch = cleaned.match(
+    /\d+[.,]?\d*\s?(ml|l|kg|g|gr|lon|chai|hộp|hop|gói|goi)/i,
+  );
   const baseName = words.slice(0, 3).join(" ");
   const unitText = unitMatch?.[0] || "";
-  const shortName = unitText && !baseName.toLowerCase().includes(unitText.toLowerCase())
-    ? `${baseName} ${unitText}`
-    : baseName;
+  const shortName =
+    unitText && !baseName.toLowerCase().includes(unitText.toLowerCase())
+      ? `${baseName} ${unitText}`
+      : baseName;
 
   return truncateText(shortName);
 };
@@ -140,7 +145,7 @@ const DashboardPage = () => {
   const categoryChartData = prepareCategorySales(categorySales);
   const totalCategoryRevenue = categoryChartData.reduce(
     (sum, item) => sum + (Number(item?.revenue) || 0),
-    0
+    0,
   );
 
   if (loading) {
@@ -191,10 +196,10 @@ const DashboardPage = () => {
   ];
 
   return (
-    <div className="p-6 font-poppins antialiased text-slate-600 bg-white min-h-full">
+    <div className="admin-page-shell p-6 font-poppins antialiased text-slate-600 min-h-full">
       <div className="max-w-[1400px] mx-auto">
         {/* Header Section */}
-        <div className="flex justify-between items-center mb-8">
+        <div className="admin-dashboard-header flex justify-between items-center mb-8">
           <div>
             <h2 className="text-2xl font-medium text-slate-900 flex items-center gap-3">
               Tổng quan hệ thống
@@ -206,7 +211,7 @@ const DashboardPage = () => {
         </div>
 
         {/* Stats Cards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="admin-kpi-band grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {statCards.map((item) => (
             <div
               key={item.id}
@@ -357,7 +362,9 @@ const DashboardPage = () => {
         {/* Product & Category Charts */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           <div className="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-sm">
-            <h3 className="text-lg font-medium text-slate-900 mb-6">Top sản phẩm bán chạy</h3>
+            <h3 className="text-lg font-medium text-slate-900 mb-6">
+              Top sản phẩm bán chạy
+            </h3>
             <div className="h-[320px] w-full">
               {topProductChartData.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
@@ -365,7 +372,11 @@ const DashboardPage = () => {
                     data={topProductChartData}
                     margin={{ top: 8, right: 24, left: 8, bottom: 40 }}
                   >
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                    <CartesianGrid
+                      strokeDasharray="3 3"
+                      vertical={false}
+                      stroke="#e2e8f0"
+                    />
                     <XAxis
                       dataKey="displayName"
                       type="category"
@@ -379,7 +390,10 @@ const DashboardPage = () => {
                     />
                     <YAxis
                       type="number"
-                      domain={[0, (dataMax) => Math.max(5, Math.ceil(dataMax * 1.15))]}
+                      domain={[
+                        0,
+                        (dataMax) => Math.max(5, Math.ceil(dataMax * 1.15)),
+                      ]}
                       allowDecimals={false}
                       axisLine={false}
                       tickLine={false}
@@ -403,7 +417,8 @@ const DashboardPage = () => {
                       formatter={(value) => [value, "Số lượng bán"]}
                       labelFormatter={(label, payload) => {
                         const revenue = payload?.[0]?.payload?.revenue || 0;
-                        const fullName = payload?.[0]?.payload?.fullName || label;
+                        const fullName =
+                          payload?.[0]?.payload?.fullName || label;
                         return `${fullName} - Doanh thu: ${formatCurrency(revenue)}`;
                       }}
                     />
@@ -413,11 +428,20 @@ const DashboardPage = () => {
                       radius={[10, 10, 0, 0]}
                     >
                       {topProductChartData.map((item, index) => {
-                        const fillColor = index === 0
-                          ? DASHBOARD_COLORS.topProductHighlight
-                          : DASHBOARD_COLORS.topProductScale[(index - 1) % DASHBOARD_COLORS.topProductScale.length];
+                        const fillColor =
+                          index === 0
+                            ? DASHBOARD_COLORS.topProductHighlight
+                            : DASHBOARD_COLORS.topProductScale[
+                                (index - 1) %
+                                  DASHBOARD_COLORS.topProductScale.length
+                              ];
 
-                        return <Cell key={`${item.fullName}-${index}`} fill={fillColor} />;
+                        return (
+                          <Cell
+                            key={`${item.fullName}-${index}`}
+                            fill={fillColor}
+                          />
+                        );
                       })}
                       <LabelList
                         dataKey="soldQuantity"
@@ -438,7 +462,9 @@ const DashboardPage = () => {
           </div>
 
           <div className="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-sm">
-            <h3 className="text-lg font-medium text-slate-900 mb-6">Doanh thu theo danh mục</h3>
+            <h3 className="text-lg font-medium text-slate-900 mb-6">
+              Doanh thu theo danh mục
+            </h3>
             <div className="h-[320px] w-full">
               {categoryChartData.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
@@ -452,12 +478,18 @@ const DashboardPage = () => {
                       outerRadius={95}
                       innerRadius={52}
                       paddingAngle={3}
-                      label={({ percent }) => (percent >= 0.05 ? `${(percent * 100).toFixed(0)}%` : "")}
+                      label={({ percent }) =>
+                        percent >= 0.05 ? `${(percent * 100).toFixed(0)}%` : ""
+                      }
                     >
                       {categoryChartData.map((entry, index) => (
                         <Cell
                           key={entry.categoryName}
-                          fill={DASHBOARD_COLORS.categoryPalette[index % DASHBOARD_COLORS.categoryPalette.length]}
+                          fill={
+                            DASHBOARD_COLORS.categoryPalette[
+                              index % DASHBOARD_COLORS.categoryPalette.length
+                            ]
+                          }
                         />
                       ))}
                     </Pie>
@@ -469,9 +501,7 @@ const DashboardPage = () => {
                         border: "1px solid #e2e8f0",
                       }}
                     />
-                    <Legend
-                      formatter={(value) => value}
-                    />
+                    <Legend formatter={(value) => value} />
                   </PieChart>
                 </ResponsiveContainer>
               ) : (

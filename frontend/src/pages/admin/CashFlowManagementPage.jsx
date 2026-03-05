@@ -211,7 +211,7 @@ const CashFlowManagementPage = () => {
   );
 
   return (
-    <div className="p-6 md:p-8 font-poppins min-h-screen bg-slate-50/50">
+    <div className="admin-page-shell p-6 md:p-8 font-poppins min-h-screen">
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
         <div>

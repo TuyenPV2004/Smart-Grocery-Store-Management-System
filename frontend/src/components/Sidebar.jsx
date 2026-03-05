@@ -8,11 +8,8 @@ import {
   LogOut,
   Layers,
   Warehouse,
-  Store,
   Truck,
   ChevronDown,
-  CircleChevronRight,
-  CircleChevronLeft,
   ClipboardList,
   Download,
   Boxes,
@@ -162,7 +159,7 @@ const Sidebar = ({ isCollapsed, onToggle }) => {
       <div
         className={`${
           isCollapsed ? "w-20" : "w-64"
-        } bg-white border-r border-slate-100 flex flex-col h-screen fixed left-0 top-0 z-50 shadow-[4px_0_24px_rgba(0,0,0,0.02)] transition-all duration-300`}
+        } bg-white border border-slate-100 rounded-3xl flex flex-col fixed left-4 top-6 bottom-6 z-50 shadow-[4px_12px_30px_rgba(15,23,42,0.08)] transition-all duration-300`}
       >
         {/* Logo Section */}
         <div
@@ -170,25 +167,21 @@ const Sidebar = ({ isCollapsed, onToggle }) => {
             isCollapsed ? "justify-center" : "gap-3"
           } mb-4`}
         >
-          <div className="p-2 bg-green-600 rounded-xl shadow-lg shadow-green-200 shrink-0">
-            <Store className="text-white" size={24} />
-          </div>
+          <button
+            type="button"
+            onClick={onToggle}
+            className="w-10 h-10 bg-green-600 rounded-xl shadow-lg shadow-green-200 shrink-0 transition-transform hover:scale-105 flex items-center justify-center"
+            aria-label={isCollapsed ? "Mở rộng sidebar" : "Thu gọn sidebar"}
+            title={isCollapsed ? "Mở rộng sidebar" : "Thu gọn sidebar"}
+          >
+            <span className="text-white text-xl leading-none font-bold">G</span>
+          </button>
           {!isCollapsed && (
             <h1 className="text-xl font-medium text-slate-900 tracking-tight truncate">
               Grocery Store
             </h1>
           )}
         </div>
-        <button
-          onClick={onToggle}
-          className="absolute top-8 -right-4 z-[60] p-1.5 bg-white rounded-full shadow-md border border-slate-200 text-slate-500 hover:text-green-600 transition-all hover:scale-110"
-        >
-          {isCollapsed ? (
-            <CircleChevronLeft size={12} />
-          ) : (
-            <CircleChevronRight size={12} />
-          )}
-        </button>
 
         {/* Menu */}
         <nav className="flex-1 px-4 space-y-1.5 overflow-y-auto overflow-x-hidden [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">

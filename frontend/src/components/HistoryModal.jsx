@@ -26,9 +26,6 @@ const HistoryModal = ({ history, onClose }) => {
         <div className="flex justify-between items-center p-8 border-b border-slate-100 bg-white">
           <div>
             <h3 className="text-2xl font-medium text-slate-900 flex items-center gap-3">
-              <div className="p-2 bg-indigo-50 rounded-xl text-indigo-600">
-                <History size={24} />
-              </div>
               Lịch sử hoạt động
             </h3>
             <p className="text-sm text-slate-500 mt-1 font-medium">
@@ -37,7 +34,7 @@ const HistoryModal = ({ history, onClose }) => {
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-rose-50 hover:text-rose-600 rounded-full text-slate-400 transition-all"
+            className="text-slate-400 hover:text-rose-600 transition-colors"
           >
             <X size={28} />
           </button>
@@ -64,10 +61,9 @@ const HistoryModal = ({ history, onClose }) => {
                   </div>
 
                   <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all duration-300">
-                    {/* Action & Time */}
                     <div className="flex justify-between items-center mb-4">
                       <span
-                        className={`px-3 py-1 rounded-lg text-[11px] font-medium border uppercase tracking-wider ${getActionStyle(
+                        className={`px-3 py-1 rounded-lg text-xs font-medium border uppercase tracking-wider ${getActionStyle(
                           item.action
                         )}`}
                       >
@@ -81,9 +77,6 @@ const HistoryModal = ({ history, onClose }) => {
 
                     {/* Performed By Card */}
                     <div className="mb-4 flex items-center gap-3 p-3 bg-slate-50/80 rounded-xl border border-slate-100/50">
-                      <div className="w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center text-indigo-600">
-                        <User size={16} />
-                      </div>
                       <div className="text-sm font-medium">
                         <span className="text-slate-500">Người thực hiện:</span>
                         <span className="ml-2 text-slate-900">
@@ -130,16 +123,6 @@ const HistoryModal = ({ history, onClose }) => {
               ))}
             </div>
           )}
-        </div>
-
-        {/* Footer Section */}
-        <div className="p-6 border-t border-slate-100 bg-white flex justify-end">
-          <button
-            onClick={onClose}
-            className="px-8 py-3 bg-slate-900 text-white rounded-2xl hover:bg-slate-700 transition-all font-medium text-[14px] shadow-lg shadow-slate-200 active:scale-95"
-          >
-            Đóng cửa sổ
-          </button>
         </div>
       </div>
     </div>

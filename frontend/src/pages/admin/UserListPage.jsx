@@ -157,7 +157,7 @@ const UserListPage = () => {
   };
 
   return (
-    <div className="p-6 font-poppins antialiased text-slate-600 bg-white">
+    <div className="admin-page-shell p-6 font-poppins antialiased text-slate-600">
       <div className="max-w-[1400px] mx-auto">
         {/* Header Section */}
         <div className="flex justify-between items-center mb-6">
@@ -432,7 +432,7 @@ const UserListPage = () => {
                 </button>
                 <button
                   type="submit"
-                  className="flex-2 px-8 py-3 bg-indigo-600 text-white rounded-2xl font-medium hover:bg-indigo-700 shadow-sm transition-all"
+                  className="flex-2 px-8 py-3 bg-green-600 text-white rounded-2xl font-medium hover:bg-green-700 shadow-sm transition-all"
                 >
                   {isEdit ? "Cập nhật" : "Tạo tài khoản"}
                 </button>

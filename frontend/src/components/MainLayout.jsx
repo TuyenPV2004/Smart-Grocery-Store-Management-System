@@ -10,14 +10,14 @@ const MainLayout = () => {
   };
 
   return (
-    <div className="flex bg-[#F8FAFC] min-h-screen relative overflow-x-hidden">
+    <div className="admin-shell flex min-h-screen relative overflow-x-hidden">
       {/* Sidebar cố định bên trái */}
       <Sidebar isCollapsed={isCollapsed} onToggle={toggleSidebar} />
 
       {/* Spacer để giữ chỗ cho Sidebar (vì Sidebar là fixed) */}
       <div
         className={`shrink-0 transition-all duration-300 ease-in-out ${
-          isCollapsed ? "w-20" : "w-64"
+          isCollapsed ? "w-24" : "w-[17rem]"
         }`}
       />
 

@@ -1,15 +1,8 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { useEffect, useState } from "react";
-import {
-  X,
-  Upload,
-  Package,
-  Image as ImageIcon,
-  Tag,
-  ChevronUp,
-} from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { X, Upload, Image as ImageIcon, ChevronUp } from "lucide-react";
 import supplierService from "../services/supplierService";
 import categoryService from "../services/categoryService";
 const productSchema = z.object({
@@ -36,6 +29,12 @@ const ProductForm = ({ existingProduct, onClose, onSuccess }) => {
   const [categories, setCategories] = useState([]);
   const [availableLabels, setAvailableLabels] = useState([]);
   const [selectedLabelIds, setSelectedLabelIds] = useState([]);
+  const [isSupplierDropdownOpen, setIsSupplierDropdownOpen] = useState(false);
+  const [isLabelDropdownOpen, setIsLabelDropdownOpen] = useState(false);
+  const [isUnitDropdownOpen, setIsUnitDropdownOpen] = useState(false);
+  const supplierDropdownRef = useRef(null);
+  const labelDropdownRef = useRef(null);
+  const unitDropdownRef = useRef(null);
 
   const {
     register,
@@ -57,6 +56,42 @@ const ProductForm = ({ existingProduct, onClose, onSuccess }) => {
           supplierId: 0,
         },
   });
+
+  const selectedSupplierId = Number(watch("supplierId")) || 0;
+  const selectedUnit = watch("unit") || "";
+  const selectedSupplier =
+    suppliers.find((supplier) => supplier.id === selectedSupplierId) || null;
+  const unitOptions = ["Thùng", "Hộp", "Cái", "Chiếc", "Chai", "Lốc", "Kg"];
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        supplierDropdownRef.current &&
+        !supplierDropdownRef.current.contains(event.target)
+      ) {
+        setIsSupplierDropdownOpen(false);
+      }
+
+      if (
+        labelDropdownRef.current &&
+        !labelDropdownRef.current.contains(event.target)
+      ) {
+        setIsLabelDropdownOpen(false);
+      }
+
+      if (
+        unitDropdownRef.current &&
+        !unitDropdownRef.current.contains(event.target)
+      ) {
+        setIsUnitDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   // Initialize selected labels from existing product
   useEffect(() => {
@@ -197,9 +232,6 @@ const ProductForm = ({ existingProduct, onClose, onSuccess }) => {
         {/* Header */}
         <div className="flex justify-between items-center p-8 border-b border-slate-100 bg-white">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-green-50 rounded-xl text-green-600">
-              <Package size={24} />
-            </div>
             <div>
               <h2 className="text-2xl font-medium text-slate-900 leading-none">
                 {existingProduct ? "Cập nhật sản phẩm" : "Thêm sản phẩm mới"}
@@ -209,11 +241,19 @@ const ProductForm = ({ existingProduct, onClose, onSuccess }) => {
               </p>
             </div>
           </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="text-slate-400 hover:text-rose-600 transition-colors"
+          >
+            <X size={28} />
+          </button>
         </div>
 
         <form
           onSubmit={handleSubmit(onSubmit)}
-          className="p-8 overflow-y-auto flex-1 custom-scrollbar"
+          className="p-8 overflow-y-auto flex-1 custom-scrollbar [&::-webkit-scrollbar]:hidden"
+          style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
         >
           <div className="grid grid-cols-1 md:grid-cols-12 gap-10">
             <div className="md:col-span-8 flex flex-col gap-8">
@@ -227,7 +267,7 @@ const ProductForm = ({ existingProduct, onClose, onSuccess }) => {
 
                 <div className="space-y-5">
                   <div className="group">
-                    <label className="block text-[13px] font-medium text-slate-900 mb-2 ml-1">
+                    <label className="block text-sm font-medium text-slate-900 mb-2 ml-1">
                       Tên sản phẩm
                     </label>
                     <input
@@ -248,29 +288,67 @@ const ProductForm = ({ existingProduct, onClose, onSuccess }) => {
                   </div>
 
                   <div className="group">
-                    <label className="block text-[13px] font-medium text-slate-900 mb-2 ml-1">
+                    <label className="block text-sm font-medium text-slate-900 mb-2 ml-1">
                       Nhà cung cấp
                     </label>
-                    <div className="relative">
-                      <select
-                        {...register("supplierId")}
-                        onChange={(e) => {
-                          register("supplierId").onChange(e);
-                          e.target.blur();
-                        }}
-                        className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-green-50 focus:border-green-400 focus:bg-white outline-none transition-all font-medium text-slate-900 cursor-pointer appearance-none peer"
+                    <div className="relative" ref={supplierDropdownRef}>
+                      <input type="hidden" {...register("supplierId")} />
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setIsSupplierDropdownOpen((prevOpen) => !prevOpen)
+                        }
+                        className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-green-50 focus:border-green-400 focus:bg-white outline-none transition-all font-medium text-slate-900 cursor-pointer appearance-none peer text-left"
                       >
-                        <option value="">Chọn nhà cung cấp</option>
-                        {suppliers.map((supplier) => (
-                          <option key={supplier.id} value={supplier.id}>
-                            {supplier.vietnameseName}
-                          </option>
-                        ))}
-                      </select>
+                        {selectedSupplier
+                          ? selectedSupplier.vietnameseName
+                          : "Chọn nhà cung cấp"}
+                      </button>
                       <ChevronUp
                         size={20}
-                        className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none transition-transform duration-200 peer-focus:rotate-180"
+                        className={`absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none transition-transform duration-200 ${
+                          isSupplierDropdownOpen ? "rotate-180" : ""
+                        }`}
                       />
+
+                      {isSupplierDropdownOpen && (
+                        <div className="absolute left-0 right-0 top-full mt-2 p-2 bg-white border border-slate-200 rounded-2xl shadow-xl z-20 max-h-56 overflow-y-auto">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setValue("supplierId", 0, {
+                                shouldValidate: true,
+                                shouldDirty: true,
+                              });
+                              setIsSupplierDropdownOpen(false);
+                            }}
+                            className="w-full text-left px-4 py-2.5 rounded-xl text-sm font-medium text-slate-700 hover:bg-slate-100 transition-colors"
+                          >
+                            Chọn nhà cung cấp
+                          </button>
+
+                          {suppliers.map((supplier) => (
+                            <button
+                              key={supplier.id}
+                              type="button"
+                              onClick={() => {
+                                setValue("supplierId", Number(supplier.id), {
+                                  shouldValidate: true,
+                                  shouldDirty: true,
+                                });
+                                setIsSupplierDropdownOpen(false);
+                              }}
+                              className={`w-full text-left px-4 py-2.5 rounded-xl text-sm font-medium transition-colors ${
+                                selectedSupplierId === supplier.id
+                                  ? "bg-green-50 text-green-700"
+                                  : "text-slate-700 hover:bg-slate-100"
+                              }`}
+                            >
+                              {supplier.vietnameseName}
+                            </button>
+                          ))}
+                        </div>
+                      )}
                     </div>
                     {errors.supplierId && (
                       <p className="text-rose-500 text-xs mt-2 ml-1 font-medium">
@@ -281,7 +359,7 @@ const ProductForm = ({ existingProduct, onClose, onSuccess }) => {
 
                   <div className="grid grid-cols-2 gap-5">
                     <div>
-                      <label className="block text-[13px] font-medium text-slate-900 mb-2 ml-1">
+                      <label className="block text-sm font-medium text-slate-900 mb-2 ml-1">
                         Mã SKU
                       </label>
                       <div className="relative">
@@ -298,7 +376,7 @@ const ProductForm = ({ existingProduct, onClose, onSuccess }) => {
                           <button
                             type="button"
                             onClick={generateSkuAndBarcode}
-                            className="absolute right-2 top-1.5 bottom-1.5 px-3 bg-white border border-slate-200 rounded-xl text-[11px] font-medium text-green-600 hover:bg-green-50 hover:border-green-200 transition-all"
+                            className="absolute right-2 top-1.5 bottom-1.5 px-3 bg-white border border-slate-200 rounded-xl text-[11px] font-medium text-black hover:bg-slate-50 hover:border-slate-200 transition-all"
                           >
                             Tạo ngẫu nhiên
                           </button>
@@ -311,7 +389,7 @@ const ProductForm = ({ existingProduct, onClose, onSuccess }) => {
                       )}
                     </div>
                     <div>
-                      <label className="block text-[13px] font-medium text-slate-900 mb-2 ml-1">
+                      <label className="block text-sm font-medium text-slate-900 mb-2 ml-1">
                         Mã barcode
                       </label>
                       <input
@@ -330,59 +408,114 @@ const ProductForm = ({ existingProduct, onClose, onSuccess }) => {
 
                   <div className="grid grid-cols-2 gap-5">
                     <div>
-                      <label className="block text-[13px] font-medium text-slate-900 mb-2 ml-1">
+                      <label className="block text-sm font-medium text-slate-900 mb-2 ml-1">
                         Nhãn sản phẩm
                       </label>
-                      <div className="relative">
-                        <select
-                          className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-green-50 focus:border-green-400 focus:bg-white outline-none transition-all font-medium text-slate-900 cursor-pointer appearance-none peer"
-                          value=""
-                          onChange={(e) => {
-                            if (e.target.value) {
-                              handleLabelToggle(parseInt(e.target.value));
-                            }
-                          }}
+                      <div className="relative" ref={labelDropdownRef}>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setIsLabelDropdownOpen((prevOpen) => !prevOpen)
+                          }
+                          className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-green-50 focus:border-green-400 focus:bg-white outline-none transition-all font-medium text-slate-900 cursor-pointer appearance-none text-left"
                         >
-                          <option value="">Chọn nhãn sản phẩm</option>
-                          {availableLabels.map((label) => (
-                            <option key={label.id} value={label.id}>
-                              {label.name}{" "}
-                              {label.labelName ? `(${label.labelName})` : ""}
-                            </option>
-                          ))}
-                        </select>
+                          Chọn nhãn sản phẩm
+                        </button>
                         <ChevronUp
                           size={20}
-                          className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none transition-transform duration-200 peer-focus:rotate-180"
+                          className={`absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none transition-transform duration-200 ${
+                            isLabelDropdownOpen ? "rotate-180" : ""
+                          }`}
                         />
+
+                        {isLabelDropdownOpen && (
+                          <div className="absolute left-0 right-0 top-full mt-2 p-2 bg-white border border-slate-200 rounded-2xl shadow-xl z-20 max-h-56 overflow-y-auto">
+                            {availableLabels.map((label) => {
+                              const isSelected = selectedLabelIds.includes(
+                                label.id,
+                              );
+                              return (
+                                <button
+                                  key={label.id}
+                                  type="button"
+                                  onClick={() => handleLabelToggle(label.id)}
+                                  className={`w-full text-left px-4 py-2.5 rounded-xl text-sm font-medium transition-colors ${
+                                    isSelected
+                                      ? "bg-green-50 text-green-700"
+                                      : "text-slate-700 hover:bg-slate-100"
+                                  }`}
+                                >
+                                  {label.name}{" "}
+                                  {label.labelName
+                                    ? `(${label.labelName})`
+                                    : ""}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        )}
                       </div>
                     </div>
                     <div>
-                      <label className="block text-[13px] font-medium text-slate-900 mb-2 ml-1">
+                      <label className="block text-sm font-medium text-slate-900 mb-2 ml-1">
                         Đơn vị
                       </label>
-                      <div className="relative">
-                        <select
-                          {...register("unit")}
-                          onChange={(e) => {
-                            register("unit").onChange(e);
-                            e.target.blur();
-                          }}
-                          className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-green-50 focus:border-green-400 focus:bg-white outline-none transition-all font-medium text-slate-900 cursor-pointer appearance-none peer"
+                      <div className="relative" ref={unitDropdownRef}>
+                        <input type="hidden" {...register("unit")} />
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setIsUnitDropdownOpen((prevOpen) => !prevOpen)
+                          }
+                          className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-green-50 focus:border-green-400 focus:bg-white outline-none transition-all font-medium text-slate-900 cursor-pointer appearance-none text-left"
                         >
-                          <option value="">Chọn đơn vị</option>
-                          <option value="Thùng">Thùng</option>
-                          <option value="Hộp">Hộp</option>
-                          <option value="Cái">Cái</option>
-                          <option value="Chiếc">Chiếc</option>
-                          <option value="Chai">Chai</option>
-                          <option value="Lốc">Lốc</option>
-                          <option value="Kg">Kg</option>
-                        </select>
+                          {selectedUnit || "Chọn đơn vị"}
+                        </button>
                         <ChevronUp
                           size={20}
-                          className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none transition-transform duration-200 peer-focus:rotate-180"
+                          className={`absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none transition-transform duration-200 ${
+                            isUnitDropdownOpen ? "rotate-180" : ""
+                          }`}
                         />
+
+                        {isUnitDropdownOpen && (
+                          <div className="absolute left-0 right-0 top-full mt-2 p-2 bg-white border border-slate-200 rounded-2xl shadow-xl z-20 max-h-56 overflow-y-auto">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setValue("unit", "", {
+                                  shouldValidate: true,
+                                  shouldDirty: true,
+                                });
+                                setIsUnitDropdownOpen(false);
+                              }}
+                              className="w-full text-left px-4 py-2.5 rounded-xl text-sm font-medium text-slate-700 hover:bg-slate-100 transition-colors"
+                            >
+                              Chọn đơn vị
+                            </button>
+
+                            {unitOptions.map((unit) => (
+                              <button
+                                key={unit}
+                                type="button"
+                                onClick={() => {
+                                  setValue("unit", unit, {
+                                    shouldValidate: true,
+                                    shouldDirty: true,
+                                  });
+                                  setIsUnitDropdownOpen(false);
+                                }}
+                                className={`w-full text-left px-4 py-2.5 rounded-xl text-sm font-medium transition-colors ${
+                                  selectedUnit === unit
+                                    ? "bg-green-50 text-green-700"
+                                    : "text-slate-700 hover:bg-slate-100"
+                                }`}
+                              >
+                                {unit}
+                              </button>
+                            ))}
+                          </div>
+                        )}
                       </div>
                       {errors.unit && (
                         <p className="text-rose-500 text-xs mt-2 ml-1 font-medium">
@@ -445,7 +578,6 @@ const ProductForm = ({ existingProduct, onClose, onSuccess }) => {
             <div className="md:col-span-4 space-y-8">
               <div className="bg-slate-50 border border-slate-200 rounded-[2.5rem] p-6 text-center">
                 <div className="flex items-center justify-center gap-2 mb-4 text-slate-600">
-                  <ImageIcon size={18} />
                   <span className="text-[13px] font-medium">
                     Hình ảnh sản phẩm
                   </span>
@@ -486,7 +618,7 @@ const ProductForm = ({ existingProduct, onClose, onSuccess }) => {
               <div className="bg-white border border-slate-200 rounded-[2.5rem] p-6 shadow-sm space-y-5">
                 <div className="flex items-center gap-2 mb-2 text-slate-900">
                   <span className="text-[13px] font-medium">
-                    Thanh toán và Trạng thái
+                    Thanh toán và trạng thái
                   </span>
                 </div>
 
@@ -546,23 +678,15 @@ const ProductForm = ({ existingProduct, onClose, onSuccess }) => {
               </div>
             </div>
           </div>
+          <div className="pt-8 flex justify-end">
+            <button
+              type="submit"
+              className="px-10 py-3 bg-green-600 text-white rounded-2xl hover:bg-green-600 transition-all font-medium text-sm shadow-lg shadow-green-100 active:scale-95"
+            >
+              Lưu dữ liệu sản phẩm
+            </button>
+          </div>
         </form>
-        <div className="p-8 border-t border-slate-100 flex justify-end gap-4 bg-slate-50/50">
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-6 py-3 text-slate-600 bg-white border border-slate-200 rounded-2xl hover:bg-slate-100 transition-all font-medium text-sm"
-          >
-            Hủy thao tác
-          </button>
-          <button
-            type="submit"
-            onClick={handleSubmit(onSubmit)}
-            className="px-10 py-3 bg-green-600 text-white rounded-2xl hover:bg-green-600 transition-all font-medium text-sm shadow-lg shadow-green-100 active:scale-95"
-          >
-            Lưu dữ liệu sản phẩm
-          </button>
-        </div>
       </div>
     </div>
   );

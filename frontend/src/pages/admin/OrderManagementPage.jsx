@@ -89,7 +89,7 @@ const OrderManagementPage = () => {
   };
 
   return (
-    <div className="p-6 space-y-6 bg-slate-50 min-h-screen">
+    <div className="admin-page-shell p-6 space-y-6 min-h-screen">
       {/* Header Section */}
       <div className="flex justify-between items-center">
         <div>

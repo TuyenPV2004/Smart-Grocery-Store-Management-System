@@ -23,7 +23,7 @@ const DetailModal = ({ isOpen, onClose, batch }) => {
     <div className="fixed inset-0 bg-slate-900/50 flex justify-center items-center z-[70] backdrop-blur-sm p-4">
       <div className="bg-white rounded-[2rem] w-full max-w-3xl shadow-2xl border border-white/50 max-h-[90vh] overflow-hidden flex flex-col animate-in fade-in zoom-in duration-200">
         <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
-          <h3 className="text-xl font-bold text-slate-800 flex items-center gap-2">
+          <h3 className="text-lg font-medium text-slate-800 flex items-center gap-2">
             Chi tiết lô hàng: {batch.batchCode}
           </h3>
           <button
@@ -238,7 +238,7 @@ const BatchListPage = () => {
   });
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] p-6 font-poppins text-slate-600">
+    <div className="admin-page-shell min-h-screen p-6 font-poppins text-slate-600">
       {/* Header */}
       <div className="max-w-[1400px] mx-auto mb-6">
         <div className="flex justify-between items-center mb-4">
@@ -254,14 +254,14 @@ const BatchListPage = () => {
 
         {/* Search + Filters */}
         <div className="flex flex-wrap items-center gap-3">
-          <div className="relative flex-1 min-w-[280px]">
+          <div className="relative w-[420px]">
             <Search
               className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400"
               size={20}
             />
             <input
               type="text"
-              placeholder="Tìm kiếm theo mã lô, SKU, tên sản phẩm, nhà cung cấp"
+              placeholder="Tìm kiếm theo mã lô, tên sản phẩm"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-12 pr-4 py-3 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"

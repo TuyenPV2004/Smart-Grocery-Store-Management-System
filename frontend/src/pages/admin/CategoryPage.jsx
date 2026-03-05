@@ -237,7 +237,7 @@ const CategoryPage = () => {
   };
 
   return (
-    <div className="p-6 font-poppins antialiased text-slate-600 bg-white">
+    <div className="admin-page-shell p-6 font-poppins antialiased text-slate-600">
       <div className="max-w-[1400px] mx-auto">
         {/* Header Section */}
         <div className="flex justify-between items-center mb-6">
@@ -311,20 +311,27 @@ const CategoryPage = () => {
         <div className="fixed inset-0 bg-slate-900/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
           <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-lg overflow-hidden border border-slate-200 animate-in fade-in zoom-in duration-200">
             <div className="px-8 pt-8 pb-4 flex justify-between items-center">
-              <h2 className="text-2xl font-medium text-slate-900 flex items-center gap-3">
-                {formData.id && <Edit size={22} className="text-indigo-600" />}
+              <h2 className="text-lg font-medium text-slate-900 flex items-center gap-3">
                 {formData.id ? "Cập nhật danh mục" : "Tạo danh mục mới"}
               </h2>
+              <button
+                type="button"
+                onClick={() => setShowModal(false)}
+                className="text-slate-400 hover:text-slate-600 transition-colors"
+                title="Đóng"
+              >
+                <X size={24} />
+              </button>
             </div>
 
             <form onSubmit={handleSubmit} className="p-8 pt-4 space-y-5">
               <div>
-                <label className="block text-[13px] font-medium text-slate-900 mb-2 ml-1">
+                <label className="block text-sm font-medium text-slate-900 mb-2 ml-1">
                   Tên danh mục
                 </label>
                 <input
                   required
-                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3 focus:bg-white focus:border-indigo-400 outline-none transition-all font-medium text-slate-900"
+                  className="w-full border border-slate-200 rounded-2xl px-5 py-3 focus:bg-white focus:border-indigo-400 outline-none transition-all font-medium text-slate-900"
                   value={formData.name}
                   onChange={handleNameChange}
                   placeholder="Nhập tên danh mục"
@@ -333,11 +340,11 @@ const CategoryPage = () => {
 
               <div className="grid grid-cols-2 gap-5">
                 <div>
-                  <label className="block text-[13px] font-medium text-slate-900 mb-2 ml-1">
+                  <label className="block text-sm font-medium text-slate-900 mb-2 ml-1">
                     Tên nhãn gán
                   </label>
                   <input
-                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3 focus:bg-white focus:border-indigo-400 outline-none transition-all font-medium text-slate-900"
+                    className="w-full border border-slate-200 rounded-2xl px-5 py-3 focus:bg-white focus:border-indigo-400 outline-none transition-all font-medium text-slate-900"
                     placeholder="Nhập tên nhãn"
                     value={formData.label}
                     onChange={(e) =>
@@ -346,7 +353,7 @@ const CategoryPage = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-[13px] font-medium text-slate-600 mb-2 ml-1">
+                  <label className="block text-sm font-medium text-slate-600 mb-2 ml-1">
                     Màu sắc nhãn
                   </label>
                   <div className="flex items-center gap-3 bg-slate-50 p-2 rounded-2xl border border-slate-100">
@@ -378,12 +385,12 @@ const CategoryPage = () => {
               )}
 
               <div>
-                <label className="block text-[13px] font-medium text-slate-600 mb-2 ml-1">
+                <label className="block text-sm font-medium text-slate-600 mb-2 ml-1">
                   Danh mục cấp cha
                 </label>
                 <div className="relative">
                   <select
-                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3 focus:bg-white focus:border-indigo-400 outline-none transition-all font-medium text-slate-700 appearance-none cursor-pointer"
+                    className="w-full border border-slate-200 rounded-2xl px-5 py-3 focus:bg-white focus:border-indigo-400 outline-none transition-all font-medium text-slate-700 appearance-none cursor-pointer"
                     value={formData.parentId}
                     onChange={(e) =>
                       setFormData({ ...formData, parentId: e.target.value })
@@ -406,13 +413,13 @@ const CategoryPage = () => {
               </div>
 
               <div>
-                <label className="block text-[13px] font-medium text-slate-600 mb-2 ml-1">
+                <label className="block text-sm font-medium text-slate-600 mb-2 ml-1">
                   Mô tả chi tiết
                 </label>
                 <textarea
                   rows="3"
-                  className="w-full bg-slate-50 border border-slate-200 rounded-[1.5rem] px-5 py-3 focus:bg-white focus:border-indigo-400 outline-none transition-all font-medium text-slate-900 resize-none"
-                  placeholder="Mô tả ngắn gọn về danh mục..."
+                  className="w-full border border-slate-200 rounded-[1.5rem] px-5 py-3 focus:bg-white focus:border-indigo-400 outline-none transition-all font-medium text-slate-900 resize-none"
+                  placeholder="Mô tả ngắn gọn về danh mục"
                   value={formData.description}
                   onChange={(e) =>
                     setFormData({ ...formData, description: e.target.value })
@@ -421,13 +428,6 @@ const CategoryPage = () => {
               </div>
 
               <div className="flex justify-end gap-3 pt-4">
-                <button
-                  type="button"
-                  onClick={() => setShowModal(false)}
-                  className="px-6 py-2.5 bg-rose-600 text-white rounded-xl hover:bg-rose-600 font-medium transition-all"
-                >
-                  Đóng
-                </button>
                 <button
                   type="submit"
                   className="px-8 py-2.5 bg-green-600 text-white rounded-xl hover:bg-green-700 font-medium shadow-sm shadow-green-100 transition-all active:scale-95"

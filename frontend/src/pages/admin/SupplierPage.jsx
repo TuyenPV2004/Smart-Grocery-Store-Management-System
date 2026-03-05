@@ -176,7 +176,7 @@ const SupplierPage = () => {
   );
 
   return (
-    <div className="p-6 bg-slate-50 min-h-screen">
+    <div className="admin-page-shell p-6 min-h-screen">
       <div className="max-w-[1400px] mx-auto">
         <div className="flex justify-between items-center mb-6">
           <div className="flex items-center gap-3">
@@ -191,8 +191,8 @@ const SupplierPage = () => {
           </div>
         </div>
 
-        <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-100 mb-6 flex items-center gap-4">
-          <div className="relative flex-1">
+        <div className="mb-6 flex items-center gap-4">
+          <div className="relative w-[420px]">
             <Search
               className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
               size={18}
@@ -212,7 +212,7 @@ const SupplierPage = () => {
           </button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {filteredSuppliers.map((s) => (
             <div
               key={s.id}
@@ -302,22 +302,22 @@ const SupplierPage = () => {
       {showModal && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 transition-all">
           <div className="bg-white rounded-[2rem] w-full max-w-2xl shadow-2xl max-h-[90vh] flex flex-col overflow-hidden border border-slate-100 relative">
-            {/* Nút đóng Icon X */}
-            <button
-              type="button"
-              onClick={closeModal}
-              className="absolute top-6 right-6 p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-all z-10"
-            >
-              <X size={20} strokeWidth={2.5} />
-            </button>
-
             {/* Header */}
             <div className="px-8 pt-8 pb-4">
-              <h2 className="text-xl font-bold text-slate-800 tracking-tight">
-                {isEditing
-                  ? "Cập nhật thông tin nhà cung cấp"
-                  : "Thêm nhà cung cấp mới"}
-              </h2>
+              <div className="flex items-center justify-between gap-4">
+                <h2 className="text-lg font-medium text-slate-800 tracking-tight">
+                  {isEditing
+                    ? "Cập nhật thông tin nhà cung cấp"
+                    : "Thêm nhà cung cấp mới"}
+                </h2>
+                <button
+                  type="button"
+                  onClick={closeModal}
+                  className="text-slate-400 hover:text-slate-600 transition-colors"
+                >
+                  <X size={20} strokeWidth={2.5} />
+                </button>
+              </div>
               <p className="text-sm text-slate-500 mt-1">
                 Vui lòng kiểm tra kỹ các thông tin có đánh dấu
               </p>
@@ -328,7 +328,7 @@ const SupplierPage = () => {
                 <div className="bg-slate-50/50 border border-slate-100 p-5 rounded-2xl space-y-4">
                   <div className="flex items-center gap-2 mb-1">
                     <span className="w-1 h-4 bg-green-500 rounded-full"></span>
-                    <h3 className="text-[11px] font-bold text-slate-900 uppercase tracking-wider">
+                    <h3 className="text-sm font-medium text-slate-900 uppercase tracking-wider">
                       Thông tin định danh
                     </h3>
                   </div>
@@ -411,7 +411,7 @@ const SupplierPage = () => {
                 <div className="bg-slate-50/50 border border-slate-100 p-5 rounded-2xl space-y-4">
                   <div className="flex items-center gap-2 mb-1">
                     <span className="w-1 h-4 bg-green-500 rounded-full"></span>
-                    <h3 className="text-[11px] font-bold text-slate-900 uppercase tracking-wider">
+                    <h3 className="text-sm font-medium text-slate-900 uppercase tracking-wider">
                       Thông tin liên hệ và chi tiết
                     </h3>
                   </div>
@@ -511,13 +511,13 @@ const SupplierPage = () => {
             <button
               type="button"
               onClick={() => setShowProductsModal(false)}
-              className="absolute top-6 right-6 p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-all z-10"
+              className="absolute top-6 right-6 text-slate-400 hover:text-slate-600 transition-colors z-10"
             >
               <X size={20} strokeWidth={2.5} />
             </button>
 
             <div className="px-8 pt-8 pb-4 border-b border-slate-100">
-              <h2 className="text-xl font-bold text-slate-800 tracking-tight">
+              <h2 className="text-lg font-medium text-slate-800 tracking-tight">
                 Sản phẩm thuộc nhà cung cấp
               </h2>
               <p className="text-sm text-slate-500 mt-1">
@@ -528,7 +528,7 @@ const SupplierPage = () => {
             <div className="overflow-y-auto px-8 pb-8 pt-5 [&::-webkit-scrollbar]:hidden">
               {isLoadingProducts ? (
                 <p className="text-sm text-slate-500">
-                  Đang tải dữ liệu sản phẩm...
+                  Đang tải dữ liệu sản phẩm
                 </p>
               ) : supplierProducts.length === 0 ? (
                 <p className="text-sm text-slate-500">
@@ -554,11 +554,11 @@ const SupplierPage = () => {
                       )}
 
                       <div className="min-w-0">
-                        <p className="text-sm font-semibold text-slate-900 line-clamp-1">
+                        <p className="text-sm font-medium text-slate-900 line-clamp-1">
                           {product.name}
                         </p>
-                        <p className="text-xs text-slate-500 mt-1">
-                          SKU: {product.sku}
+                        <p className="text-sm text-slate-500 mt-1">
+                          {product.sku}
                         </p>
                       </div>
                     </div>
