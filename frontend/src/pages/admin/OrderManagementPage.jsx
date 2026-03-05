@@ -15,7 +15,14 @@ const OrderManagementPage = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("ALL");
   const [selectedOrder, setSelectedOrder] = useState(null);
+
+  const statusOptions = [
+    { value: "ALL", label: "Tất cả" },
+    { value: "COMPLETED", label: "Hoàn thành" },
+    { value: "CANCELLED", label: "Đã hủy" },
+  ];
 
   useEffect(() => {
     fetchOrders();
@@ -34,9 +41,10 @@ const OrderManagementPage = () => {
 
   const filteredOrders = orders.filter(
     (order) =>
-      order.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      order.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (order.customerPhone && order.customerPhone.includes(searchTerm)),
+      (order.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        order.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (order.customerPhone && order.customerPhone.includes(searchTerm))) &&
+      (statusFilter === "ALL" || order.status === statusFilter),
   );
 
   const getStatusColor = (status) => {
@@ -44,11 +52,28 @@ const OrderManagementPage = () => {
       case "COMPLETED":
         return "bg-green-100 text-green-700";
       case "PENDING":
-        return "bg-yellow-100 text-yellow-700";
+        return "bg-slate-100 text-slate-700";
+      case "SHIPPING":
+        return "bg-slate-100 text-slate-700";
       case "CANCELLED":
         return "bg-red-100 text-red-700";
       default:
         return "bg-slate-100 text-slate-700";
+    }
+  };
+
+  const getStatusLabel = (status) => {
+    switch (status) {
+      case "PENDING":
+        return "PENDING";
+      case "SHIPPING":
+        return "SHIPPING";
+      case "COMPLETED":
+        return "Hoàn thành";
+      case "CANCELLED":
+        return "Đã hủy";
+      default:
+        return status;
     }
   };
 
@@ -68,7 +93,9 @@ const OrderManagementPage = () => {
       {/* Header Section */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-medium text-slate-900">Quản lý đơn hàng</h1>
+          <h1 className="text-2xl font-medium text-slate-900">
+            Quản lý đơn hàng
+          </h1>
           <p className="text-sm text-slate-500 mt-1">
             Theo dõi và quản lý tất cả đơn hàng
           </p>
@@ -97,9 +124,20 @@ const OrderManagementPage = () => {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          <button className="p-2 text-slate-500 hover:bg-slate-100 rounded-lg transition-colors border border-slate-200">
-            <Filter size={20} /> 
-          </button>
+          <div className="flex items-center gap-2 border border-slate-200 rounded-lg bg-white px-3 py-2">
+            <Filter size={16} className="text-slate-400" />
+            <select
+              className="bg-transparent text-sm font-medium text-slate-700 outline-none"
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+            >
+              {statusOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
         <div className="flex items-center gap-2">
           <div className="flex items-center px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm text-slate-600">
@@ -195,7 +233,7 @@ const OrderManagementPage = () => {
                       <span
                         className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium border border-transparent ${getStatusColor(order.status)}`}
                       >
-                        {order.status}
+                        {getStatusLabel(order.status)}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
@@ -287,7 +325,7 @@ const OrderManagementPage = () => {
                       <span
                         className={`px-2 py-0.5 rounded text-xs font-medium ${getStatusColor(selectedOrder.status)}`}
                       >
-                        {selectedOrder.status}
+                        {getStatusLabel(selectedOrder.status)}
                       </span>
                     </div>
                   </div>

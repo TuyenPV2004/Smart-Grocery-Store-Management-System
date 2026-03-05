@@ -9,6 +9,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/v1/dashboard")
 @RequiredArgsConstructor
@@ -19,5 +21,18 @@ public class DashboardController {
     @GetMapping("/stats")
     public ResponseEntity<DashboardDTO> getDashboardStats(@RequestParam(defaultValue = "7") Integer days) {
         return ResponseEntity.ok(dashboardService.getDashboardStats(days));
+    }
+
+    @GetMapping("/top-products")
+    public ResponseEntity<List<DashboardDTO.TopProduct>> getTopProducts(
+            @RequestParam(defaultValue = "7") Integer days,
+            @RequestParam(defaultValue = "5") Integer limit) {
+        return ResponseEntity.ok(dashboardService.getTopProducts(days, limit));
+    }
+
+    @GetMapping("/category-sales")
+    public ResponseEntity<List<DashboardDTO.CategorySales>> getCategorySales(
+            @RequestParam(defaultValue = "7") Integer days) {
+        return ResponseEntity.ok(dashboardService.getCategorySales(days));
     }
 }

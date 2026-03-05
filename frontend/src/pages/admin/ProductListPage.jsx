@@ -1,6 +1,7 @@
-import { toast } from 'react-toastify';
+import { toast } from "react-toastify";
 import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import ReactPaginate from "react-paginate";
 import productService from "../../services/productService";
 import priceService from "../../services/priceService";
 import ProductForm from "../../components/ProductForm";
@@ -256,7 +257,9 @@ const ProductCheckModal = ({
 const ProductListPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const productsPerPage = 10;
   const [products, setProducts] = useState([]);
+  const [currentPage, setCurrentPage] = useState(0);
   const [filter, setFilter] = useState({ keyword: "", status: "" });
   const [showModal, setShowModal] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
@@ -283,6 +286,10 @@ const ProductListPage = () => {
   useEffect(() => {
     fetchProducts();
   }, [filter]);
+
+  useEffect(() => {
+    setCurrentPage(0);
+  }, [filter.keyword, filter.status]);
 
   const fetchProducts = async () => {
     try {
@@ -351,6 +358,20 @@ const ProductListPage = () => {
     const margin = ((sellPrice - importPrice) / importPrice) * 100;
     return margin.toFixed(1);
   };
+
+  const pageCount = Math.ceil(products.length / productsPerPage);
+  const offset = currentPage * productsPerPage;
+  const currentProducts = products.slice(offset, offset + productsPerPage);
+
+  const handlePageClick = (event) => {
+    setCurrentPage(event.selected);
+  };
+
+  useEffect(() => {
+    if (pageCount > 0 && currentPage > pageCount - 1) {
+      setCurrentPage(pageCount - 1);
+    }
+  }, [pageCount, currentPage]);
 
   const handleDeleteClick = (product) => {
     setProductToDelete(product);
@@ -515,7 +536,7 @@ const ProductListPage = () => {
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-50">
-            {products.map((p) => {
+            {currentProducts.map((p) => {
               const margin = calculateMargin(p.importPrice, p.sellPrice);
               const isProfit = margin >= 0;
 
@@ -758,12 +779,38 @@ const ProductListPage = () => {
         </div>
       )}
 
-      <div className="max-w-[1400px] mx-auto mt-6 flex justify-end items-center">
+      <div className="max-w-[1400px] mx-auto mt-6 flex flex-col gap-4 md:flex-row md:justify-between md:items-center">
         <div className="flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-200 bg-white text-slate-700 font-medium shadow-sm">
           <Layers size={18} className="text-indigo-600" />
           <span>Tổng sản phẩm:</span>
           <span className="text-slate-900">{products.length}</span>
         </div>
+
+        {pageCount > 1 && (
+          <ReactPaginate
+            breakLabel="..."
+            nextLabel=">"
+            onPageChange={handlePageClick}
+            pageRangeDisplayed={3}
+            marginPagesDisplayed={1}
+            pageCount={pageCount}
+            previousLabel="<"
+            forcePage={currentPage}
+            renderOnZeroPageCount={null}
+            containerClassName="flex items-center gap-1"
+            pageClassName=""
+            pageLinkClassName="min-w-9 h-9 px-2 flex items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-700 text-sm font-medium hover:bg-slate-50 transition-colors"
+            previousClassName=""
+            previousLinkClassName="min-w-9 h-9 px-2 flex items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-700 text-sm font-medium hover:bg-slate-50 transition-colors"
+            nextClassName=""
+            nextLinkClassName="min-w-9 h-9 px-2 flex items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-700 text-sm font-medium hover:bg-slate-50 transition-colors"
+            breakClassName=""
+            breakLinkClassName="min-w-9 h-9 px-2 flex items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 text-sm font-medium"
+            activeClassName=""
+            activeLinkClassName="!bg-green-600 !text-white !border-green-600"
+            disabledClassName="opacity-40 pointer-events-none"
+          />
+        )}
       </div>
 
       <ProductCheckModal

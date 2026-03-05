@@ -4,11 +4,18 @@ import {
   ShoppingCart,
   AlertTriangle,
   Package,
-  Clock,
 } from "lucide-react";
 import {
   AreaChart,
   Area,
+  BarChart,
+  Bar,
+  PieChart,
+  Pie,
+  Cell,
+  Legend,
+  Label,
+  LabelList,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -23,8 +30,72 @@ const TIME_OPTIONS = [
   { value: 90, label: "90 ngày" },
 ];
 
+const DASHBOARD_COLORS = {
+  topProductHighlight: "#16a34a",
+  topProductScale: ["#34d399", "#6ee7b7", "#a7f3d0", "#d1fae5"],
+  categoryPalette: ["#16a34a", "#0ea5e9", "#f59e0b", "#a855f7", "#ef4444", "#14b8a6"],
+};
+
+const PRODUCT_NAME_MAX_LENGTH = 24;
+
+const truncateText = (text, max = PRODUCT_NAME_MAX_LENGTH) => {
+  if (!text) return "N/A";
+  return text.length > max ? `${text.slice(0, max)}...` : text;
+};
+
+const normalizeProductName = (name) => {
+  if (!name) return "N/A";
+
+  const cleaned = name.replace(/\s+/g, " ").trim();
+  const words = cleaned.split(" ");
+  const unitMatch = cleaned.match(/\d+[.,]?\d*\s?(ml|l|kg|g|gr|lon|chai|hộp|hop|gói|goi)/i);
+  const baseName = words.slice(0, 3).join(" ");
+  const unitText = unitMatch?.[0] || "";
+  const shortName = unitText && !baseName.toLowerCase().includes(unitText.toLowerCase())
+    ? `${baseName} ${unitText}`
+    : baseName;
+
+  return truncateText(shortName);
+};
+
+const normalizeTopProducts = (products = []) => {
+  return [...products]
+    .filter((item) => (item?.soldQuantity || 0) > 0)
+    .sort((a, b) => (b?.soldQuantity || 0) - (a?.soldQuantity || 0))
+    .slice(0, 10)
+    .map((item, index) => ({
+      ...item,
+      rank: index + 1,
+      fullName: item?.productName || "N/A",
+      displayName: normalizeProductName(item?.productName),
+    }));
+};
+
+const prepareCategorySales = (categories = []) => {
+  const validCategories = categories
+    .filter((item) => (item?.revenue || 0) > 0)
+    .sort((a, b) => (b?.revenue || 0) - (a?.revenue || 0));
+
+  const topFive = validCategories.slice(0, 5);
+  const othersRevenue = validCategories
+    .slice(5)
+    .reduce((sum, item) => sum + (Number(item?.revenue) || 0), 0);
+
+  const chartData = [...topFive];
+  if (othersRevenue > 0) {
+    chartData.push({
+      categoryName: "Others",
+      revenue: othersRevenue,
+    });
+  }
+
+  return chartData;
+};
+
 const DashboardPage = () => {
   const [stats, setStats] = useState(null);
+  const [topProducts, setTopProducts] = useState([]);
+  const [categorySales, setCategorySales] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedDays, setSelectedDays] = useState(7);
 
@@ -35,8 +106,15 @@ const DashboardPage = () => {
   const fetchDashboardStats = async (days) => {
     setLoading(true);
     try {
-      const res = await dashboardService.getStats(days);
-      setStats(res.data);
+      const [statsRes, topProductsRes, categorySalesRes] = await Promise.all([
+        dashboardService.getStats(days),
+        dashboardService.getTopProducts(days, 10),
+        dashboardService.getCategorySales(days),
+      ]);
+
+      setStats(statsRes.data);
+      setTopProducts(topProductsRes.data || []);
+      setCategorySales(categorySalesRes.data || []);
     } catch (error) {
       console.error("Lỗi tải dashboard:", error);
     } finally {
@@ -50,6 +128,20 @@ const DashboardPage = () => {
       currency: "VND",
     }).format(amount);
   };
+
+  const formatCompactCurrency = (amount) => {
+    return new Intl.NumberFormat("vi-VN", {
+      notation: "compact",
+      compactDisplay: "short",
+    }).format(amount || 0);
+  };
+
+  const topProductChartData = normalizeTopProducts(topProducts);
+  const categoryChartData = prepareCategorySales(categorySales);
+  const totalCategoryRevenue = categoryChartData.reduce(
+    (sum, item) => sum + (Number(item?.revenue) || 0),
+    0
+  );
 
   if (loading) {
     return (
@@ -257,6 +349,135 @@ const DashboardPage = () => {
                 <p className="text-center text-slate-500 text-sm py-4">
                   Chưa có đơn hàng nào
                 </p>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Product & Category Charts */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-sm">
+            <h3 className="text-lg font-medium text-slate-900 mb-6">Top sản phẩm bán chạy</h3>
+            <div className="h-[320px] w-full">
+              {topProductChartData.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={topProductChartData}
+                    margin={{ top: 8, right: 24, left: 8, bottom: 40 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                    <XAxis
+                      dataKey="displayName"
+                      type="category"
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fill: "#64748b", fontSize: 12 }}
+                      interval={0}
+                      angle={-15}
+                      textAnchor="end"
+                      height={70}
+                    />
+                    <YAxis
+                      type="number"
+                      domain={[0, (dataMax) => Math.max(5, Math.ceil(dataMax * 1.15))]}
+                      allowDecimals={false}
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fill: "#334155", fontSize: 12 }}
+                    >
+                      <Label
+                        value="Số lượng bán"
+                        angle={-90}
+                        position="insideLeft"
+                        dx={-2}
+                        fill="#475569"
+                        fontSize={12}
+                      />
+                    </YAxis>
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: "#fff",
+                        borderRadius: "12px",
+                        border: "1px solid #e2e8f0",
+                      }}
+                      formatter={(value) => [value, "Số lượng bán"]}
+                      labelFormatter={(label, payload) => {
+                        const revenue = payload?.[0]?.payload?.revenue || 0;
+                        const fullName = payload?.[0]?.payload?.fullName || label;
+                        return `${fullName} - Doanh thu: ${formatCurrency(revenue)}`;
+                      }}
+                    />
+                    <Bar
+                      dataKey="soldQuantity"
+                      name="Số lượng bán"
+                      radius={[10, 10, 0, 0]}
+                    >
+                      {topProductChartData.map((item, index) => {
+                        const fillColor = index === 0
+                          ? DASHBOARD_COLORS.topProductHighlight
+                          : DASHBOARD_COLORS.topProductScale[(index - 1) % DASHBOARD_COLORS.topProductScale.length];
+
+                        return <Cell key={`${item.fullName}-${index}`} fill={fillColor} />;
+                      })}
+                      <LabelList
+                        dataKey="soldQuantity"
+                        position="top"
+                        fill="#0f172a"
+                        fontSize={12}
+                        formatter={(value) => `${value}`}
+                      />
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="h-full flex items-center justify-center text-sm text-slate-500">
+                  Chưa có dữ liệu sản phẩm bán chạy
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-sm">
+            <h3 className="text-lg font-medium text-slate-900 mb-6">Doanh thu theo danh mục</h3>
+            <div className="h-[320px] w-full">
+              {categoryChartData.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={categoryChartData}
+                      dataKey="revenue"
+                      nameKey="categoryName"
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={95}
+                      innerRadius={52}
+                      paddingAngle={3}
+                      label={({ percent }) => (percent >= 0.05 ? `${(percent * 100).toFixed(0)}%` : "")}
+                    >
+                      {categoryChartData.map((entry, index) => (
+                        <Cell
+                          key={entry.categoryName}
+                          fill={DASHBOARD_COLORS.categoryPalette[index % DASHBOARD_COLORS.categoryPalette.length]}
+                        />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      formatter={(value) => formatCurrency(value)}
+                      contentStyle={{
+                        backgroundColor: "#fff",
+                        borderRadius: "12px",
+                        border: "1px solid #e2e8f0",
+                      }}
+                    />
+                    <Legend
+                      formatter={(value) => value}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="h-full flex items-center justify-center text-sm text-slate-500">
+                  Chưa có dữ liệu doanh thu theo danh mục
+                </div>
               )}
             </div>
           </div>

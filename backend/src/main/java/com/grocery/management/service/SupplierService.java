@@ -1,6 +1,7 @@
 package com.grocery.management.service;
 
 import com.grocery.management.entity.Supplier;
+import com.grocery.management.repository.ProductRepository;
 import com.grocery.management.repository.SupplierRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -13,6 +14,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class SupplierService {
     private final SupplierRepository supplierRepository;
+    private final ProductRepository productRepository;
 
     /**
      * Lấy danh sách tất cả nhà cung cấp
@@ -38,15 +40,15 @@ public class SupplierService {
         if (supplierRepository.existsByPhone(supplier.getPhone())) {
             throw new RuntimeException("Số điện thoại này đã tồn tại!");
         }
-        if (supplier.getEmail() != null && !supplier.getEmail().isEmpty() 
-            && supplierRepository.existsByEmail(supplier.getEmail())) {
+        if (supplier.getEmail() != null && !supplier.getEmail().isEmpty()
+                && supplierRepository.existsByEmail(supplier.getEmail())) {
             throw new RuntimeException("Email này đã tồn tại!");
         }
 
         // 2. Sinh mã tự động (Logic: SUP + 3 số)
         String lastCode = supplierRepository.findLastCode();
         supplier.setCode(generateNextCode(lastCode));
-        
+
         supplier.setActive(true);
         return supplierRepository.save(supplier);
     }
@@ -75,10 +77,10 @@ public class SupplierService {
         existing.setAddress(request.getAddress());
         existing.setTaxCode(request.getTaxCode());
         existing.setNote(request.getNote());
-        
+
         return supplierRepository.save(existing);
     }
-    
+
     /**
      * Bật/Tắt trạng thái hoạt động (Soft Delete)
      */
@@ -86,6 +88,15 @@ public class SupplierService {
         Supplier supplier = getSupplierById(id);
         supplier.setActive(!supplier.isActive());
         supplierRepository.save(supplier);
+    }
+
+    @Transactional
+    public void deleteSupplier(@NonNull Long id) {
+        Supplier supplier = getSupplierById(id);
+        if (productRepository.existsBySupplierId(id)) {
+            throw new RuntimeException("Không thể xóa nhà cung cấp vì đang có sản phẩm liên kết");
+        }
+        supplierRepository.delete(supplier);
     }
 
     /**

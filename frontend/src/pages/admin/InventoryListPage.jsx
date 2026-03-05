@@ -10,11 +10,11 @@ import {
   X,
   User,
   Calendar,
-  Trash2, // 1. Import thêm icon Trash2
+  Trash2,
+  Search,
 } from "lucide-react";
 import Swal from "sweetalert2";
 
-// --- MODAL XEM CHI TIẾT (Giữ nguyên như cũ) ---
 const DetailModal = ({ isOpen, onClose, note }) => {
   if (!isOpen || !note) return null;
 
@@ -189,11 +189,15 @@ const DetailModal = ({ isOpen, onClose, note }) => {
   );
 };
 
-// --- TRANG CHÍNH ---
 const InventoryListPage = () => {
   const navigate = useNavigate();
   const [notes, setNotes] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [typeFilter, setTypeFilter] = useState("ALL");
+  const [timeFilter, setTimeFilter] = useState("ALL");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   const [selectedNote, setSelectedNote] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -238,6 +242,7 @@ const InventoryListPage = () => {
       toast.error("Lỗi xuất file: " + error.message);
     }
   };
+
   const handleDelete = async (id) => {
     const result = await Swal.fire({
       title: "Xác nhận xóa?",
@@ -263,10 +268,95 @@ const InventoryListPage = () => {
     }
   };
 
+  const getNoteType = (note) => {
+    if (note?.type) {
+      const normalizedType = String(note.type).toUpperCase();
+      if (normalizedType.includes("EXP") || normalizedType.includes("EXPORT")) {
+        return "EXP";
+      }
+      if (normalizedType.includes("IMP") || normalizedType.includes("IMPORT")) {
+        return "IMP";
+      }
+    }
+
+    const normalizedCode = String(note?.code || "").toUpperCase();
+    return normalizedCode.startsWith("EXP") ? "EXP" : "IMP";
+  };
+
+  const filteredNotes = notes.filter((note) => {
+    const keyword = searchTerm.trim().toLowerCase();
+    const createdAt = note?.createdAt ? new Date(note.createdAt) : null;
+
+    const matchesSearch =
+      !keyword ||
+      String(note?.code || "")
+        .toLowerCase()
+        .includes(keyword) ||
+      String(note?.createdBy?.staffCode || "")
+        .toLowerCase()
+        .includes(keyword) ||
+      String(note?.createdBy?.fullName || "")
+        .toLowerCase()
+        .includes(keyword);
+
+    const noteType = getNoteType(note);
+    const matchesType = typeFilter === "ALL" || noteType === typeFilter;
+
+    let matchesTime = true;
+    if (createdAt && !Number.isNaN(createdAt.getTime())) {
+      const now = new Date();
+      const startToday = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate(),
+      );
+
+      if (timeFilter === "TODAY") {
+        matchesTime = createdAt >= startToday;
+      } else if (timeFilter === "LAST_7_DAYS") {
+        const sevenDaysAgo = new Date(startToday);
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
+        matchesTime = createdAt >= sevenDaysAgo;
+      } else if (timeFilter === "LAST_30_DAYS") {
+        const thirtyDaysAgo = new Date(startToday);
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 29);
+        matchesTime = createdAt >= thirtyDaysAgo;
+      } else if (timeFilter === "THIS_MONTH") {
+        matchesTime =
+          createdAt.getMonth() === now.getMonth() &&
+          createdAt.getFullYear() === now.getFullYear();
+      }
+    } else if (timeFilter !== "ALL") {
+      matchesTime = false;
+    }
+
+    return matchesSearch && matchesType && matchesTime;
+  });
+
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filteredNotes.length / itemsPerPage),
+  );
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, typeFilter, timeFilter]);
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
+
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedNotes = filteredNotes.slice(
+    startIndex,
+    startIndex + itemsPerPage,
+  );
+
   return (
     <div className="min-h-screen bg-[#F8FAFC] p-6 font-poppins text-slate-600">
-      {/* Header */}
-      <div className="max-w-[1400px] mx-auto flex justify-between items-center mb-6">
+      <div className="max-w-[1400px] mx-auto mb-6">
         <div>
           <h1 className="text-2xl font-medium text-slate-900 flex items-center">
             Danh sách phiếu nhập xuất kho
@@ -275,115 +365,210 @@ const InventoryListPage = () => {
             Tạo phiếu nhập, quản lý thông tin phiếu nhập xuất kho
           </p>
         </div>
-        <button
-          onClick={() => navigate("/inventory/entry")}
-          className="bg-green-600 text-white px-5 py-2 rounded-xl flex items-center shadow-sm hover:bg-green-700 transition-all font-medium"
-        >
-          Tạo phiếu nhập
-        </button>
+
+        <div className="mt-4 flex flex-wrap items-center gap-3">
+          <div className="relative flex-1 min-w-[240px]">
+            <Search
+              size={16}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+            />
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Tìm theo mã phiếu, mã nhân viên, người tạo"
+              className="w-full pl-9 pr-4 py-2.5 border border-slate-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-400"
+            />
+          </div>
+
+          <button
+            onClick={() => navigate("/inventory/entry")}
+            className="bg-green-600 text-white px-5 py-2.5 rounded-xl flex items-center shadow-sm hover:bg-green-700 transition-all font-medium whitespace-nowrap"
+          >
+            Tạo phiếu nhập
+          </button>
+
+          <select
+            value={typeFilter}
+            onChange={(e) => setTypeFilter(e.target.value)}
+            className="px-4 py-2.5 border border-slate-200 rounded-xl bg-white text-slate-700 font-medium outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-400"
+          >
+            <option value="ALL">Tất cả loại phiếu</option>
+            <option value="IMP">Phiếu nhập (IMP)</option>
+            <option value="EXP">Phiếu xuất (EXP)</option>
+          </select>
+
+          <select
+            value={timeFilter}
+            onChange={(e) => setTimeFilter(e.target.value)}
+            className="px-4 py-2.5 border border-slate-200 rounded-xl bg-white text-slate-700 font-medium outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-400"
+          >
+            <option value="ALL">Tất cả thời gian</option>
+            <option value="TODAY">Hôm nay</option>
+            <option value="LAST_7_DAYS">7 ngày gần nhất</option>
+            <option value="LAST_30_DAYS">30 ngày gần nhất</option>
+            <option value="THIS_MONTH">Tháng này</option>
+          </select>
+        </div>
       </div>
 
-      {/* Table */}
       <div className="max-w-[1400px] mx-auto bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
         {loading ? (
           <div className="p-8 text-center text-slate-500">Đang tải dữ liệu</div>
         ) : (
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-slate-50/50 border-b border-slate-100">
-                <th className="px-6 py-4 font-medium text-slate-900 text-sm tracking-wider">
-                  Mã phiếu
-                </th>
-                <th className="px-6 py-4 font-medium text-slate-900 text-sm tracking-wider">
-                  Ngày tạo
-                </th>
-                <th className="px-6 py-4 font-medium text-slate-900 text-sm tracking-wider">
-                  Mã nhân viên
-                </th>
-                <th className="px-6 py-4 font-medium text-slate-900 text-sm tracking-wider">
-                  Người tạo
-                </th>
-                <th className="px-6 py-4 font-medium text-slate-900 text-sm tracking-wider text-right">
-                  Tổng tiền
-                </th>
-                <th className="px-6 py-4 font-medium text-slate-900 text-center text-sm tracking-wider">
-                  Thao tác
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-50">
-              {notes.map((note) => (
-                <tr
-                  key={note.id}
-                  className="hover:bg-slate-50/50 transition-colors"
-                >
-                  <td className="px-6 py-4 font-medium text-green-600">
-                    {note.code}
-                  </td>
-
-                  <td className="px-6 py-4 text-slate-500">
-                    {new Date(note.createdAt).toLocaleString("vi-VN", {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                      day: "2-digit",
-                      month: "2-digit",
-                      year: "numeric",
-                    })}
-                  </td>
-
-                  {/* 3. SỬA: Đồng bộ giao diện (bỏ background, style giống các cột khác) */}
-                  <td className="px-6 py-4 text-slate-700 font-medium">
-                    {note.createdBy?.staffCode || "---"}
-                  </td>
-
-                  <td className="px-6 py-4 text-slate-700 font-medium">
-                    {note.createdBy?.fullName || "N/A"}
-                  </td>
-
-                  <td className="px-6 py-4 font-medium text-slate-800 text-right">
-                    {note.finalAmount ? note.finalAmount.toLocaleString() : "0"}{" "}
-                    ₫
-                  </td>
-
-                  <td className="px-6 py-4 text-center">
-                    <div className="flex justify-center gap-3">
-                      <button
-                        onClick={() => handleExport(note.id, note.code)}
-                        className="text-emerald-600 hover:bg-emerald-50 p-2 rounded-lg transition-colors"
-                        title="Xuất Excel"
-                      >
-                        <FileSpreadsheet size={18} />
-                      </button>
-
-                      <button
-                        onClick={() => handleViewDetail(note.id)}
-                        className="text-indigo-600 hover:bg-indigo-50 p-2 rounded-lg transition-colors"
-                        title="Xem chi tiết"
-                      >
-                        <Eye size={18} />
-                      </button>
-
-                      {/* 4. Nút Xóa mới */}
-                      <button
-                        onClick={() => handleDelete(note.id)}
-                        className="text-red-600 hover:bg-red-50 p-2 rounded-lg transition-colors"
-                        title="Xóa phiếu"
-                      >
-                        <Trash2 size={18} />
-                      </button>
-                    </div>
-                  </td>
+          <>
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-slate-50/50 border-b border-slate-100">
+                  <th className="px-6 py-4 font-medium text-slate-900 text-sm tracking-wider">
+                    Mã phiếu
+                  </th>
+                  <th className="px-6 py-4 font-medium text-slate-900 text-sm tracking-wider">
+                    Ngày tạo
+                  </th>
+                  <th className="px-6 py-4 font-medium text-slate-900 text-sm tracking-wider">
+                    Mã nhân viên
+                  </th>
+                  <th className="px-6 py-4 font-medium text-slate-900 text-sm tracking-wider">
+                    Người tạo
+                  </th>
+                  <th className="px-6 py-4 font-medium text-slate-900 text-sm tracking-wider text-right">
+                    Tổng tiền
+                  </th>
+                  <th className="px-6 py-4 font-medium text-slate-900 text-center text-sm tracking-wider">
+                    Thao tác
+                  </th>
                 </tr>
-              ))}
-              {notes.length === 0 && (
-                <tr>
-                  <td colSpan="6" className="p-8 text-center text-slate-400">
-                    Chưa có phiếu nào được tạo.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-slate-50">
+                {paginatedNotes.map((note) => {
+                  const isExport = getNoteType(note) === "EXP";
+
+                  return (
+                    <tr
+                      key={note.id}
+                      className="hover:bg-slate-50/50 transition-colors"
+                    >
+                      <td
+                        className={`px-6 py-4 font-semibold ${
+                          isExport ? "text-amber-600" : "text-green-600"
+                        }`}
+                      >
+                        {note.code}
+                      </td>
+
+                      <td className="px-6 py-4 text-slate-500">
+                        {new Date(note.createdAt).toLocaleString("vi-VN", {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                          day: "2-digit",
+                          month: "2-digit",
+                          year: "numeric",
+                        })}
+                      </td>
+
+                      <td className="px-6 py-4 text-slate-700 font-medium">
+                        {note.createdBy?.staffCode || "---"}
+                      </td>
+                      <td className="px-6 py-4 text-slate-700 font-medium">
+                        {note.createdBy?.fullName || "N/A"}
+                      </td>
+
+                      <td className="px-6 py-4 font-medium text-slate-800 text-right">
+                        {note.finalAmount
+                          ? note.finalAmount.toLocaleString()
+                          : "0"}{" "}
+                        ₫
+                      </td>
+
+                      <td className="px-6 py-4 text-center">
+                        <div className="flex justify-center gap-3">
+                          <button
+                            onClick={() => handleExport(note.id, note.code)}
+                            className="text-emerald-600 hover:bg-emerald-50 p-2 rounded-lg transition-colors"
+                            title="Xuất Excel"
+                          >
+                            <FileSpreadsheet size={18} />
+                          </button>
+
+                          <button
+                            onClick={() => handleViewDetail(note.id)}
+                            className="text-indigo-600 hover:bg-indigo-50 p-2 rounded-lg transition-colors"
+                            title="Xem chi tiết"
+                          >
+                            <Eye size={18} />
+                          </button>
+
+                          <button
+                            onClick={() => handleDelete(note.id)}
+                            className="text-red-600 hover:bg-red-50 p-2 rounded-lg transition-colors"
+                            title="Xóa phiếu"
+                          >
+                            <Trash2 size={18} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+                {filteredNotes.length === 0 && (
+                  <tr>
+                    <td colSpan="6" className="p-8 text-center text-slate-400">
+                      Không có phiếu phù hợp bộ lọc hiện tại.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+
+            {filteredNotes.length > 0 && (
+              <div className="px-6 py-4 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3 bg-white">
+                <p className="text-sm text-slate-500">
+                  Hiển thị {startIndex + 1}-
+                  {Math.min(startIndex + itemsPerPage, filteredNotes.length)} /{" "}
+                  {filteredNotes.length} phiếu
+                </p>
+
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() =>
+                      setCurrentPage((prev) => Math.max(prev - 1, 1))
+                    }
+                    disabled={currentPage === 1}
+                    className="px-3 py-1.5 text-sm rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Trước
+                  </button>
+
+                  {Array.from({ length: totalPages }, (_, idx) => idx + 1).map(
+                    (page) => (
+                      <button
+                        key={page}
+                        onClick={() => setCurrentPage(page)}
+                        className={`px-3 py-1.5 text-sm rounded-lg border ${
+                          currentPage === page
+                            ? "bg-green-600 text-white border-green-600"
+                            : "border-slate-200 text-slate-600 hover:bg-slate-50"
+                        }`}
+                      >
+                        {page}
+                      </button>
+                    ),
+                  )}
+
+                  <button
+                    onClick={() =>
+                      setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                    }
+                    disabled={currentPage === totalPages}
+                    className="px-3 py-1.5 text-sm rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Sau
+                  </button>
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
 

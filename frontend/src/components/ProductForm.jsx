@@ -14,7 +14,8 @@ import supplierService from "../services/supplierService";
 import categoryService from "../services/categoryService";
 const productSchema = z.object({
   name: z.string().min(10, "Tên sản phẩm phải có ít nhất 10 ký tự"),
-  brand: z.string().min(1, "Thương hiệu không được để trống"),
+  brand: z.string().optional(),
+  supplierId: z.coerce.number().min(1, "Nhà cung cấp không được để trống"),
   sku: z.string().min(1, "Mã SKU bắt buộc"),
   barcode: z.string().min(1, "Mã vạch bắt buộc"),
   unit: z.string().min(1, "Đơn vị tính bắt buộc"),
@@ -47,11 +48,13 @@ const ProductForm = ({ existingProduct, onClose, onSuccess }) => {
     defaultValues: existingProduct
       ? {
           ...existingProduct,
+          supplierId: existingProduct?.supplier?.id || 0,
         }
       : {
           status: "ACTIVE",
           importPrice: 0,
           sellPrice: 0,
+          supplierId: 0,
         },
   });
 
@@ -165,10 +168,17 @@ const ProductForm = ({ existingProduct, onClose, onSuccess }) => {
 
   const onSubmit = async (data) => {
     try {
+      const selectedSupplier = suppliers.find(
+        (supplier) => supplier.id === Number(data.supplierId),
+      );
+
       const payload = {
         ...data,
+        brand: selectedSupplier?.vietnameseName || data.brand || "",
+        supplier: data.supplierId ? { id: Number(data.supplierId) } : null,
         labels: selectedLabelIds.map((id) => ({ id })),
       };
+      delete payload.supplierId;
 
       if (existingProduct) {
         await onSuccess(existingProduct.id, payload, imageFile);
@@ -239,23 +249,20 @@ const ProductForm = ({ existingProduct, onClose, onSuccess }) => {
 
                   <div className="group">
                     <label className="block text-[13px] font-medium text-slate-900 mb-2 ml-1">
-                      Thương hiệu
+                      Nhà cung cấp
                     </label>
                     <div className="relative">
                       <select
-                        {...register("brand")}
+                        {...register("supplierId")}
                         onChange={(e) => {
-                          register("brand").onChange(e);
+                          register("supplierId").onChange(e);
                           e.target.blur();
                         }}
                         className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-green-50 focus:border-green-400 focus:bg-white outline-none transition-all font-medium text-slate-900 cursor-pointer appearance-none peer"
                       >
-                        <option value="">Chọn thương hiệu</option>
+                        <option value="">Chọn nhà cung cấp</option>
                         {suppliers.map((supplier) => (
-                          <option
-                            key={supplier.id}
-                            value={supplier.vietnameseName}
-                          >
+                          <option key={supplier.id} value={supplier.id}>
                             {supplier.vietnameseName}
                           </option>
                         ))}
@@ -265,9 +272,9 @@ const ProductForm = ({ existingProduct, onClose, onSuccess }) => {
                         className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none transition-transform duration-200 peer-focus:rotate-180"
                       />
                     </div>
-                    {errors.brand && (
+                    {errors.supplierId && (
                       <p className="text-rose-500 text-xs mt-2 ml-1 font-medium">
-                        {errors.brand.message}
+                        {errors.supplierId.message}
                       </p>
                     )}
                   </div>

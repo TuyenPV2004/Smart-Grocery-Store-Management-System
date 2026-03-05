@@ -34,4 +34,6 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
     @Query("SELECT COUNT(p) FROM Product p WHERE p.stockQuantity <= p.minStock")
     long countLowStock();
+
+    boolean existsBySupplierId(Long supplierId);
 }

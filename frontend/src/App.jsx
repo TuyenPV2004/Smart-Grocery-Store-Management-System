@@ -29,6 +29,7 @@ import RoleBasedLayout from "./components/RoleBasedLayout";
 import CashFlowManagementPage from "./pages/admin/CashFlowManagementPage";
 import PromotionsPage from "./pages/admin/PromotionsPage";
 import VouchersPage from "./pages/admin/VouchersPage";
+import OrderHistoryPage from "./pages/user/OrderHistoryPage";
 
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -50,6 +51,7 @@ function App() {
           <Route element={<ProtectedRoute />}>
             <Route element={<RoleBasedLayout />}>
               <Route path="/profile" element={<ProfilePage />} />
+              <Route path="/order-history" element={<OrderHistoryPage />} />
             </Route>
           </Route>
           <Route element={<ProtectedRoute allowedRoles={["ADMIN", "STAFF"]} />}>

@@ -6,10 +6,11 @@ import {
   Trash2,
   Plus,
   Minus,
-  CreditCard,
-  Banknote,
   User,
   ChevronRight,
+  Loader2,
+  CheckCircle,
+  XCircle,
 } from "lucide-react";
 import Swal from "sweetalert2";
 import productService from "../../services/productService";
@@ -21,6 +22,10 @@ const PosPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(true);
+  const [waitingOrder, setWaitingOrder] = useState(null);
+  const [waitingSeconds, setWaitingSeconds] = useState(300);
+  const [finalizingStatus, setFinalizingStatus] = useState(false);
+  const [finalResult, setFinalResult] = useState(null);
 
   // Form khách hàng
   const [customerName, setCustomerName] = useState("Khách lẻ");
@@ -88,6 +93,61 @@ const PosPage = () => {
     0,
   );
 
+  useEffect(() => {
+    if (!waitingOrder || finalResult) return;
+
+    const interval = setInterval(() => {
+      setWaitingSeconds((prev) => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          handleFinalizeOrder("CANCELLED", true);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [waitingOrder, finalResult]);
+
+  const formatCountdown = (seconds) => {
+    const mm = Math.floor(seconds / 60)
+      .toString()
+      .padStart(2, "0");
+    const ss = (seconds % 60).toString().padStart(2, "0");
+    return `${mm}:${ss}`;
+  };
+
+  const resetAfterFinalize = () => {
+    setTimeout(() => {
+      setWaitingOrder(null);
+      setWaitingSeconds(300);
+      setFinalResult(null);
+    }, 1200);
+  };
+
+  const handleFinalizeOrder = async (status, isAutoCancel = false) => {
+    if (!waitingOrder?.id) return;
+    setFinalizingStatus(true);
+    try {
+      await orderService.updateStatus(waitingOrder.id, status);
+      setFinalResult(status);
+      if (status === "COMPLETED") {
+        toast.success("Đơn hàng đã hoàn thành");
+        setCart([]);
+        setCustomerName("Khách lẻ");
+        setCustomerPhone("");
+      } else if (!isAutoCancel) {
+        toast.info("Đơn hàng đã hủy");
+      }
+      resetAfterFinalize();
+    } catch (error) {
+      toast.error(error.response?.data || "Không thể cập nhật trạng thái đơn");
+    } finally {
+      setFinalizingStatus(false);
+    }
+  };
+
   // Thanh toán
   const handleCheckout = async () => {
     if (cart.length === 0) return toast.error("Giỏ hàng trống!");
@@ -110,6 +170,7 @@ const PosPage = () => {
         customerName,
         customerPhone,
         paymentMethod,
+        pendingConfirmation: true,
         discount: 0,
         items: cart.map((i) => ({
           productId: i.id,
@@ -118,11 +179,10 @@ const PosPage = () => {
         })),
       };
 
-      await orderService.create(payload);
-      toast.success("Thanh toán thành công!");
-      setCart([]);
-      setCustomerName("Khách lẻ");
-      setCustomerPhone("");
+      const res = await orderService.create(payload);
+      setWaitingOrder(res.data);
+      setWaitingSeconds(300);
+      setFinalResult(null);
     } catch (error) {
       toast.error(error.response?.data || "Lỗi thanh toán");
     } finally {
@@ -326,6 +386,56 @@ const PosPage = () => {
           </button>
         </div>
       </div>
+
+      {waitingOrder && (
+        <div className="fixed inset-0 z-[120] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl w-full max-w-md p-6 shadow-2xl border border-slate-100 text-center">
+            <p className="text-sm text-slate-500 mb-2">
+              Mã đơn: {waitingOrder.code}
+            </p>
+            <h3 className="text-2xl font-semibold text-slate-900 mb-2">
+              Chờ thanh toán
+            </h3>
+
+            {!finalResult ? (
+              <>
+                <div className="w-24 h-24 mx-auto my-5 rounded-full border-4 border-emerald-100 border-t-emerald-600 animate-spin" />
+                <p className="text-slate-600 mb-1">Thời gian còn lại</p>
+                <p className="text-3xl font-bold text-emerald-600 mb-5">
+                  {formatCountdown(waitingSeconds)}
+                </p>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    onClick={() => handleFinalizeOrder("COMPLETED")}
+                    disabled={finalizingStatus}
+                    className="py-2.5 rounded-xl bg-emerald-600 text-white font-medium hover:bg-emerald-700 disabled:opacity-60"
+                  >
+                    {finalizingStatus ? "Đang xử lý..." : "Hoàn thành"}
+                  </button>
+                  <button
+                    onClick={() => handleFinalizeOrder("CANCELLED")}
+                    disabled={finalizingStatus}
+                    className="py-2.5 rounded-xl bg-rose-50 text-rose-700 font-medium hover:bg-rose-100 disabled:opacity-60"
+                  >
+                    Hủy
+                  </button>
+                </div>
+              </>
+            ) : finalResult === "COMPLETED" ? (
+              <div className="py-8 flex flex-col items-center gap-3 text-emerald-600">
+                <CheckCircle size={56} />
+                <p className="text-lg font-medium">Thanh toán hoàn thành</p>
+              </div>
+            ) : (
+              <div className="py-8 flex flex-col items-center gap-3 text-rose-600">
+                <XCircle size={56} />
+                <p className="text-lg font-medium">Đơn hàng đã hủy</p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

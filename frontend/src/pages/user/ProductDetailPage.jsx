@@ -1,5 +1,5 @@
 import { toast } from "react-toastify";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
@@ -14,6 +14,7 @@ import {
 import productService from "../../services/productService";
 import { useCart } from "../../context/CartContext";
 import { useAuth } from "../../context/AuthContext";
+import ProductCard from "../../components/common/ProductCard";
 import ImageGallery from "react-image-gallery";
 import "react-image-gallery/styles/image-gallery.css";
 
@@ -27,15 +28,24 @@ const ProductDetailPage = () => {
   const [loading, setLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
   const [mainImage, setMainImage] = useState("");
+  const [allProducts, setAllProducts] = useState([]);
 
   useEffect(() => {
     const fetchProduct = async () => {
       try {
-        const res = await productService.get(id);
-        setProduct(res.data);
-        if (res.data.thumbnail) {
-          setMainImage(`http://localhost:8080/${res.data.thumbnail}`);
+        const [productRes, productsRes] = await Promise.all([
+          productService.get(id),
+          productService.getAll({ status: "ACTIVE", pageSize: 1000 }),
+        ]);
+
+        const currentProduct = productRes.data;
+        setProduct(currentProduct);
+        if (currentProduct.thumbnail) {
+          setMainImage(`http://localhost:8080/${currentProduct.thumbnail}`);
         }
+
+        const productList = productsRes.data?.content || productsRes.data || [];
+        setAllProducts(Array.isArray(productList) ? productList : []);
       } catch (error) {
         console.error("Error fetching product details:", error);
       } finally {
@@ -47,6 +57,63 @@ const ProductDetailPage = () => {
       fetchProduct();
     }
   }, [id]);
+
+  const relatedProducts = useMemo(() => {
+    if (!product || !Array.isArray(allProducts) || allProducts.length === 0) {
+      return [];
+    }
+
+    const currentId = Number(product.id);
+    const currentBrand = (product.brand || "").trim().toLowerCase();
+    const currentSupplierId = product.supplier?.id;
+    const currentLabelIds = new Set((product.labels || []).map((l) => l.id));
+
+    const scored = allProducts
+      .filter((p) => Number(p.id) !== currentId && p.status === "ACTIVE")
+      .map((p) => {
+        let score = 0;
+
+        if (
+          currentBrand &&
+          (p.brand || "").trim().toLowerCase() === currentBrand
+        ) {
+          score += 3;
+        }
+
+        if (
+          currentSupplierId &&
+          p.supplier?.id &&
+          Number(p.supplier.id) === Number(currentSupplierId)
+        ) {
+          score += 2;
+        }
+
+        const sharedLabelCount = (p.labels || []).filter((l) =>
+          currentLabelIds.has(l.id),
+        ).length;
+        if (sharedLabelCount > 0) {
+          score += sharedLabelCount * 2;
+        }
+
+        return { product: p, score };
+      });
+
+    const withScore = scored
+      .filter((item) => item.score > 0)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 8)
+      .map((item) => item.product);
+
+    if (withScore.length >= 4) {
+      return withScore;
+    }
+
+    const fallback = allProducts
+      .filter((p) => Number(p.id) !== currentId && p.status === "ACTIVE")
+      .slice(0, 8);
+
+    return withScore.length > 0 ? withScore : fallback;
+  }, [product, allProducts]);
 
   const handleQuantityChange = (type) => {
     if (type === "decrease") {
@@ -333,6 +400,26 @@ const ProductDetailPage = () => {
               </div>
             </div>
           </div>
+        </div>
+
+        <div className="mt-10">
+          <div className="flex items-center justify-between mb-5">
+            <h2 className="text-2xl font-medium text-slate-900">
+              Sản phẩm tương tự
+            </h2>
+          </div>
+
+          {relatedProducts.length > 0 ? (
+            <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {relatedProducts.map((related) => (
+                <ProductCard key={related.id} product={related} />
+              ))}
+            </div>
+          ) : (
+            <div className="bg-white border border-slate-100 rounded-2xl p-6 text-slate-500">
+              Hiện chưa có sản phẩm liên quan.
+            </div>
+          )}
         </div>
       </div>
     </div>

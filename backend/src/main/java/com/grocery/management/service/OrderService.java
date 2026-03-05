@@ -37,7 +37,18 @@ public class OrderService {
         order.setCustomerName(request.getCustomerName());
         order.setCustomerPhone(request.getCustomerPhone());
         order.setPaymentMethod(request.getPaymentMethod());
-        order.setStatus("COMPLETED");
+        if (Boolean.TRUE.equals(request.getPendingConfirmation())) {
+            order.setStatus("PENDING");
+        } else {
+            String paymentMethod = request.getPaymentMethod() != null ? request.getPaymentMethod().toUpperCase() : "";
+            // Don chuyen khoan can duoc xac nhan xu ly; tien mat tai quay co the hoan tat
+            // ngay.
+            if ("CHUYEN_KHOAN".equals(paymentMethod) || "TRANSFER".equals(paymentMethod)) {
+                order.setStatus("PENDING");
+            } else {
+                order.setStatus("COMPLETED");
+            }
+        }
 
         List<OrderDetail> details = new ArrayList<>();
         BigDecimal totalAmount = BigDecimal.ZERO;
@@ -125,5 +136,58 @@ public class OrderService {
     public List<Order> getAllOrders() {
         return orderRepository.findAll(org.springframework.data.domain.Sort
                 .by(org.springframework.data.domain.Sort.Direction.DESC, "createdAt"));
+    }
+
+    public List<Order> getOrdersByUsername(String username) {
+        return orderRepository.findByUserUsernameOrderByCreatedAtDesc(username);
+    }
+
+    @Transactional
+    public Order cancelOrder(Long orderId, String username) {
+        User currentUser = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng"));
+
+        Order order;
+        if (currentUser.getRole() == Role.ADMIN || currentUser.getRole() == Role.STAFF) {
+            order = orderRepository.findById(orderId)
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng"));
+        } else {
+            order = orderRepository.findByIdAndUserUsername(orderId, username)
+                    .orElseThrow(() -> new RuntimeException("Bạn không có quyền thao tác đơn hàng này"));
+        }
+
+        if (!"PENDING".equalsIgnoreCase(order.getStatus())) {
+            throw new RuntimeException("Chỉ có thể hủy đơn hàng ở trạng thái chờ xác nhận");
+        }
+
+        order.setStatus("CANCELLED");
+        return orderRepository.save(order);
+    }
+
+    @Transactional
+    public Order updateOrderStatus(Long orderId, String username, String newStatus) {
+        User currentUser = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng"));
+
+        Order order;
+        if (currentUser.getRole() == Role.ADMIN || currentUser.getRole() == Role.STAFF) {
+            order = orderRepository.findById(orderId)
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng"));
+        } else {
+            order = orderRepository.findByIdAndUserUsername(orderId, username)
+                    .orElseThrow(() -> new RuntimeException("Bạn không có quyền thao tác đơn hàng này"));
+        }
+
+        String normalizedStatus = newStatus == null ? "" : newStatus.toUpperCase();
+        if (!"COMPLETED".equals(normalizedStatus) && !"CANCELLED".equals(normalizedStatus)) {
+            throw new RuntimeException("Trạng thái không hợp lệ");
+        }
+
+        if (!"PENDING".equalsIgnoreCase(order.getStatus())) {
+            throw new RuntimeException("Chỉ có thể cập nhật đơn hàng đang chờ thanh toán");
+        }
+
+        order.setStatus(normalizedStatus);
+        return orderRepository.save(order);
     }
 }

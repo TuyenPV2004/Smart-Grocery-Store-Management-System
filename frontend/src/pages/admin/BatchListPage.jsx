@@ -26,6 +26,13 @@ const DetailModal = ({ isOpen, onClose, batch }) => {
           <h3 className="text-xl font-bold text-slate-800 flex items-center gap-2">
             Chi tiết lô hàng: {batch.batchCode}
           </h3>
+          <button
+            onClick={onClose}
+            className="text-slate-400 hover:text-slate-600 p-1 rounded-md hover:bg-slate-100 transition-colors"
+            title="Đóng"
+          >
+            <X size={22} />
+          </button>
         </div>
 
         <div className="p-6 overflow-y-auto flex-1 space-y-6">
@@ -113,15 +120,6 @@ const DetailModal = ({ isOpen, onClose, batch }) => {
             </div>
           </div>
         </div>
-
-        <div className="p-6 border-t border-slate-100 bg-white flex justify-end">
-          <button
-            onClick={onClose}
-            className="px-6 py-2.5 bg-rose-500 text-white rounded-lg font-medium hover:bg-rose-600 transition-colors"
-          >
-            Đóng
-          </button>
-        </div>
       </div>
     </div>
   );
@@ -133,6 +131,7 @@ const BatchListPage = () => {
   const [batches, setBatches] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("ALL");
   const [selectedBatch, setSelectedBatch] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(0);
@@ -222,12 +221,20 @@ const BatchListPage = () => {
 
   const filteredBatches = batches.filter((batch) => {
     const searchLower = searchTerm.toLowerCase();
-    return (
+    const expiryStatus = getExpiryStatus(batch.expiryDate);
+
+    const matchesSearch =
       (batch.batchCode || "").toLowerCase().includes(searchLower) ||
       (batch.product?.sku || "").toLowerCase().includes(searchLower) ||
       (batch.product?.name || "").toLowerCase().includes(searchLower) ||
-      (batch.supplier?.vietnameseName || "").toLowerCase().includes(searchLower)
-    );
+      (batch.supplier?.vietnameseName || "")
+        .toLowerCase()
+        .includes(searchLower);
+
+    const matchesStatus =
+      statusFilter === "ALL" || expiryStatus.status === statusFilter;
+
+    return matchesSearch && matchesStatus;
   });
 
   return (
@@ -245,19 +252,33 @@ const BatchListPage = () => {
           </div>
         </div>
 
-        {/* Search Bar */}
-        <div className="relative">
-          <Search
-            className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400"
-            size={20}
-          />
-          <input
-            type="text"
-            placeholder="Tìm kiếm theo mã lô, SKU, tên sản phẩm, nhà cung cấp"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-12 pr-4 py-3 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
-          />
+        {/* Search + Filters */}
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="relative flex-1 min-w-[280px]">
+            <Search
+              className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400"
+              size={20}
+            />
+            <input
+              type="text"
+              placeholder="Tìm kiếm theo mã lô, SKU, tên sản phẩm, nhà cung cấp"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-12 pr-4 py-3 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
+            />
+          </div>
+
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="px-4 py-3 bg-white border border-slate-200 rounded-xl text-slate-700 font-medium outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+          >
+            <option value="ALL">Tất cả trạng thái</option>
+            <option value="good">Còn hạn</option>
+            <option value="near-expiry">Sắp hết hạn</option>
+            <option value="expired">Hết hạn</option>
+            <option value="unknown">Không rõ</option>
+          </select>
         </div>
       </div>
 

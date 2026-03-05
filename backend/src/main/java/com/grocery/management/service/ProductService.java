@@ -140,6 +140,14 @@ public class ProductService {
             product.setThumbnail("product-images/" + fileName);
         }
 
+        if (product.getSupplier() != null && product.getSupplier().getId() != null) {
+            Long supplierId = product.getSupplier().getId();
+            product.setSupplier(supplierRepository.findById(supplierId)
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy nhà cung cấp với ID: " + supplierId)));
+        } else {
+            product.setSupplier(null);
+        }
+
         Product savedProduct = productRepository.save(product);
         saveHistory(savedProduct, "THÊM MỚI");
 
@@ -232,6 +240,14 @@ public class ProductService {
         existing.setSellPrice(input.getSellPrice());
         existing.setStatus(input.getStatus());
         existing.setLabels(input.getLabels());
+
+        if (input.getSupplier() != null && input.getSupplier().getId() != null) {
+            Long supplierId = input.getSupplier().getId();
+            existing.setSupplier(supplierRepository.findById(supplierId)
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy nhà cung cấp với ID: " + supplierId)));
+        } else {
+            existing.setSupplier(null);
+        }
 
         if (imageFile != null && !imageFile.isEmpty()) {
             String fileName = System.currentTimeMillis() + "_" + imageFile.getOriginalFilename();

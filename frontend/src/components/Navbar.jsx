@@ -95,6 +95,7 @@ const Navbar = () => {
   const navLinks = [
     { name: "Trang chủ", path: "/" },
     { name: "Sản phẩm", path: "/products" }, // Protected route
+    ...(isAuthenticated ? [{ name: "Đơn hàng", path: "/order-history" }] : []),
     { name: "Khuyến mãi", path: "/promotions" },
     { name: "Liên hệ", path: "/contact" },
   ];

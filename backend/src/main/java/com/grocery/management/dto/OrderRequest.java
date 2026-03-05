@@ -9,6 +9,7 @@ public class OrderRequest {
     private String customerName;
     private String customerPhone;
     private String paymentMethod;
+    private Boolean pendingConfirmation;
     private BigDecimal discount;
     private String voucherCode;
     private List<OrderItem> items;

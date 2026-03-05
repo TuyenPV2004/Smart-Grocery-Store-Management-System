@@ -20,6 +20,7 @@ public class DashboardDTO {
 
     private List<ChartData> revenueChart;
     private List<TopProduct> topProducts;
+    private List<CategorySales> categorySales;
     private List<RecentOrder> recentOrders;
 
     @Data
@@ -36,6 +37,15 @@ public class DashboardDTO {
     public static class TopProduct {
         private String productName;
         private long soldQuantity;
+        private BigDecimal revenue;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class CategorySales {
+        private String categoryName;
+        private BigDecimal revenue;
     }
 
     @Data

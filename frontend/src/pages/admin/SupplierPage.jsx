@@ -1,8 +1,8 @@
 import { toast } from "react-toastify";
 import React, { useEffect, useState } from "react";
 import supplierService from "../../services/supplierService";
+import productService from "../../services/productService";
 import {
-  Plus,
   Edit,
   Search,
   Phone,
@@ -10,7 +10,8 @@ import {
   MapPin,
   Power,
   Building2,
-  Truck,
+  Info,
+  Trash2,
   X,
 } from "lucide-react";
 import Swal from "sweetalert2";
@@ -20,6 +21,10 @@ const SupplierPage = () => {
   const [showModal, setShowModal] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [showProductsModal, setShowProductsModal] = useState(false);
+  const [supplierProducts, setSupplierProducts] = useState([]);
+  const [selectedSupplierName, setSelectedSupplierName] = useState("");
+  const [isLoadingProducts, setIsLoadingProducts] = useState(false);
 
   const initialForm = {
     vietnameseName: "",
@@ -103,7 +108,62 @@ const SupplierPage = () => {
   const closeModal = () => {
     setShowModal(false);
     setIsEditing(false);
+    setSelectedId(null);
     setFormData(initialForm);
+  };
+
+  const getProductImageUrl = (path) => {
+    if (!path) return "";
+    return path.startsWith("http") ? path : `http://localhost:8080/${path}`;
+  };
+
+  const handleViewProducts = async (supplier) => {
+    setShowProductsModal(true);
+    setSelectedSupplierName(
+      supplier.tradingName || supplier.vietnameseName || supplier.code,
+    );
+    setIsLoadingProducts(true);
+    setSupplierProducts([]);
+
+    try {
+      const res = await productService.getAll();
+      const productsOfSupplier = (res.data || []).filter(
+        (product) => product?.supplier?.id === supplier.id,
+      );
+      setSupplierProducts(productsOfSupplier);
+    } catch (error) {
+      toast.error("Không thể tải danh sách sản phẩm của nhà cung cấp");
+      setShowProductsModal(false);
+    } finally {
+      setIsLoadingProducts(false);
+    }
+  };
+
+  const handleDeleteSupplier = async (id) => {
+    const result = await Swal.fire({
+      title: "Xác nhận xóa nhà cung cấp?",
+      text: "Hành động này không thể hoàn tác.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#dc2626",
+      cancelButtonColor: "#94a3b8",
+      confirmButtonText: "Xóa",
+      cancelButtonText: "Hủy bỏ",
+    });
+
+    if (!result.isConfirmed) {
+      return;
+    }
+
+    try {
+      await supplierService.delete(id);
+      toast.success("Xóa nhà cung cấp thành công!");
+      fetchSuppliers();
+    } catch (error) {
+      toast.error(
+        "Lỗi: " + (error.response?.data || "Không thể xóa nhà cung cấp"),
+      );
+    }
   };
 
   // Cập nhật logic tìm kiếm
@@ -168,14 +228,30 @@ const SupplierPage = () => {
                       <button
                         onClick={() => handleEdit(s)}
                         className="text-indigo-500 hover:text-indigo-600"
+                        title="Chỉnh sửa"
                       >
                         <Edit size={16} />
                       </button>
                       <button
+                        onClick={() => handleViewProducts(s)}
+                        className="text-sky-500 hover:text-sky-600"
+                        title="Xem sản phẩm"
+                      >
+                        <Info size={16} />
+                      </button>
+                      <button
                         onClick={() => handleToggleStatus(s.id)}
                         className={`${s.active ? "text-rose-500" : "text-slate-400"}`}
+                        title="Bật/Tắt trạng thái"
                       >
                         <Power size={16} />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteSupplier(s.id)}
+                        className="text-red-500 hover:text-red-600"
+                        title="Xóa nhà cung cấp"
+                      >
+                        <Trash2 size={16} />
                       </button>
                     </div>
                   </div>
@@ -424,6 +500,71 @@ const SupplierPage = () => {
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showProductsModal && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 transition-all">
+          <div className="bg-white rounded-[2rem] w-full max-w-3xl shadow-2xl max-h-[90vh] flex flex-col overflow-hidden border border-slate-100 relative">
+            <button
+              type="button"
+              onClick={() => setShowProductsModal(false)}
+              className="absolute top-6 right-6 p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-all z-10"
+            >
+              <X size={20} strokeWidth={2.5} />
+            </button>
+
+            <div className="px-8 pt-8 pb-4 border-b border-slate-100">
+              <h2 className="text-xl font-bold text-slate-800 tracking-tight">
+                Sản phẩm thuộc nhà cung cấp
+              </h2>
+              <p className="text-sm text-slate-500 mt-1">
+                Nhà cung cấp: {selectedSupplierName}
+              </p>
+            </div>
+
+            <div className="overflow-y-auto px-8 pb-8 pt-5 [&::-webkit-scrollbar]:hidden">
+              {isLoadingProducts ? (
+                <p className="text-sm text-slate-500">
+                  Đang tải dữ liệu sản phẩm...
+                </p>
+              ) : supplierProducts.length === 0 ? (
+                <p className="text-sm text-slate-500">
+                  Nhà cung cấp này hiện chưa có sản phẩm nào.
+                </p>
+              ) : (
+                <div className="space-y-3">
+                  {supplierProducts.map((product) => (
+                    <div
+                      key={product.id}
+                      className="flex items-center gap-4 p-3 rounded-xl border border-slate-100 bg-slate-50/60"
+                    >
+                      {product.thumbnail ? (
+                        <img
+                          src={getProductImageUrl(product.thumbnail)}
+                          alt={product.name}
+                          className="w-14 h-14 rounded-lg object-cover border border-slate-200"
+                        />
+                      ) : (
+                        <div className="w-14 h-14 rounded-lg bg-slate-200 flex items-center justify-center text-xs text-slate-500">
+                          No Img
+                        </div>
+                      )}
+
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold text-slate-900 line-clamp-1">
+                          {product.name}
+                        </p>
+                        <p className="text-xs text-slate-500 mt-1">
+                          SKU: {product.sku}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>

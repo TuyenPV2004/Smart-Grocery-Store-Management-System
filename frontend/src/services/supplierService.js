@@ -1,10 +1,11 @@
-import axiosClient from './axiosClient';
+import axiosClient from "./axiosClient";
 
 const supplierService = {
-  getAll: () => axiosClient.get('/suppliers'),
-  create: (data) => axiosClient.post('/suppliers', data),
+  getAll: () => axiosClient.get("/suppliers"),
+  create: (data) => axiosClient.post("/suppliers", data),
   update: (id, data) => axiosClient.put(`/suppliers/${id}`, data),
-  toggleStatus: (id) => axiosClient.patch(`/suppliers/${id}/status`)
+  toggleStatus: (id) => axiosClient.patch(`/suppliers/${id}/status`),
+  delete: (id) => axiosClient.delete(`/suppliers/${id}`),
 };
 
 export default supplierService;

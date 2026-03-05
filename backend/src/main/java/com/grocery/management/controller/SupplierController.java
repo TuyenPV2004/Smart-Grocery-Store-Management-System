@@ -37,11 +37,21 @@ public class SupplierController {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
-    
+
     @PatchMapping("/{id}/status")
     public ResponseEntity<?> toggleStatus(@PathVariable @NonNull Long id) {
         supplierService.toggleStatus(id);
         return ResponseEntity.ok("Cập nhật trạng thái thành công");
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> delete(@PathVariable @NonNull Long id) {
+        try {
+            supplierService.deleteSupplier(id);
+            return ResponseEntity.ok("Xóa nhà cung cấp thành công");
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 
 }

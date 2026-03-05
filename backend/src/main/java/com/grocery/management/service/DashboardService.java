@@ -19,8 +19,12 @@ public class DashboardService {
     private final OrderRepository orderRepository;
     private final ProductRepository productRepository;
 
+    private int normalizeDays(Integer days) {
+        return (days == null || days < 1) ? 7 : Math.min(days, 365);
+    }
+
     public DashboardDTO getDashboardStats(Integer days) {
-        int safeDays = (days == null || days < 1) ? 7 : Math.min(days, 365);
+        int safeDays = normalizeDays(days);
 
         // Summary Stats
         BigDecimal totalRevenue = orderRepository.sumTotalRevenue();
@@ -53,10 +57,11 @@ public class DashboardService {
                         o.getCreatedAt().toString()))
                 .collect(Collectors.toList());
 
-        // Top Products (Placeholder for now as we don't have order details aggregation
-        // in OrderRepository yet)
-        List<DashboardDTO.TopProduct> topProducts = new ArrayList<>();
-        // In a real app, query order_details grouped by product_id
+        // Top Products
+        List<DashboardDTO.TopProduct> topProducts = getTopProducts(safeDays, 5);
+
+        // Category Sales
+        List<DashboardDTO.CategorySales> categorySales = getCategorySales(safeDays);
 
         return DashboardDTO.builder()
                 .totalRevenue(totalRevenue)
@@ -66,6 +71,36 @@ public class DashboardService {
                 .revenueChart(chartData)
                 .recentOrders(recentOrders)
                 .topProducts(topProducts)
+                .categorySales(categorySales)
                 .build();
+    }
+
+    public List<DashboardDTO.TopProduct> getTopProducts(Integer days, Integer limit) {
+        int safeDays = normalizeDays(days);
+        int safeLimit = (limit == null || limit < 1) ? 5 : Math.min(limit, 20);
+
+        LocalDateTime startDate = LocalDateTime.now().minusDays(safeDays);
+        return orderRepository.findTopProductsByDate(startDate).stream()
+                .limit(safeLimit)
+                .map(row -> {
+                    String productName = row[0] != null ? row[0].toString() : "Khong xac dinh";
+                    long soldQuantity = row[1] != null ? ((Number) row[1]).longValue() : 0L;
+                    BigDecimal revenue = row[2] != null ? (BigDecimal) row[2] : BigDecimal.ZERO;
+                    return new DashboardDTO.TopProduct(productName, soldQuantity, revenue);
+                })
+                .collect(Collectors.toList());
+    }
+
+    public List<DashboardDTO.CategorySales> getCategorySales(Integer days) {
+        int safeDays = normalizeDays(days);
+        LocalDateTime startDate = LocalDateTime.now().minusDays(safeDays);
+
+        return orderRepository.findCategorySalesByDate(startDate).stream()
+                .map(row -> {
+                    String categoryName = row[0] != null ? row[0].toString() : "Chua phan loai";
+                    BigDecimal revenue = row[1] != null ? (BigDecimal) row[1] : BigDecimal.ZERO;
+                    return new DashboardDTO.CategorySales(categoryName, revenue);
+                })
+                .collect(Collectors.toList());
     }
 }
