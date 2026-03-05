@@ -12,8 +12,8 @@ import {
   Info,
 } from "lucide-react";
 import Swal from "sweetalert2";
-import stockService from "../services/stockService";
-import productService from "../services/productService";
+import stockService from "../../services/stockService";
+import productService from "../../services/productService";
 
 // ===== BATCH EXPIRY TAB COMPONENT =====
 const BatchExpiryTab = () => {

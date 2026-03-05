@@ -9,7 +9,7 @@ import {
   X,
   Printer,
 } from "lucide-react";
-import orderService from "../services/orderService";
+import orderService from "../../services/orderService";
 
 const OrderManagementPage = () => {
   const [orders, setOrders] = useState([]);

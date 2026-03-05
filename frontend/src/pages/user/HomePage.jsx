@@ -13,9 +13,9 @@ import {
   Heart,
   Tag,
 } from "lucide-react";
-import productService from "../services/productService";
-import categoryService from "../services/categoryService";
-import ProductCard from "../components/common/ProductCard";
+import productService from "../../services/productService";
+import categoryService from "../../services/categoryService";
+import ProductCard from "../../components/common/ProductCard";
 
 const HomePage = () => {
   const [products, setProducts] = useState([]);

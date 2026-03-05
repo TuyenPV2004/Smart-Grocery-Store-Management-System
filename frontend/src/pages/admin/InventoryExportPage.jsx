@@ -20,12 +20,12 @@ import {
   ImageIcon,
 } from "lucide-react";
 import Swal from "sweetalert2";
-import productService from "../services/productService";
-import inventoryService from "../services/inventoryService";
-import userService from "../services/userService";
-import batchService from "../services/batchService";
-import supplierService from "../services/supplierService";
-import BatchSelectionModal from "../components/BatchSelectionModal";
+import productService from "../../services/productService";
+import inventoryService from "../../services/inventoryService";
+import userService from "../../services/userService";
+import batchService from "../../services/batchService";
+import supplierService from "../../services/supplierService";
+import BatchSelectionModal from "../../components/BatchSelectionModal";
 
 // ===== MODAL COMPONENTS =====
 

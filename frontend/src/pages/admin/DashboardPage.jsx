@@ -3,9 +3,6 @@ import {
   TrendingUp,
   ShoppingCart,
   AlertTriangle,
-  LayoutDashboard,
-  ArrowUpRight,
-  ArrowDownRight,
   Package,
   Clock,
 } from "lucide-react";
@@ -17,23 +14,28 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  BarChart,
-  Bar,
-  Legend,
 } from "recharts";
-import dashboardService from "../services/dashboardService";
+import dashboardService from "../../services/dashboardService";
+
+const TIME_OPTIONS = [
+  { value: 7, label: "7 ngày" },
+  { value: 30, label: "30 ngày" },
+  { value: 90, label: "90 ngày" },
+];
 
 const DashboardPage = () => {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [selectedDays, setSelectedDays] = useState(7);
 
   useEffect(() => {
-    fetchDashboardStats();
-  }, []);
+    fetchDashboardStats(selectedDays);
+  }, [selectedDays]);
 
-  const fetchDashboardStats = async () => {
+  const fetchDashboardStats = async (days) => {
+    setLoading(true);
     try {
-      const res = await dashboardService.getStats();
+      const res = await dashboardService.getStats(days);
       setStats(res.data);
     } catch (error) {
       console.error("Lỗi tải dashboard:", error);
@@ -118,21 +120,20 @@ const DashboardPage = () => {
               key={item.id}
               className={`bg-white p-6 rounded-[2rem] border ${item.borderColor} shadow-sm hover:shadow-md transition-all duration-300 group`}
             >
-              <div className="flex justify-between items-start mb-4">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <h3 className="text-slate-500 text-sm font-medium mb-1">
+                    {item.title}
+                  </h3>
+                  <p className="text-2xl font-medium text-slate-900 tracking-tight">
+                    {item.value}
+                  </p>
+                </div>
                 <div
                   className={`p-3 ${item.bgColor} ${item.color} rounded-2xl transition-transform group-hover:scale-110 duration-300`}
                 >
                   <item.icon size={26} />
                 </div>
-              </div>
-
-              <div>
-                <h3 className="text-slate-500 text-sm font-medium mb-1">
-                  {item.title}
-                </h3>
-                <p className="text-2xl font-medium text-slate-900 tracking-tight">
-                  {item.value}
-                </p>
               </div>
             </div>
           ))}
@@ -142,10 +143,22 @@ const DashboardPage = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
           {/* Revenue Chart */}
           <div className="lg:col-span-2 bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-sm">
-            <h3 className="text-lg font-medium text-slate-900 mb-6 flex items-center gap-2">
-              <TrendingUp size={20} className="text-green-600" />
-              Biểu đồ doanh thu 7 ngày qua
-            </h3>
+            <div className="flex items-center justify-between mb-6 gap-3">
+              <h3 className="text-lg font-medium text-slate-900 flex items-center gap-2">
+                Biểu đồ doanh thu
+              </h3>
+              <select
+                value={selectedDays}
+                onChange={(e) => setSelectedDays(Number(e.target.value))}
+                className="px-3 py-2 rounded-xl border border-slate-200 text-sm font-medium text-slate-700 bg-white outline-none focus:border-green-500 focus:ring-2 focus:ring-green-100"
+              >
+                {TIME_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
             <div className="h-[300px] w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart
@@ -213,7 +226,6 @@ const DashboardPage = () => {
           {/* Recent Orders */}
           <div className="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-sm">
             <h3 className="text-lg font-medium text-slate-900 mb-6 flex items-center gap-2">
-              <Clock size={20} className="text-blue-600" />
               Đơn hàng gần đây
             </h3>
             <div className="space-y-4">

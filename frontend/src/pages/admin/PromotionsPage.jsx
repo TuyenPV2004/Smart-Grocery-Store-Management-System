@@ -1,10 +1,12 @@
 import { toast } from "react-toastify";
 import { useEffect, useState } from "react";
-import voucherService from "../services/voucherService";
+import promotionService from "../../services/promotionService";
+import productService from "../../services/productService";
 import {
   Edit,
   Trash2,
-  Ticket,
+  Tag,
+  Calendar,
   Percent,
   DollarSign,
   X,
@@ -13,37 +15,47 @@ import {
 import moment from "moment";
 import Swal from "sweetalert2";
 
-const VouchersPage = () => {
-  const [vouchers, setVouchers] = useState([]);
+const PromotionsPage = () => {
+  const [promotions, setPromotions] = useState([]);
+  const [products, setProducts] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [loading, setLoading] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
-  const [selectedVoucher, setSelectedVoucher] = useState(null);
+  const [selectedPromo, setSelectedPromo] = useState(null);
 
   const [formData, setFormData] = useState({
     id: null,
-    code: "",
+    name: "",
     description: "",
     discountType: "PERCENTAGE",
     discountValue: "",
-    minOrderValue: 0,
-    maxDiscountAmount: "",
-    usageLimit: "",
     startDate: "",
     endDate: "",
     status: "ACTIVE",
+    productIds: [],
   });
 
   useEffect(() => {
     fetchData();
+    fetchProducts();
   }, []);
 
   const fetchData = async () => {
     try {
-      const res = await voucherService.getAll();
-      setVouchers(res.data);
+      const res = await promotionService.getAll();
+      setPromotions(res.data);
     } catch (error) {
-      console.error("Lỗi tải voucher:", error);
+      console.error("Lỗi tải khuyến mãi:", error);
+    }
+  };
+
+  const fetchProducts = async () => {
+    try {
+      const res = await productService.getAll();
+      // res.data might be an array or paginated object, assuming array here
+      setProducts(res.data?.content || res.data || []);
+    } catch (error) {
+      console.error("Lỗi tải sản phẩm:", error);
     }
   };
 
@@ -52,32 +64,42 @@ const VouchersPage = () => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  const handleProductToggle = (productId) => {
+    setFormData((prev) => {
+      const isSelected = prev.productIds.includes(productId);
+      return {
+        ...prev,
+        productIds: isSelected
+          ? prev.productIds.filter((id) => id !== productId)
+          : [...prev.productIds, productId],
+      };
+    });
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     try {
       const payload = {
-        id: formData.id,
-        code: formData.code.toUpperCase(),
-        description: formData.description,
-        discountType: formData.discountType,
-        discountValue: Number(formData.discountValue),
-        minOrderValue: Number(formData.minOrderValue) || 0,
-        maxDiscountAmount: formData.maxDiscountAmount
-          ? Number(formData.maxDiscountAmount)
-          : null,
-        usageLimit: formData.usageLimit ? Number(formData.usageLimit) : null,
-        startDate: formData.startDate,
-        endDate: formData.endDate,
-        status: formData.status,
+        promotion: {
+          id: formData.id,
+          name: formData.name,
+          description: formData.description,
+          discountType: formData.discountType,
+          discountValue: formData.discountValue,
+          startDate: formData.startDate,
+          endDate: formData.endDate,
+          status: formData.status,
+        },
+        productIds: formData.productIds,
       };
 
       if (formData.id) {
-        await voucherService.update(formData.id, payload);
-        toast.success("Cập nhật mã giảm giá thành công!");
+        await promotionService.update(formData.id, payload);
+        toast.success("Cập nhật khuyến mãi thành công!");
       } else {
-        await voucherService.create(payload);
-        toast.success("Tạo mã giảm giá mới thành công!");
+        await promotionService.create(payload);
+        toast.success("Tạo khuyến mãi mới thành công!");
       }
       setShowModal(false);
       fetchData();
@@ -91,7 +113,7 @@ const VouchersPage = () => {
   const handleDelete = async (id) => {
     const result = await Swal.fire({
       title: "Xác nhận xóa?",
-      text: "Bạn sẽ không thể khôi phục lại mã giảm giá này!",
+      text: "Bạn sẽ không thể khôi phục lại khuyến mãi này!",
       icon: "warning",
       showCancelButton: true,
       confirmButtonColor: "#ef4444",
@@ -102,7 +124,7 @@ const VouchersPage = () => {
 
     if (result.isConfirmed) {
       try {
-        await voucherService.delete(id);
+        await promotionService.delete(id);
         toast.success("Xóa thành công!");
         fetchData();
       } catch (error) {
@@ -111,23 +133,21 @@ const VouchersPage = () => {
     }
   };
 
-  const openEdit = (voucher) => {
+  const openEdit = (promo) => {
     setFormData({
-      id: voucher.id,
-      code: voucher.code,
-      description: voucher.description || "",
-      discountType: voucher.discountType || "PERCENTAGE",
-      discountValue: voucher.discountValue || "",
-      minOrderValue: voucher.minOrderValue || 0,
-      maxDiscountAmount: voucher.maxDiscountAmount || "",
-      usageLimit: voucher.usageLimit || "",
-      startDate: voucher.startDate
-        ? moment(voucher.startDate).utc().format("YYYY-MM-DDTHH:mm")
+      id: promo.id,
+      name: promo.name,
+      description: promo.description || "",
+      discountType: promo.discountType || "PERCENTAGE",
+      discountValue: promo.discountValue || "",
+      startDate: promo.startDate
+        ? moment(promo.startDate).utc().format("YYYY-MM-DDTHH:mm")
         : "",
-      endDate: voucher.endDate
-        ? moment(voucher.endDate).utc().format("YYYY-MM-DDTHH:mm")
+      endDate: promo.endDate
+        ? moment(promo.endDate).utc().format("YYYY-MM-DDTHH:mm")
         : "",
-      status: voucher.status || "ACTIVE",
+      status: promo.status || "ACTIVE",
+      productIds: promo.products ? promo.products.map((p) => p.id) : [],
     });
     setShowModal(true);
   };
@@ -135,26 +155,16 @@ const VouchersPage = () => {
   const resetForm = () => {
     setFormData({
       id: null,
-      code: "",
+      name: "",
       description: "",
       discountType: "PERCENTAGE",
       discountValue: "",
-      minOrderValue: 0,
-      maxDiscountAmount: "",
-      usageLimit: "",
       startDate: "",
       endDate: "",
       status: "ACTIVE",
+      productIds: [],
     });
     setShowModal(true);
-  };
-
-  const formatCurrency = (amount) => {
-    if (!amount && amount !== 0) return "";
-    return new Intl.NumberFormat("vi-VN", {
-      style: "currency",
-      currency: "VND",
-    }).format(amount);
   };
 
   return (
@@ -164,17 +174,17 @@ const VouchersPage = () => {
         <div className="flex justify-between items-center mb-6">
           <div>
             <h1 className="text-2xl font-medium text-slate-900 flex items-center gap-3">
-              Quản lý mã giảm giá
+              Quản lý Khuyến mãi
             </h1>
             <p className="text-[14px] text-slate-500 mt-1 font-medium">
-              Thiết lập mã khuyến mãi cho giỏ hàng
+              Thiết lập siêu khuyến mãi, giảm giá cho sản phẩm
             </p>
           </div>
           <button
             onClick={resetForm}
-            className="bg-indigo-600 text-white px-5 py-2.5 rounded-xl flex items-center shadow-sm hover:bg-indigo-700 transition-all active:scale-95 font-medium gap-2"
+            className="bg-green-600 text-white px-5 py-2.5 rounded-xl flex items-center shadow-sm hover:bg-green-700 transition-all active:scale-95 font-medium gap-2"
           >
-            Thêm mã giảm giá
+            Thêm khuyến mãi
           </button>
         </div>
 
@@ -185,25 +195,16 @@ const VouchersPage = () => {
               <thead>
                 <tr className="bg-slate-50/50 border-b border-slate-200">
                   <th className="px-6 py-4 text-left text-[13px] font-medium text-slate-900 whitespace-nowrap">
-                    Mã Code
-                  </th>
-                  <th className="px-6 py-4 text-left text-[13px] font-medium text-slate-900 whitespace-nowrap">
-                    Mô tả
+                    Tên GD
                   </th>
                   <th className="px-6 py-4 text-left text-[13px] font-medium text-slate-900 whitespace-nowrap">
                     Chiết khấu
                   </th>
                   <th className="px-6 py-4 text-left text-[13px] font-medium text-slate-900 whitespace-nowrap">
-                    Đơn tối thiểu
+                    Bắt đầu
                   </th>
                   <th className="px-6 py-4 text-left text-[13px] font-medium text-slate-900 whitespace-nowrap">
-                    Từ ngày
-                  </th>
-                  <th className="px-6 py-4 text-left text-[13px] font-medium text-slate-900 whitespace-nowrap">
-                    Đến ngày
-                  </th>
-                  <th className="px-6 py-4 text-center text-[13px] font-medium text-slate-900 whitespace-nowrap">
-                    Lượt sử dụng
+                    Kết thúc
                   </th>
                   <th className="px-6 py-4 text-center text-[13px] font-medium text-slate-900 whitespace-nowrap">
                     Trạng thái
@@ -214,69 +215,58 @@ const VouchersPage = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {vouchers.map((voucher) => (
+                {promotions.map((promo) => (
                   <tr
-                    key={voucher.id}
+                    key={promo.id}
                     className="hover:bg-slate-50/50 transition-colors"
                   >
                     <td className="px-6 py-4">
-                      <div className="font-bold text-indigo-600 border border-indigo-200 bg-indigo-50 px-2 py-1 rounded inline-block">
-                        {voucher.code}
+                      <div className="font-medium text-slate-900">
+                        {promo.name}
                       </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="text-[13px] text-slate-600 line-clamp-2 max-w-[200px]">
-                        {voucher.description || (
-                          <span className="text-slate-400 italic">
-                            Không có
-                          </span>
-                        )}
+                      <div className="text-[12px] text-slate-400 mt-1 line-clamp-1">
+                        {promo.description}
                       </div>
                     </td>
                     <td className="px-6 py-4">
                       <div className="inline-flex items-center px-3 py-1 bg-amber-50 text-amber-700 rounded-lg text-sm font-medium border border-amber-100/50">
-                        {voucher.discountType === "PERCENTAGE"
-                          ? `${voucher.discountValue}%`
-                          : formatCurrency(voucher.discountValue)}
+                        {promo.discountType === "PERCENTAGE"
+                          ? `${promo.discountValue}%`
+                          : `${promo.discountValue.toLocaleString()}đ`}
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-sm font-medium text-slate-700">
-                      {formatCurrency(voucher.minOrderValue)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-[13px] text-slate-700 flex items-center gap-1.5">
-                        <div className="w-1.5 h-1.5 rounded-full bg-green-500"></div>
-                        {moment(voucher.startDate)
-                          .utc()
-                          .format("YYYY-MM-DD HH:mm")}
+                    <td className="px-6 py-4">
+                      <div className="text-sm">
+                        <div className="text-slate-900 flex items-center gap-1 mb-1">
+                          <div className="w-1.5 h-1.5 rounded-full bg-green-500"></div>
+                          {moment(promo.startDate)
+                            .utc()
+                            .format("HH:mm DD/MM/YYYY")}
+                        </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-[13px] text-slate-700 flex items-center gap-1.5">
-                        <div className="w-1.5 h-1.5 rounded-full bg-rose-500"></div>
-                        {moment(voucher.endDate)
-                          .utc()
-                          .format("YYYY-MM-DD HH:mm")}
+                    <td className="px-6 py-4">
+                      <div className="text-sm">
+                        <div className="text-slate-900 flex items-center gap-1">
+                          <div className="w-1.5 h-1.5 rounded-full bg-rose-500"></div>
+                          {moment(promo.endDate)
+                            .utc()
+                            .format("HH:mm DD/MM/YYYY")}
+                        </div>
                       </div>
-                    </td>
-                    <td className="px-6 py-4 text-center text-sm font-medium">
-                      <span className="text-indigo-600">
-                        {voucher.usedCount || 0}
-                      </span>{" "}
-                      / {voucher.usageLimit ? voucher.usageLimit : "∞"}
                     </td>
                     <td className="px-6 py-4 text-center">
                       <span
-                        className={`px-3 py-1 rounded-full text-[12px] font-medium ${voucher.status === "ACTIVE" ? "bg-green-100 text-green-700" : "bg-slate-100 text-slate-600"}`}
+                        className={`px-3 py-1 rounded-full text-[12px] font-medium ${promo.status === "ACTIVE" ? "bg-green-100 text-green-700" : "bg-slate-100 text-slate-600"}`}
                       >
-                        {voucher.status === "ACTIVE" ? "Kích hoạt" : "Đã tắt"}
+                        {promo.status === "ACTIVE" ? "Đang chạy" : "Đã tắt"}
                       </span>
                     </td>
                     <td className="px-6 py-4 text-center">
                       <div className="flex justify-center items-center gap-3">
                         <button
                           onClick={() => {
-                            setSelectedVoucher(voucher);
+                            setSelectedPromo(promo);
                             setShowDetailModal(true);
                           }}
                           className="text-blue-500 hover:text-blue-700 hover:bg-blue-50 p-2 rounded-xl transition-all"
@@ -285,14 +275,14 @@ const VouchersPage = () => {
                           <Info size={18} />
                         </button>
                         <button
-                          onClick={() => openEdit(voucher)}
+                          onClick={() => openEdit(promo)}
                           className="text-indigo-500 hover:text-indigo-700 hover:bg-indigo-50 p-2 rounded-xl transition-all"
                           title="Sửa"
                         >
                           <Edit size={18} />
                         </button>
                         <button
-                          onClick={() => handleDelete(voucher.id)}
+                          onClick={() => handleDelete(promo.id)}
                           className="text-rose-500 hover:text-rose-700 hover:bg-rose-50 p-2 rounded-xl transition-all"
                           title="Xóa"
                         >
@@ -305,11 +295,11 @@ const VouchersPage = () => {
               </tbody>
             </table>
           </div>
-          {vouchers.length === 0 && (
+          {promotions.length === 0 && (
             <div className="p-12 text-center flex flex-col items-center justify-center text-slate-400">
-              <Ticket size={48} className="text-slate-200 mb-4" />
+              <Tag size={48} className="text-slate-200 mb-4" />
               <p className="font-medium text-slate-500">
-                Chưa có mã giảm giá nào
+                Chưa có chương trình khuyến mãi nào
               </p>
             </div>
           )}
@@ -322,13 +312,13 @@ const VouchersPage = () => {
           <div className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200 border border-slate-100">
             <div className="px-6 py-5 border-b border-slate-100 flex justify-between items-center bg-white sticky top-0 z-10">
               <h2 className="text-xl font-semibold text-slate-800 flex items-center gap-3">
-                {formData.id ? "Cập nhật mã giảm giá" : "Tạo mã giảm giá mới"}
+                {formData.id ? "Cập nhật khuyến mãi" : "Tạo khuyến mãi mới"}
               </h2>
             </div>
 
             <div className="p-6 overflow-y-auto custom-scrollbar flex-1 bg-slate-50/30">
               <form
-                id="voucherForm"
+                id="promoForm"
                 onSubmit={handleSubmit}
                 className="space-y-6"
               >
@@ -338,15 +328,15 @@ const VouchersPage = () => {
                   </h3>
                   <div>
                     <label className="block text-[13px] font-medium text-slate-700 mb-2">
-                      Mã Code
+                      Tên chương trình
                     </label>
                     <input
                       required
-                      name="code"
-                      className="w-full border-slate-200 rounded-xl px-4 py-3 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 transition-all font-medium text-slate-700 text-sm uppercase"
-                      value={formData.code}
+                      name="name"
+                      className="w-full border-slate-200 rounded-xl px-4 py-3 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 transition-all font-medium text-slate-700 text-sm"
+                      value={formData.name}
                       onChange={handleChange}
-                      placeholder="VD: WELCOME2024"
+                      placeholder="Nhập tên chương trình"
                     />
                   </div>
                   <div>
@@ -357,7 +347,7 @@ const VouchersPage = () => {
                       rows="2"
                       name="description"
                       className="w-full border-slate-200 rounded-xl px-4 py-3 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 transition-all font-medium text-slate-700 text-sm resize-none"
-                      placeholder="Chi tiết mã giảm giá (VD: Giảm 10% cho đơn từ 200k)"
+                      placeholder="Chi tiết khuyến mãi"
                       value={formData.description}
                       onChange={handleChange}
                     ></textarea>
@@ -394,72 +384,16 @@ const VouchersPage = () => {
                         className="w-full border-slate-200 rounded-xl px-4 py-3 bg-slate-50 focus:bg-white focus:border-indigo-400 transition-all font-medium text-slate-700 text-sm"
                         value={formData.discountValue}
                         onChange={handleChange}
-                        placeholder={
-                          formData.discountType === "PERCENTAGE"
-                            ? "VD: 10"
-                            : "VD: 50000"
-                        }
+                        placeholder="Nhập số"
                         min="0"
                       />
                     </div>
-                    {formData.discountType === "PERCENTAGE" && (
-                      <div>
-                        <label className="block text-[13px] font-medium text-slate-700 mb-2">
-                          Giảm tối đa (VNĐ)
-                        </label>
-                        <input
-                          type="number"
-                          name="maxDiscountAmount"
-                          className="w-full border-slate-200 rounded-xl px-4 py-3 bg-slate-50 focus:bg-white focus:border-indigo-400 transition-all font-medium text-slate-700 text-sm"
-                          value={formData.maxDiscountAmount}
-                          onChange={handleChange}
-                          placeholder="Không giới hạn"
-                          min="0"
-                        />
-                      </div>
-                    )}
                   </div>
 
                   <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm space-y-4">
                     <h3 className="text-sm font-semibold text-indigo-600 mb-2">
-                      Điều kiện & Số lượng
+                      Thời gian
                     </h3>
-                    <div>
-                      <label className="block text-[13px] font-medium text-slate-700 mb-2">
-                        Đơn tối thiểu (VNĐ)
-                      </label>
-                      <input
-                        type="number"
-                        name="minOrderValue"
-                        className="w-full border-slate-200 rounded-xl px-4 py-3 bg-slate-50 focus:bg-white focus:border-indigo-400 transition-all font-medium text-slate-700 text-sm"
-                        value={formData.minOrderValue}
-                        onChange={handleChange}
-                        placeholder="VD: 0"
-                        min="0"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[13px] font-medium text-slate-700 mb-2">
-                        Số lượt sử dụng tối đa
-                      </label>
-                      <input
-                        type="number"
-                        name="usageLimit"
-                        className="w-full border-slate-200 rounded-xl px-4 py-3 bg-slate-50 focus:bg-white focus:border-indigo-400 transition-all font-medium text-slate-700 text-sm"
-                        value={formData.usageLimit}
-                        onChange={handleChange}
-                        placeholder="Không giới hạn"
-                        min="1"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm space-y-4">
-                  <h3 className="text-sm font-semibold text-indigo-600 mb-2">
-                    Thời gian
-                  </h3>
-                  <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="block text-[13px] font-medium text-slate-700 mb-2">
                         Từ ngày
@@ -490,6 +424,90 @@ const VouchersPage = () => {
                         onChange={handleChange}
                       />
                     </div>
+                  </div>
+                </div>
+
+                <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-sm font-semibold text-indigo-600">
+                      Sản phẩm áp dụng{" "}
+                      {formData.productIds.length > 0 &&
+                        `(${formData.productIds.length})`}
+                    </h3>
+                  </div>
+                  <div className="max-h-60 overflow-y-auto custom-scrollbar border border-slate-100 rounded-xl">
+                    {products.length === 0 ? (
+                      <div className="p-4 text-center text-sm text-slate-500">
+                        Không có sản phẩm nào
+                      </div>
+                    ) : (
+                      <table className="w-full text-left text-sm border-collapse">
+                        <thead className="sticky top-0 bg-slate-50 font-medium text-slate-600 z-10 border-b border-slate-200">
+                          <tr>
+                            <th className="py-2 px-4 w-12 text-center">
+                              <input
+                                type="checkbox"
+                                className="w-4 h-4 rounded text-indigo-600 border-slate-300 focus:ring-indigo-500"
+                                checked={
+                                  formData.productIds.length > 0 &&
+                                  formData.productIds.length === products.length
+                                }
+                                onChange={(e) => {
+                                  if (e.target.checked) {
+                                    setFormData((p) => ({
+                                      ...p,
+                                      productIds: products.map((x) => x.id),
+                                    }));
+                                  } else {
+                                    setFormData((p) => ({
+                                      ...p,
+                                      productIds: [],
+                                    }));
+                                  }
+                                }}
+                              />
+                            </th>
+                            <th className="py-2 px-4 text-xs font-semibold">
+                              Tên sản phẩm
+                            </th>
+                            <th className="py-2 px-4 text-xs font-semibold text-right">
+                              Giá bán
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-50">
+                          {products.map((p) => (
+                            <tr
+                              key={p.id}
+                              className="hover:bg-slate-50/50 cursor-pointer"
+                              onClick={() => handleProductToggle(p.id)}
+                            >
+                              <td className="py-2.5 px-4 text-center">
+                                <input
+                                  type="checkbox"
+                                  readOnly
+                                  checked={formData.productIds.includes(p.id)}
+                                  className="w-4 h-4 rounded text-indigo-600 border-slate-300 pointer-events-none"
+                                />
+                              </td>
+                              <td className="py-2.5 px-4 font-medium text-slate-700 flex items-center gap-2">
+                                {p.thumbnail && (
+                                  <img
+                                    src={`http://localhost:8080/${p.thumbnail}`}
+                                    className="w-8 h-8 rounded-lg object-cover"
+                                    alt=""
+                                  />
+                                )}
+                                <span className="line-clamp-1">{p.name}</span>
+                              </td>
+                              <td className="py-2.5 px-4 text-right text-slate-500">
+                                {p.sellPrice?.toLocaleString()}đ
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    )}
                   </div>
                 </div>
 
@@ -527,15 +545,15 @@ const VouchersPage = () => {
                 Hủy bỏ
               </button>
               <button
-                form="voucherForm"
+                form="promoForm"
                 type="submit"
                 disabled={loading}
-                className="px-6 py-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 font-medium shadow-sm transition-all active:scale-95 disabled:opacity-70 disabled:pointer-events-none flex items-center gap-2"
+                className="px-6 py-2.5 bg-green-600 text-white rounded-xl hover:bg-green-700 font-medium shadow-sm transition-all active:scale-95 disabled:opacity-70 disabled:pointer-events-none flex items-center gap-2"
               >
                 {loading && (
                   <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                 )}
-                {formData.id ? "Lưu thay đổi" : "Tạo mã giảm giá"}
+                {formData.id ? "Lưu thay đổi" : "Tạo khuyến mãi"}
               </button>
             </div>
           </div>
@@ -543,13 +561,12 @@ const VouchersPage = () => {
       )}
 
       {/* DETAIL MODAL */}
-      {showDetailModal && selectedVoucher && (
+      {showDetailModal && selectedPromo && (
         <div className="fixed inset-0 bg-slate-900/40 z-[100] flex items-center justify-center p-4 backdrop-blur-sm">
           <div className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200 border border-slate-100">
             <div className="px-6 py-5 border-b border-slate-100 flex justify-between items-center bg-white sticky top-0 z-10">
               <h2 className="text-xl font-semibold text-slate-800 flex items-center gap-3">
-                Chi tiết Voucher:{" "}
-                <span className="text-indigo-600">{selectedVoucher.code}</span>
+                Chi tiết khuyến mãi
               </h2>
               <button
                 onClick={() => setShowDetailModal(false)}
@@ -559,86 +576,123 @@ const VouchersPage = () => {
               </button>
             </div>
             <div className="p-6 overflow-y-auto custom-scrollbar flex-1 bg-slate-50/30 space-y-6">
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <p className="text-slate-500 mb-1">Trạng thái:</p>
-                  <span
-                    className={`px-3 py-1 rounded-full text-[12px] font-medium inline-block ${selectedVoucher.status === "ACTIVE" ? "bg-green-100 text-green-700" : "bg-slate-100 text-slate-600"}`}
-                  >
-                    {selectedVoucher.status === "ACTIVE"
-                      ? "Đang chạy"
-                      : "Đã tắt"}
-                  </span>
-                </div>
-                <div>
-                  <p className="text-slate-500 mb-1">Mô tả:</p>
-                  <p className="font-medium text-slate-800">
-                    {selectedVoucher.description || "Không có mô tả"}
-                  </p>
+              <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm space-y-4">
+                <h3 className="text-sm font-semibold text-indigo-600 border-b border-slate-100 pb-2">
+                  Thông tin chung
+                </h3>
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <p className="text-slate-500 mb-1">Tên chương trình:</p>
+                    <p className="font-medium text-slate-800">
+                      {selectedPromo.name}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-slate-500 mb-1">Trạng thái:</p>
+                    <span
+                      className={`px-3 py-1 rounded-full text-[12px] font-medium inline-block ${selectedPromo.status === "ACTIVE" ? "bg-green-100 text-green-700" : "bg-slate-100 text-slate-600"}`}
+                    >
+                      {selectedPromo.status === "ACTIVE"
+                        ? "Đang chạy"
+                        : "Đã tắt"}
+                    </span>
+                  </div>
+                  <div className="col-span-2">
+                    <p className="text-slate-500 mb-1">Mô tả:</p>
+                    <p className="font-medium text-slate-800">
+                      {selectedPromo.description || "Không có mô tả"}
+                    </p>
+                  </div>
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm space-y-4">
                   <h3 className="text-sm font-semibold text-indigo-600 border-b border-slate-100 pb-2">
-                    Mức giảm & Điều kiện
+                    Mức giảm
                   </h3>
-                  <div className="text-sm space-y-3">
-                    <div className="flex justify-between">
-                      <span className="text-slate-500">Chiết khấu:</span>
-                      <span className="font-medium text-slate-800">
-                        {selectedVoucher.discountType === "PERCENTAGE"
-                          ? `${selectedVoucher.discountValue}%`
-                          : formatCurrency(selectedVoucher.discountValue)}
-                      </span>
-                    </div>
-                    {selectedVoucher.maxDiscountAmount && (
-                      <div className="flex justify-between">
-                        <span className="text-slate-500">Giảm tối đa:</span>
-                        <span className="font-medium text-slate-800">
-                          {formatCurrency(selectedVoucher.maxDiscountAmount)}
-                        </span>
-                      </div>
-                    )}
-                    <div className="flex justify-between">
-                      <span className="text-slate-500">Đơn tối thiểu:</span>
-                      <span className="font-medium text-slate-800">
-                        {formatCurrency(selectedVoucher.minOrderValue)}
-                      </span>
-                    </div>
+                  <div className="text-sm">
+                    <p className="text-slate-500 mb-1">Chiết khấu:</p>
+                    <p className="font-medium text-slate-800">
+                      {selectedPromo.discountType === "PERCENTAGE"
+                        ? `${selectedPromo.discountValue}%`
+                        : `${selectedPromo.discountValue.toLocaleString()}đ`}
+                    </p>
                   </div>
                 </div>
 
                 <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm space-y-4">
                   <h3 className="text-sm font-semibold text-indigo-600 border-b border-slate-100 pb-2">
-                    Lượt dùng & Thời gian
+                    Thời gian
                   </h3>
-                  <div className="text-sm space-y-3">
-                    <div className="flex justify-between">
-                      <span className="text-slate-500">Đã dùng:</span>
-                      <span className="font-medium text-slate-800">
-                        {selectedVoucher.usedCount || 0} /{" "}
-                        {selectedVoucher.usageLimit || "Vô hạn"}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-slate-500">Bắt đầu:</span>
-                      <span className="font-medium text-slate-800">
-                        {moment(selectedVoucher.startDate)
+                  <div className="text-sm space-y-2">
+                    <div className="flex items-center">
+                      <p className="w-20 text-slate-500">Bắt đầu:</p>
+                      <p className="font-medium text-slate-800">
+                        {moment(selectedPromo.startDate)
                           .utc()
-                          .format("YYYY-MM-DD HH:mm")}
-                      </span>
+                          .format("HH:mm DD/MM/YYYY")}
+                      </p>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-slate-500">Kết thúc:</span>
-                      <span className="font-medium text-slate-800">
-                        {moment(selectedVoucher.endDate)
+
+                    <div className="flex items-center">
+                      <p className="w-20 text-slate-500">Kết thúc:</p>
+                      <p className="font-medium text-slate-800">
+                        {moment(selectedPromo.endDate)
                           .utc()
-                          .format("YYYY-MM-DD HH:mm")}
-                      </span>
+                          .format("HH:mm DD/MM/YYYY")}
+                      </p>
                     </div>
                   </div>
                 </div>
+              </div>
+
+              <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm space-y-4">
+                <h3 className="text-sm font-semibold text-indigo-600 border-b border-slate-100 pb-2">
+                  Sản phẩm áp dụng ({selectedPromo.products?.length || 0})
+                </h3>
+                {selectedPromo.products && selectedPromo.products.length > 0 ? (
+                  <div className="max-h-48 overflow-y-auto custom-scrollbar border border-slate-100 rounded-xl">
+                    <table className="w-full text-left text-sm border-collapse">
+                      <thead className="sticky top-0 bg-slate-50 font-medium text-slate-600 z-10 border-b border-slate-200">
+                        <tr>
+                          <th className="py-2 px-4 text-xs font-semibold">
+                            Sản phẩm
+                          </th>
+                          <th className="py-2 px-4 text-xs font-semibold text-right">
+                            Giá bán
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-50">
+                        {selectedPromo.products.map((p) => (
+                          <tr
+                            key={p.id}
+                            className="hover:bg-slate-50/50 transition-colors"
+                          >
+                            <td className="py-2.5 px-4 font-medium text-slate-700 flex items-center gap-2">
+                              {p.thumbnail && (
+                                <img
+                                  src={`http://localhost:8080/${p.thumbnail}`}
+                                  className="w-8 h-8 rounded-lg object-cover"
+                                  alt=""
+                                />
+                              )}
+                              <span className="line-clamp-1">{p.name}</span>
+                            </td>
+                            <td className="py-2.5 px-4 text-right text-slate-500">
+                              {p.sellPrice?.toLocaleString()}đ
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <p className="text-sm text-slate-500 text-center py-4">
+                    Không có sản phẩm nào được áp dụng
+                  </p>
+                )}
               </div>
             </div>
           </div>
@@ -648,4 +702,4 @@ const VouchersPage = () => {
   );
 };
 
-export default VouchersPage;
+export default PromotionsPage;

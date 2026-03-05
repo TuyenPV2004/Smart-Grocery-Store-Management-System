@@ -1,7 +1,7 @@
 import { toast } from "react-toastify";
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import inventoryService from "../services/inventoryService";
+import inventoryService from "../../services/inventoryService";
 import {
   FileSpreadsheet,
   Eye,

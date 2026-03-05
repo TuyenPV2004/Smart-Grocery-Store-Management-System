@@ -1,7 +1,7 @@
 import { toast } from 'react-toastify';
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import userService from "../services/userService";
+import userService from "../../services/userService";
 import {
   Mail,
   Lock,

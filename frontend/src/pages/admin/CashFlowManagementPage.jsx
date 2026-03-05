@@ -2,7 +2,7 @@ import { toast } from "react-toastify";
 import React, { useState, useEffect } from "react";
 import { Edit, Trash2, Search, X, CheckCircle } from "lucide-react";
 import Swal from "sweetalert2";
-import bankAccountService from "../services/bankAccountService";
+import bankAccountService from "../../services/bankAccountService";
 
 const bankOptions = [
   {

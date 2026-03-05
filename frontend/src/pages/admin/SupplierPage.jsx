@@ -1,6 +1,6 @@
 import { toast } from "react-toastify";
 import React, { useEffect, useState } from "react";
-import supplierService from "../services/supplierService";
+import supplierService from "../../services/supplierService";
 import {
   Plus,
   Edit,

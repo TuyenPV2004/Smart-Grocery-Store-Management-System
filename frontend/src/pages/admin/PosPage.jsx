@@ -12,8 +12,8 @@ import {
   ChevronRight,
 } from "lucide-react";
 import Swal from "sweetalert2";
-import productService from "../services/productService";
-import orderService from "../services/orderService";
+import productService from "../../services/productService";
+import orderService from "../../services/orderService";
 
 const PosPage = () => {
   const [products, setProducts] = useState([]);

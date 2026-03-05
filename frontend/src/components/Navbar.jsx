@@ -1,25 +1,95 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
 import { Menu, X, ShoppingCart, LogOut, Search, User } from "lucide-react";
+import productService from "../services/productService";
 
 const Navbar = () => {
   const { user, isAuthenticated, logout } = useAuth();
-  const { cartCount } = useCart();
+  const { cartCount, addToCart, getProductPrice } = useCart();
   const BACKEND_URL = "http://localhost:8080/";
   const [isOpen, setIsOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [searchSuggestions, setSearchSuggestions] = useState([]);
+  const [isSuggestionsLoading, setIsSuggestionsLoading] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    setIsSearchOpen(false);
+    setSearchQuery("");
+    setSearchSuggestions([]);
+    setIsSuggestionsLoading(false);
+  }, [location.pathname, location.search]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    if (!isSearchOpen || !searchQuery.trim()) {
+      setSearchSuggestions([]);
+      setIsSuggestionsLoading(false);
+      return;
+    }
+
+    const timerId = setTimeout(async () => {
+      setIsSuggestionsLoading(true);
+      try {
+        const res = await productService.getAll({
+          status: "ACTIVE",
+          keyword: searchQuery.trim(),
+          pageSize: 3,
+        });
+        const productList = res.data?.content || res.data || [];
+        if (isMounted) {
+          setSearchSuggestions(
+            Array.isArray(productList) ? productList.slice(0, 3) : [],
+          );
+        }
+      } catch (error) {
+        if (isMounted) {
+          setSearchSuggestions([]);
+        }
+      } finally {
+        if (isMounted) {
+          setIsSuggestionsLoading(false);
+        }
+      }
+    }, 250);
+
+    return () => {
+      isMounted = false;
+      clearTimeout(timerId);
+    };
+  }, [isSearchOpen, searchQuery]);
 
   const handleSearch = (e) => {
     e.preventDefault();
     if (searchQuery.trim()) {
       navigate(`/products?search=${encodeURIComponent(searchQuery)}`);
       setIsSearchOpen(false);
+      setSearchSuggestions([]);
     }
+  };
+
+  const getImageUrl = (path) => {
+    if (!path) return "https://via.placeholder.com/80x80?text=No+Image";
+    if (path.startsWith("http")) return path;
+    return `${BACKEND_URL}${path}`;
+  };
+
+  const formatCurrency = (amount) => {
+    return new Intl.NumberFormat("vi-VN", {
+      style: "currency",
+      currency: "VND",
+    }).format(amount || 0);
+  };
+
+  const handleAddToCartFromSuggestion = (e, product) => {
+    e.preventDefault();
+    e.stopPropagation();
+    addToCart(product, 1);
   };
 
   const navLinks = [
@@ -70,7 +140,7 @@ const Navbar = () => {
               >
                 <input
                   type="text"
-                  placeholder="Tìm kiếm sản phẩm..."
+                  placeholder="Tìm kiếm sản phẩm"
                   className="w-full pl-12 pr-12 py-2.5 bg-slate-50 border border-slate-200 rounded-full outline-none focus:border-green-500 focus:ring-2 focus:ring-green-100 transition-all font-medium text-slate-700"
                   autoFocus
                   value={searchQuery}
@@ -81,25 +151,68 @@ const Navbar = () => {
                   size={18}
                   className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
                 />
-                {searchQuery && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSearchQuery("");
-                      document.querySelector('input[type="text"]').focus();
-                    }}
-                    className="absolute right-12 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1"
-                  >
-                    <X size={14} />
-                  </button>
-                )}
                 <button
                   type="button"
-                  onClick={() => setIsSearchOpen(false)}
+                  onClick={() => {
+                    setIsSearchOpen(false);
+                    setSearchSuggestions([]);
+                  }}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-rose-500 p-1 bg-white rounded-full shadow-sm border border-slate-100"
                 >
                   <X size={16} />
                 </button>
+
+                {searchQuery.trim() && (
+                  <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-slate-100 rounded-2xl shadow-xl overflow-hidden z-50">
+                    {isSuggestionsLoading ? (
+                      <div className="px-4 py-3 text-sm text-slate-500">
+                        Đang tìm sản phẩm...
+                      </div>
+                    ) : searchSuggestions.length > 0 ? (
+                      <ul className="divide-y divide-slate-100">
+                        {searchSuggestions.map((product) => (
+                          <li key={product.id}>
+                            <Link
+                              to={`/products/${product.id}`}
+                              onClick={() => setIsSearchOpen(false)}
+                              className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-colors"
+                            >
+                              <img
+                                src={getImageUrl(product.thumbnail)}
+                                alt={product.name}
+                                className="w-12 h-12 rounded-lg object-cover border border-slate-100"
+                              />
+
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-semibold text-slate-800 truncate">
+                                  {product.name}
+                                </p>
+                                <p className="text-sm text-green-600 font-medium mt-0.5">
+                                  {formatCurrency(getProductPrice(product))}
+                                </p>
+                              </div>
+
+                              <button
+                                type="button"
+                                onClick={(e) =>
+                                  handleAddToCartFromSuggestion(e, product)
+                                }
+                                className="p-2 rounded-lg bg-[#15803D] text-white hover:bg-[#166534] transition-colors"
+                                title="Thêm vào giỏ"
+                              >
+                                <ShoppingCart size={16} />
+                              </button>
+                            </Link>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <div className="px-4 py-3 text-sm text-slate-500">
+                        Không tìm thấy sản phẩm phù hợp.
+                      </div>
+                    )}
+                  </div>
+                )}
               </form>
             )}
           </div>

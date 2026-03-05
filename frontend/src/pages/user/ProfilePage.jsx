@@ -1,7 +1,7 @@
 import { toast } from 'react-toastify';
 import { useState, useEffect } from "react";
-import userService from "../services/userService";
-import { useAuth } from "../context/AuthContext";
+import userService from "../../services/userService";
+import { useAuth } from "../../context/AuthContext";
 import {
   User,
   Mail,

@@ -1,12 +1,12 @@
 import { toast } from 'react-toastify';
 import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import productService from "../services/productService";
-import priceService from "../services/priceService";
-import ProductForm from "../components/ProductForm";
-import HistoryModal from "../components/HistoryModal";
-import PriceManagementModal from "../components/PriceManagementModal";
-import ProductImageModal from "../components/ProductImageModal";
+import productService from "../../services/productService";
+import priceService from "../../services/priceService";
+import ProductForm from "../../components/ProductForm";
+import HistoryModal from "../../components/HistoryModal";
+import PriceManagementModal from "../../components/PriceManagementModal";
+import ProductImageModal from "../../components/ProductImageModal";
 import {
   Plus,
   Search,

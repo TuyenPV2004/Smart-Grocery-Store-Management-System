@@ -1,6 +1,6 @@
 import { toast } from "react-toastify";
 import { useEffect, useState } from "react";
-import categoryService from "../services/categoryService";
+import categoryService from "../../services/categoryService";
 import {
   Plus,
   Edit,
@@ -14,7 +14,7 @@ import {
   X,
 } from "lucide-react";
 import Swal from "sweetalert2";
-import HistoryModal from "../components/HistoryModal";
+import HistoryModal from "../../components/HistoryModal";
 
 const CategoryPage = () => {
   const [categories, setCategories] = useState([]);

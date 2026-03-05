@@ -28,11 +28,11 @@ import {
 } from "lucide-react";
 import Swal from "sweetalert2";
 import styled, { createGlobalStyle } from "styled-components";
-import productService from "../services/productService";
-import userService from "../services/userService";
-import supplierService from "../services/supplierService";
-import inventoryService from "../services/inventoryService";
-import batchService from "../services/batchService";
+import productService from "../../services/productService";
+import userService from "../../services/userService";
+import supplierService from "../../services/supplierService";
+import inventoryService from "../../services/inventoryService";
+import batchService from "../../services/batchService";
 
 const GlobalStyles = () => (
   <style>{`

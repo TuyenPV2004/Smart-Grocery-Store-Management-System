@@ -1,7 +1,7 @@
 import { toast } from "react-toastify";
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import batchService from "../services/batchService";
+import batchService from "../../services/batchService";
 import {
   Package,
   Eye,

@@ -11,9 +11,9 @@ import {
   ShieldCheck,
   RotateCw,
 } from "lucide-react";
-import productService from "../services/productService";
-import { useCart } from "../context/CartContext";
-import { useAuth } from "../context/AuthContext";
+import productService from "../../services/productService";
+import { useCart } from "../../context/CartContext";
+import { useAuth } from "../../context/AuthContext";
 import ImageGallery from "react-image-gallery";
 import "react-image-gallery/styles/image-gallery.css";
 

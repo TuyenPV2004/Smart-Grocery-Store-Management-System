@@ -19,7 +19,9 @@ public class DashboardService {
     private final OrderRepository orderRepository;
     private final ProductRepository productRepository;
 
-    public DashboardDTO getDashboardStats() {
+    public DashboardDTO getDashboardStats(Integer days) {
+        int safeDays = (days == null || days < 1) ? 7 : Math.min(days, 365);
+
         // Summary Stats
         BigDecimal totalRevenue = orderRepository.sumTotalRevenue();
         if (totalRevenue == null)
@@ -28,9 +30,9 @@ public class DashboardService {
         long totalProducts = productRepository.count();
         long lowStockProducts = productRepository.countLowStock();
 
-        // Chart Data (Last 7 days)
-        LocalDateTime sevenDaysAgo = LocalDateTime.now().minusDays(7);
-        List<Object[]> revenueData = orderRepository.findRevenueByDate(sevenDaysAgo);
+        // Chart Data (Selected time range)
+        LocalDateTime startDate = LocalDateTime.now().minusDays(safeDays);
+        List<Object[]> revenueData = orderRepository.findRevenueByDate(startDate);
         List<DashboardDTO.ChartData> chartData = new ArrayList<>();
         if (revenueData != null) {
             for (Object[] row : revenueData) {
