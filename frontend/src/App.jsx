@@ -30,9 +30,12 @@ import CashFlowManagementPage from "./pages/admin/CashFlowManagementPage";
 import PromotionsPage from "./pages/admin/PromotionsPage";
 import VouchersPage from "./pages/admin/VouchersPage";
 import OrderHistoryPage from "./pages/user/OrderHistoryPage";
+import VNPayReturnPage from "./pages/user/VNPayReturnPage";
 
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+
+import CheckoutPage from "./pages/user/CheckoutPage";
 
 function App() {
   return (
@@ -50,8 +53,10 @@ function App() {
           </Route>
           <Route element={<ProtectedRoute />}>
             <Route element={<RoleBasedLayout />}>
+              <Route path="/checkout" element={<CheckoutPage />} />
               <Route path="/profile" element={<ProfilePage />} />
               <Route path="/order-history" element={<OrderHistoryPage />} />
+              <Route path="/payment/vnpay-return" element={<VNPayReturnPage />} />
             </Route>
           </Route>
           <Route element={<ProtectedRoute allowedRoles={["ADMIN", "STAFF"]} />}>

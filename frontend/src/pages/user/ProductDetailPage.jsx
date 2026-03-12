@@ -163,15 +163,6 @@ const ProductDetailPage = () => {
     <div className="min-h-screen bg-[#F8FAFC] py-8 px-4 font-poppins">
       <div className="max-w-7xl mx-auto">
         {/* Breadcrumb / Back Button */}
-        <button
-          onClick={() => navigate(-1)}
-          className="flex items-center gap-2 text-slate-500 hover:text-green-600 mb-8 transition-colors group"
-        >
-          <div className="p-2 bg-white rounded-lg shadow-sm group-hover:shadow-md transition-all border border-slate-100">
-            <ArrowLeft size={20} />
-          </div>
-          <span className="font-medium">Quay lại</span>
-        </button>
 
         <div className="bg-white rounded-[2.5rem] p-6 md:p-10 shadow-xl shadow-slate-200/50 border border-slate-100">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20">
@@ -315,8 +306,7 @@ const ProductDetailPage = () => {
                   "Sản phẩm tươi ngon, được chọn lọc kỹ càng để đảm bảo chất lượng tốt nhất cho bữa ăn gia đình bạn."}
               </p>
 
-              {/* Action Buttons */}
-              <div className="flex flex-col sm:flex-row gap-4 mb-10 pb-10 border-b border-slate-100">
+              <div className="flex flex-col sm:flex-row gap-4 mb-6">
                 {/* Quantity Selector */}
                 <div className="flex items-center bg-slate-50 rounded-2xl border border-slate-200 p-1 w-fit">
                   <button
@@ -358,7 +348,7 @@ const ProductDetailPage = () => {
                   {
                     icon: Truck,
                     label: "Giao hàng",
-                    value: "2-4 giờ",
+                    value: "từ 2-4 giờ",
                     color:
                       "bg-blue-50 text-blue-600 border-blue-100 hover:border-blue-200",
                     iconColor: "text-blue-500",

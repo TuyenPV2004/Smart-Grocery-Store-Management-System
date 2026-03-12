@@ -97,6 +97,20 @@ const prepareCategorySales = (categories = []) => {
   return chartData;
 };
 
+const getOrderStatusStyle = (status) => {
+  switch (status?.toUpperCase()) {
+    case "COMPLETED":
+      return "bg-green-100 text-green-700";
+    case "CANCELLED":
+    case "CANCELED":
+      return "bg-red-100 text-red-700";
+    case "PENDING":
+      return "bg-yellow-100 text-yellow-700";
+    default:
+      return "bg-slate-100 text-slate-700";
+  }
+};
+
 const DashboardPage = () => {
   const [stats, setStats] = useState(null);
   const [topProducts, setTopProducts] = useState([]);
@@ -344,7 +358,7 @@ const DashboardPage = () => {
                       <p className="text-sm font-medium text-green-600">
                         {formatCurrency(order.totalAmount)}
                       </p>
-                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-green-100 text-green-700 font-medium mt-1 inline-block">
+                      <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium mt-1 inline-block ${getOrderStatusStyle(order.status)}`}>
                         {order.status}
                       </span>
                     </div>

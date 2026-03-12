@@ -421,7 +421,7 @@ const CustomerProductPage = () => {
     <div className="min-h-screen bg-[#F8FAFC] py-8 px-4 font-poppins">
       <div className="max-w-7xl mx-auto">
         <div className="flex flex-col md:flex-row gap-4 items-center justify-between mb-8">
-          <h1 className="text-2xl font-bold text-slate-800">Tất cả sản phẩm</h1>
+          <h1 className="text-2xl font-semibold text-slate-800">Tất cả sản phẩm</h1>
 
           <div className="flex gap-3 w-full md:w-auto">
             <button
@@ -430,20 +430,6 @@ const CustomerProductPage = () => {
             >
               <Filter size={20} />
             </button>
-
-            <form onSubmit={handleSearch} className="flex-1 md:w-80 relative">
-              <input
-                name="search"
-                type="text"
-                defaultValue={currentSearch}
-                placeholder="Tìm kiếm sản phẩm"
-                className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl outline-none focus:border-green-500 focus:ring-2 focus:ring-green-100 transition-all font-medium text-slate-700"
-              />
-              <Search
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-                size={20}
-              />
-            </form>
           </div>
         </div>
 

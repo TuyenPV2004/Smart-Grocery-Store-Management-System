@@ -4,6 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useCart } from "../../context/CartContext";
 import { useAuth } from "../../context/AuthContext";
 import orderService from "../../services/orderService";
+import paymentService from "../../services/paymentService";
 import bankAccountService from "../../services/bankAccountService";
 import voucherService from "../../services/voucherService";
 import {
@@ -266,6 +267,23 @@ const CartPage = () => {
     }
   };
 
+  const handleCreateVNPAYPayment = async (orderId) => {
+    try {
+      const res = await paymentService.createPayment(orderId);
+      if (res.data && res.data.paymentUrl) {
+        window.location.href = res.data.paymentUrl;
+      } else {
+        toast.error("Không lấy được URL thanh toán từ hệ thống.");
+      }
+    } catch (error) {
+      console.error("Lỗi khi tạo URL thanh toán VNPAY:", error);
+      toast.error(
+        "Có lỗi xảy ra khi tạo mã thanh toán VNPAY. Vui lòng thử lại!",
+      );
+      setIsProcessing(false);
+    }
+  };
+
   // Hàm xử lý khi ấn Xác nhận thanh toán
   const handleConfirmCheckout = async () => {
     if (!user) {
@@ -293,14 +311,18 @@ const CartPage = () => {
 
     try {
       const res = await orderService.create(orderData);
-      setWaitingOrder(res.data);
-      setWaitingSeconds(300);
-      setFinalResult(null);
-      setShowCheckoutModal(false);
+
+      // Thành công tạo đơn, gọi VNPAY URL
+      const orderCreated = res.data;
+      await handleCreateVNPAYPayment(orderCreated.id);
+
+      // setWaitingOrder(res.data);
+      // setWaitingSeconds(300);
+      // setFinalResult(null);
+      // setShowCheckoutModal(false);
     } catch (error) {
       console.error("Lỗi khi đặt hàng:", error);
       toast.error("Có lỗi xảy ra khi đặt hàng. Vui lòng thử lại!");
-    } finally {
       setIsProcessing(false);
     }
   };
@@ -384,16 +406,10 @@ const CartPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] py-12 px-4 sm:px-6 font-poppins relative">
-      <div className="max-w-7xl mx-auto">
-        {/* Header Giỏ hàng */}
-        <div className="flex items-center gap-4 mb-8">
-          <Link
-            to="/products"
-            className="p-2 hover:bg-slate-100 rounded-full transition-colors text-slate-500"
-          >
-            <ArrowLeft size={24} />
-          </Link>
+    <div className="min-h-screen bg-[#F8FAFC] pt-6 pb-12 px-4 sm:px-6 font-poppins relative">
+      <div className="max-w-6xl mx-auto">
+        {/* Header Giỏ hàng + Stepper */}
+        <div className="flex items-center mb-8 gap-4">
           <h1 className="text-2xl font-medium text-slate-900">
             Giỏ hàng của bạn
           </h1>
@@ -404,7 +420,7 @@ const CartPage = () => {
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           {/* Danh sách sản phẩm */}
-          <div className="lg:col-span-8 space-y-4">
+          <div className="lg:col-span-7 space-y-4">
             {cartItems.map((item) => (
               <div
                 key={item.product.id}
@@ -501,7 +517,7 @@ const CartPage = () => {
                 <div className="flex justify-between text-slate-500">
                   <span>Giảm giá</span>
                   <span className="font-medium text-rose-500">
-                    -{formatCurrency(cartDiscount)}
+                    {formatCurrency(cartDiscount)}
                   </span>
                 </div>
                 <div className="h-px bg-slate-100 my-4"></div>
@@ -512,7 +528,7 @@ const CartPage = () => {
                     <input
                       type="text"
                       className="w-full border-slate-200 rounded-xl px-4 py-2.5 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 font-medium text-slate-700 text-sm uppercase placeholder:normal-case"
-                      placeholder="Nhập mã ưu đãi..."
+                      placeholder="Nhập mã ưu đãi"
                       value={voucherCode}
                       onChange={(e) =>
                         setVoucherCode(e.target.value.toUpperCase())
@@ -556,173 +572,29 @@ const CartPage = () => {
                 </div>
               </div>
 
-              {/* Nút Kích hoạt Modal Thanh toán */}
+              {/* Nút Kích hoạt Modal Thanh toán -> Đổi thành chuyển hướng */}
               <button
                 onClick={() => {
-                  setGeneratedOrderCode(generateOrderCode());
-                  setShowCheckoutModal(true);
+                  if (!user) {
+                    toast.warning("Vui lòng đăng nhập để thanh toán!");
+                    navigate("/login");
+                    return;
+                  }
+                  navigate("/checkout", {
+                    state: {
+                      appliedVoucher,
+                      cartDiscount,
+                    },
+                  });
                 }}
                 className="w-full py-4 bg-green-600 text-white rounded-2xl font-medium hover:bg-green-700 transition-all shadow-lg shadow-green-200 active:scale-95 flex items-center justify-center gap-2"
               >
-                Tiến hành thanh toán
+                Xác nhận
               </button>
             </div>
           </div>
         </div>
       </div>
-
-      {/* MODAL THANH TOÁN */}
-      {showCheckoutModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-          <div
-            className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
-            onClick={() => setShowCheckoutModal(false)}
-          />
-
-          <div className="relative bg-white rounded-[2rem] shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-slate-200 flex flex-col md:flex-row">
-            {/* Cột trái: Thông tin chuyển khoản */}
-            <div className="bg-slate-50 p-8 md:w-1/2 flex flex-col items-center border-b md:border-b-0 md:border-r border-slate-200">
-              <div className="flex items-center gap-2 text-indigo-600 mb-6 font-medium bg-indigo-50 px-4 py-2 rounded-full">
-                <QrCode size={20} />
-                Chuyển khoản QR
-              </div>
-
-              {(() => {
-                const selectedAcc =
-                  bankAccounts.length > 0 ? bankAccounts[0] : null;
-                if (!selectedAcc) {
-                  return (
-                    <div className="text-slate-500 text-sm mt-4">
-                      Chưa có tài khoản nhận tiền nào đang được sử dụng. Vui
-                      lòng kiểm tra lại cấu hình.
-                    </div>
-                  );
-                }
-
-                const bankInfo = findBank(selectedAcc.bankName);
-                const bankCode = bankInfo ? bankInfo.code : "MB";
-                const orderCodeStr = generatedOrderCode; // Dùng mã đơn giả lập đã gen
-
-                // qr code format: https://img.vietqr.io/image/<BANK_BIN>-<ACCOUNT_NO>-<TEMPLATE>.png?amount=<AMOUNT>&addInfo=<DESCRIPTION>&accountName=<ACCOUNT_NAME>
-                const qrUrl = `https://img.vietqr.io/image/${bankCode}-${selectedAcc.accountNumber}-compact2.png?amount=${finalTotal}&addInfo=${encodeURIComponent(orderCodeStr)}&accountName=${encodeURIComponent(selectedAcc.accountOwner)}`;
-
-                return (
-                  <>
-                    <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 mb-6 w-48 h-48 flex items-center justify-center relative group">
-                      {bankInfo && (
-                        <img
-                          src={bankInfo.logo}
-                          alt="Bank Logo"
-                          className="absolute -top-3 -right-3 w-10 h-10 object-contain rounded-full shadow-md bg-white border border-slate-100 p-0.5"
-                        />
-                      )}
-                      <img
-                        src={qrUrl}
-                        alt="QR Code"
-                        className="w-full h-full object-contain cursor-pointer hover:scale-105 transition-transform"
-                        onClick={() => setSelectedQR(qrUrl)}
-                        title="Nhấn để phóng to"
-                      />
-                    </div>
-
-                    <div className="w-full space-y-3 text-sm">
-                      <div className="flex justify-between border-b border-slate-200 pb-2">
-                        <span className="text-slate-500">Ngân hàng:</span>
-                        <span className="font-medium text-slate-800">
-                          {bankInfo ? bankInfo.name : selectedAcc.bankName}
-                        </span>
-                      </div>
-                      <div className="flex justify-between border-b border-slate-200 pb-2">
-                        <span className="text-slate-500">Chủ tài khoản:</span>
-                        <span className="font-medium text-slate-800 uppercase">
-                          {selectedAcc.accountOwner}
-                        </span>
-                      </div>
-                      <div className="flex justify-between border-b border-slate-200 pb-2">
-                        <span className="text-slate-500">Số tài khoản:</span>
-                        <span className="font-medium text-slate-800 text-indigo-600">
-                          {selectedAcc.accountNumber}
-                        </span>
-                      </div>
-                      <div className="flex justify-between pt-1">
-                        <span className="text-slate-500">Nội dung CK:</span>
-                        <span className="font-medium text-rose-500">
-                          {orderCodeStr}
-                        </span>
-                      </div>
-                    </div>
-                  </>
-                );
-              })()}
-            </div>
-
-            {/* Cột phải: Thông tin đơn hàng & Xác nhận */}
-            <div className="p-8 md:w-1/2 flex flex-col">
-              <div className="flex justify-between items-center mb-6">
-                <h3 className="text-xl font-medium text-slate-900">
-                  Xác nhận đơn
-                </h3>
-                <button
-                  onClick={() => setShowCheckoutModal(false)}
-                  className="p-1 hover:bg-slate-100 rounded-full text-slate-400"
-                >
-                  <X size={20} />
-                </button>
-              </div>
-
-              <div className="space-y-4 mb-8 flex-1">
-                <div>
-                  <label className="text-xs text-slate-500 font-medium">
-                    Người nhận
-                  </label>
-                  <p className="font-medium text-slate-800">
-                    {user?.fullName || user?.username || "Khách hàng"}
-                  </p>
-                </div>
-                <div>
-                  <label className="text-xs text-slate-500 font-medium">
-                    Số điện thoại
-                  </label>
-                  <p className="font-medium text-slate-800">
-                    {user?.phone || "Cần cập nhật trong hồ sơ"}
-                  </p>
-                </div>
-
-                <div className="bg-green-50 p-4 rounded-xl border border-green-100 mt-4">
-                  <p className="text-sm text-green-800 font-medium mb-1">
-                    Số tiền cần thanh toán:
-                  </p>
-                  <p className="text-2xl font-medium text-green-600">
-                    {formatCurrency(finalTotal)}
-                  </p>
-                </div>
-                <p className="text-xs text-slate-500 italic mt-2">
-                  *Vui lòng thực hiện chuyển khoản trước khi bấm xác nhận.
-                </p>
-              </div>
-
-              <div className="space-y-3 mt-auto">
-                <button
-                  onClick={handleConfirmCheckout}
-                  disabled={isProcessing}
-                  className="w-full py-3.5 bg-green-600 text-white rounded-xl font-medium hover:bg-green-700 shadow-md shadow-green-200 transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
-                >
-                  {isProcessing ? (
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                  ) : null}
-                  {isProcessing ? "Đang xử lý" : "Chuyển khoản"}
-                </button>
-                <button
-                  onClick={() => setShowCheckoutModal(false)}
-                  className="w-full py-3.5 bg-slate-100 text-slate-600 rounded-xl font-medium hover:bg-slate-200 transition-all"
-                >
-                  Hủy bỏ
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Full screen QR Modal */}
       {selectedQR && (

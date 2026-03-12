@@ -16,12 +16,13 @@ const STATUS_OPTIONS = [
   { value: "ALL", label: "Tất cả" },
   { value: "COMPLETED", label: "Hoàn thành" },
   { value: "CANCELLED", label: "Đã hủy" },
+  { value: "PENDING", label: "Hàng chờ" },
 ];
 
 const STATUS_META = {
   PENDING: {
-    label: "PENDING",
-    className: "bg-slate-100 text-slate-700",
+    label: "Hàng chờ",
+    className: "bg-amber-100 text-amber-700",
   },
   SHIPPING: {
     label: "SHIPPING",
@@ -50,6 +51,8 @@ const OrderHistoryPage = () => {
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [cancellingOrderId, setCancellingOrderId] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 5;
 
   const fetchMyOrders = async () => {
     try {
@@ -67,6 +70,11 @@ const OrderHistoryPage = () => {
     fetchMyOrders();
   }, []);
 
+  useEffect(() => {
+    // Mỗi khi thay đổi bộ lọc hoặc danh sách đơn, quay lại trang đầu
+    setCurrentPage(1);
+  }, [statusFilter, orders]);
+
   const filteredOrders = useMemo(() => {
     if (statusFilter === "ALL") {
       return orders;
@@ -82,6 +90,17 @@ const OrderHistoryPage = () => {
       }
     );
   };
+
+  const totalPages = useMemo(() => {
+    if (!filteredOrders.length) return 1;
+    return Math.ceil(filteredOrders.length / pageSize);
+  }, [filteredOrders, pageSize]);
+
+  const paginatedOrders = useMemo(() => {
+    const startIndex = (currentPage - 1) * pageSize;
+    const endIndex = startIndex + pageSize;
+    return filteredOrders.slice(startIndex, endIndex);
+  }, [filteredOrders, currentPage, pageSize]);
 
   const handleCancelOrder = async (orderId) => {
     setCancellingOrderId(orderId);
@@ -104,16 +123,10 @@ const OrderHistoryPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 py-10 px-4 sm:px-6">
+    <div className="min-h-screen bg-slate-50 pt-6 pb-10 px-4 sm:px-6">
       <div className="max-w-6xl mx-auto space-y-6">
-        <div className="flex items-center justify-between gap-4 flex-wrap">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <Link
-              to="/products"
-              className="p-2 hover:bg-white rounded-full border border-slate-200 text-slate-500"
-            >
-              <ArrowLeft size={20} />
-            </Link>
             <div>
               <h1 className="text-2xl font-medium text-slate-900">
                 Lịch sử đơn hàng
@@ -123,15 +136,7 @@ const OrderHistoryPage = () => {
               </p>
             </div>
           </div>
-          <Link
-            to="/products"
-            className="px-4 py-2.5 rounded-xl bg-emerald-600 text-white font-medium hover:bg-emerald-700"
-          >
-            Mua thêm sản phẩm
-          </Link>
-        </div>
-
-        <div className="bg-white rounded-2xl border border-slate-100 p-4 sm:p-5 shadow-sm">
+          
           <div className="flex gap-2 flex-wrap">
             {STATUS_OPTIONS.map((item) => (
               <button
@@ -139,8 +144,8 @@ const OrderHistoryPage = () => {
                 onClick={() => setStatusFilter(item.value)}
                 className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
                   statusFilter === item.value
-                    ? "bg-emerald-600 text-white"
-                    : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                    ? "bg-emerald-600 text-white shadow-sm"
+                    : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
                 }`}
               >
                 {item.label}
@@ -168,70 +173,130 @@ const OrderHistoryPage = () => {
               </p>
             </div>
           ) : (
-            <div className="divide-y divide-slate-100">
-              {filteredOrders.map((order) => {
-                const statusMeta = getStatusMeta(order.status);
-                return (
-                  <div
-                    key={order.id}
-                    className="p-4 sm:p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4"
-                  >
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="px-2.5 py-1 bg-emerald-50 text-emerald-700 rounded-lg text-xs font-semibold font-mono">
-                          {order.code}
-                        </span>
-                        <span
-                          className={`px-2.5 py-1 rounded-full text-xs font-medium ${statusMeta.className}`}
-                        >
-                          {statusMeta.label}
-                        </span>
-                      </div>
-                      <div className="text-sm text-slate-500 flex items-center gap-2">
-                        <CalendarClock size={16} />
-                        {new Date(order.createdAt).toLocaleString("vi-VN")}
-                      </div>
-                      <div className="text-sm text-slate-500">
-                        {order.details?.length || 0} sản phẩm
-                        {order.voucherCode
-                          ? ` • Voucher: ${order.voucherCode}`
-                          : ""}
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-3 flex-wrap justify-start lg:justify-end">
-                      <div className="text-left lg:text-right min-w-[170px]">
-                        <p className="text-xs text-slate-500">
-                          Tổng thanh toán
-                        </p>
-                        <p className="text-lg font-semibold text-emerald-600">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm text-left">
+                <thead className="text-sm text-slate-500 bg-slate-50 border-b border-slate-100">
+                  <tr>
+                    <th className="px-4 py-3 text-center whitespace-nowrap">STT</th>
+                    <th className="px-4 py-3 whitespace-nowrap">Mã đơn</th>
+                    <th className="px-4 py-3 whitespace-nowrap">Thời gian</th>
+                    <th className="px-4 py-3 whitespace-nowrap">Tổng sản phẩm</th>
+                    <th className="px-4 py-3 whitespace-nowrap">Trạng thái</th>
+                    <th className="px-4 py-3 text-right whitespace-nowrap">Giá tiền</th>
+                    <th className="px-4 py-3 text-center whitespace-nowrap">Hành động</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {paginatedOrders.map((order, index) => {
+                    const statusMeta = getStatusMeta(order.status);
+                    const globalIndex = (currentPage - 1) * pageSize + index + 1;
+                    return (
+                      <tr key={order.id} className="hover:bg-slate-50/50 transition-colors">
+                        <td className="px-4 py-4 text-center font-medium text-slate-900">
+                          {globalIndex}
+                        </td>
+                        <td className="px-4 py-4">
+                          <span className="px-2.5 py-1 bg-emerald-50 text-emerald-700 rounded-lg text-xs font-medium">
+                            {order.code}
+                          </span>
+                        </td>
+                        <td className="px-4 py-4 text-slate-500 whitespace-nowrap">
+                          {new Date(order.createdAt).toLocaleString("vi-VN")}
+                        </td>
+                        <td className="px-4 py-4 text-slate-500">
+                          {order.details?.length || 0} sản phẩm
+                          {order.voucherCode && (
+                            <span className="block text-xs mt-1">
+                              Voucher: {order.voucherCode}
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-4 py-4">
+                          <span className={`px-2.5 py-1 rounded-full text-xs font-medium whitespace-nowrap ${statusMeta.className}`}>
+                            {statusMeta.label}
+                          </span>
+                        </td>
+                        <td className="px-4 py-4 text-right font-medium text-emerald-600 whitespace-nowrap">
                           {formatCurrency(order.finalAmount)}
-                        </p>
-                      </div>
+                        </td>
+                        <td className="px-4 py-4">
+                          <div className="flex items-center justify-center gap-2">
+                            <button
+                              onClick={() => setSelectedOrder(order)}
+                              className="px-3.5 py-2 bg-blue-50 text-blue-700 rounded-xl text-sm font-medium hover:bg-blue-100 flex items-center gap-2 whitespace-nowrap"
+                            >
+                              <Eye size={16} />
+                              Chi tiết
+                            </button>
+                            {order.status === "PENDING" && (
+                              <button
+                                onClick={() => handleCancelOrder(order.id)}
+                                disabled={cancellingOrderId === order.id}
+                                className="px-3.5 py-2 bg-rose-50 text-rose-700 rounded-xl text-xs font-medium hover:bg-rose-100 disabled:opacity-60 whitespace-nowrap"
+                              >
+                                {cancellingOrderId === order.id
+                                  ? "Đang hủy..."
+                                  : "Hủy đơn"}
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
 
+              {filteredOrders.length > pageSize && (
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-4 py-3 border-t border-slate-100 bg-slate-50">
+                  <p className="text-xs sm:text-sm text-slate-500">
+                    Hiển thị{" "}
+                    <span className="font-medium text-slate-700">
+                      {(currentPage - 1) * pageSize + 1}
+                    </span>{" "}
+                    -{" "}
+                    <span className="font-medium text-slate-700">
+                      {Math.min(currentPage * pageSize, filteredOrders.length)}
+                    </span>{" "}
+                    trên{" "}
+                    <span className="font-medium text-slate-700">
+                      {filteredOrders.length}
+                    </span>{" "}
+                    đơn hàng
+                  </p>
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                      disabled={currentPage === 1}
+                      className="px-3 py-1.5 text-xs sm:text-sm rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-50"
+                    >
+                      Trước
+                    </button>
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
                       <button
-                        onClick={() => setSelectedOrder(order)}
-                        className="px-3.5 py-2 bg-blue-50 text-blue-700 rounded-xl text-sm font-medium hover:bg-blue-100 flex items-center gap-2"
+                        key={page}
+                        onClick={() => setCurrentPage(page)}
+                        className={`px-3 py-1.5 text-xs sm:text-sm rounded-lg border ${
+                          currentPage === page
+                            ? "bg-emerald-600 text-white border-emerald-600"
+                            : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
+                        }`}
                       >
-                        <Eye size={16} />
-                        Chi tiết
+                        {page}
                       </button>
-
-                      {order.status === "PENDING" && (
-                        <button
-                          onClick={() => handleCancelOrder(order.id)}
-                          disabled={cancellingOrderId === order.id}
-                          className="px-3.5 py-2 bg-rose-50 text-rose-700 rounded-xl text-sm font-medium hover:bg-rose-100 disabled:opacity-60"
-                        >
-                          {cancellingOrderId === order.id
-                            ? "Đang hủy..."
-                            : "Hủy đơn"}
-                        </button>
-                      )}
-                    </div>
+                    ))}
+                    <button
+                      onClick={() =>
+                        setCurrentPage((prev) => Math.min(totalPages, prev + 1))
+                      }
+                      disabled={currentPage === totalPages}
+                      className="px-3 py-1.5 text-xs sm:text-sm rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-50"
+                    >
+                      Sau
+                    </button>
                   </div>
-                );
-              })}
+                </div>
+              )}
             </div>
           )}
         </div>
