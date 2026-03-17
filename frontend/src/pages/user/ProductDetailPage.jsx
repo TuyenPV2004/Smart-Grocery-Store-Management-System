@@ -1,8 +1,9 @@
 import { toast } from "react-toastify";
 import React, { useEffect, useMemo, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import {
   ArrowLeft,
+  ArrowRight,
   ShoppingCart,
   Heart,
   Minus,
@@ -17,6 +18,65 @@ import { useAuth } from "../../context/AuthContext";
 import ProductCard from "../../components/common/ProductCard";
 import ImageGallery from "react-image-gallery";
 import "react-image-gallery/styles/image-gallery.css";
+
+const ARTICLE_TEMPLATES = [
+  {
+    badge: "Mẹo mua sắm",
+    titlePrefix: "Cách chọn",
+    description:
+      "Bí quyết nhận biết sản phẩm tươi ngon, an toàn cho cả gia đình khi đi chợ online.",
+  },
+  {
+    badge: "Bảo quản",
+    titlePrefix: "Bảo quản",
+    description:
+      "Hướng dẫn lưu trữ đúng cách để giữ hương vị, dinh dưỡng và kéo dài độ tươi của thực phẩm.",
+  },
+  {
+    badge: "Gợi ý món ăn",
+    titlePrefix: "Thực đơn nhanh với",
+    description:
+      "Gợi ý món ngon dễ làm từ các sản phẩm đang bán, phù hợp cho bữa cơm bận rộn mỗi ngày.",
+  },
+  {
+    badge: "Ưu đãi",
+    titlePrefix: "Mua",
+    description:
+      "Cách kết hợp combo thông minh để tối ưu chi phí mà vẫn đầy đủ nhóm thực phẩm cần thiết.",
+  },
+];
+
+const DETAIL_POST_READ_MORE_URLS = [
+  "https://www.avakids.com/me-va-be/cach-chon-sua-cong-thuc-phu-hop-cho-tre-1443302",
+  "https://giadinh.suckhoedoisong.vn/5-meo-bao-quan-hai-san-tuoi-lau-khong-bi-mat-vi-172250312155805609.htm",
+  "https://www.bachhoaxanh.com/kinh-nghiem-hay/thuc-don-giam-can-7-ngay-tu-rau-cu-qua-ma-chi-em-nao-cung-me-1329736",
+  "https://www.avakids.com/me-va-be/cach-lam-kem-sua-chua-1508028",
+  "https://www.bachhoaxanh.com/kinh-nghiem-hay/15-cach-lam-mi-tron-hao-hao-de-lam-sieu-ngon-tai-nha-1578703",
+  "https://petal.vn/huong-dan-bao-quan-nuoc-uong-tai-gia-dinh-tot-nhat/",
+  "http://winmilk.com.vn/tin-tuc/4-mon-an-dinh-duong-de-lam-tu-sua-cho-ca-gia-dinh-4.html",
+  "https://www.bachhoaxanh.com/kinh-nghiem-hay/cach-lua-chon-hai-san-tuoi-ngon-chat-luong-va-an-toan-1112991",
+];
+const DETAIL_POST_IMAGES = [
+  "https://cdn.tgdd.vn//News/1443302//cach-chon-sua-cong-thuc-phu-hop-cho-tre-3-845x479.jpg",
+  "https://giadinh.mediacdn.vn/thumb_w/640/296230595582509056/2025/3/18/hs3-17422715838861107342096.jpg",
+  "https://cdn.tgdd.vn/Files/2021/02/23/1329736/thuc-don-giam-can-7-ngay-tu-rau-cu-qua-ma-chi-em-nao-cung-me-202112301215164181.jpg",
+  "https://cdn.tgdd.vn//News/1508028//cach-lam-kem-sua-chua-dau-800x564.jpg",
+  "https://cdnv2.tgdd.vn/bhx-static/bhx/News/Images/2025/06/07/1578703/image10_202506071739360428.jpg",
+  "https://petal.vn/wp-content/uploads/2021/04/nuoc-tinh-khiet.jpg",
+  "http://winmilk.com.vn/upload/images/pexels-joshsorenson-990439.jpg",
+  "https://cdn.tgdd.vn/Files/2018/12/22/1139752/tuyet-chieu-chon-hai-san-tuoi-ngon-cho-chi-em-3_700x450.jpg",
+];
+
+const DETAIL_POST_TITLES = [
+  "Cách chọn Sữa",
+  "Bảo quản Thịt, trứng, hải sản",
+  "Thực đơn nhanh với Rau, củ, nấm, trái cây",
+  "Mua Kem, sữa chua",
+  "Cách chọn Mì gói",
+  "Bảo quản Bia, nước giải khát",
+  "Thực đơn nhanh với Sữa",
+  "Mua Thịt, trứng, hải sản",
+];
 
 const ProductDetailPage = () => {
   const { id } = useParams();
@@ -137,7 +197,7 @@ const ProductDetailPage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#F8FAFC]">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-emerald-50 via-slate-50 to-emerald-100">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
       </div>
     );
@@ -145,7 +205,7 @@ const ProductDetailPage = () => {
 
   if (!product) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-[#F8FAFC] gap-4">
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-emerald-50 via-slate-50 to-emerald-100 gap-4">
         <h2 className="text-2xl font-medium text-slate-800">
           Không tìm thấy sản phẩm
         </h2>
@@ -160,7 +220,7 @@ const ProductDetailPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] py-8 px-4 font-poppins">
+    <div className="min-h-screen bg-gradient-to-b from-emerald-50 via-slate-50 to-emerald-100 py-8 px-4 font-poppins">
       <div className="max-w-7xl mx-auto">
         {/* Breadcrumb / Back Button */}
 
@@ -410,6 +470,103 @@ const ProductDetailPage = () => {
               Hiện chưa có sản phẩm liên quan.
             </div>
           )}
+        </div>
+
+        {/* Related Posts */}
+        <div className="mt-14">
+          <div className="flex items-end justify-between gap-6 mb-8">
+            <div>
+              <h2 className="text-2xl font-medium text-slate-900 mb-2">
+                Bài viết liên quan
+              </h2>
+              <p className="text-slate-500 font-medium text-sm">
+                Gợi ý bài viết hữu ích từ các nhóm sản phẩm
+              </p>
+            </div>
+            <Link
+              to="/products"
+              className="shrink-0 text-green-600 font-semibold hover:text-green-700 flex items-center gap-1.5 group text-sm"
+            >
+              Xem sản phẩm
+              <ArrowRight
+                size={16}
+                className="transition-transform duration-300 group-hover:translate-x-1"
+              />
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
+            {Array.from({ length: 8 }, (_, index) => {
+              const template = ARTICLE_TEMPLATES[index % ARTICLE_TEMPLATES.length];
+              const image = DETAIL_POST_IMAGES[index] || "";
+              const readMoreUrl = DETAIL_POST_READ_MORE_URLS[index] || "";
+              const title = DETAIL_POST_TITLES[index] || `${template.titlePrefix} sản phẩm`;
+
+              return (
+                <article
+                  key={`detail-post-${index}`}
+                  className="group h-full bg-white rounded-3xl border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden"
+                >
+                  {readMoreUrl ? (
+                    <a href={readMoreUrl} target="_blank" rel="noopener noreferrer" className="block">
+                      <div className="h-48 overflow-hidden">
+                        <img
+                          src={image}
+                          alt={title}
+                          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        />
+                      </div>
+                    </a>
+                  ) : (
+                    <div className="h-48 overflow-hidden">
+                      <img
+                        src={image}
+                        alt={title}
+                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      />
+                    </div>
+                  )}
+
+                  <div className="p-5 flex min-h-[240px] flex-col">
+                    <span className="w-fit rounded-md bg-emerald-50 text-emerald-700 px-1 py-0.5 text-[11px] font-semibold leading-none mb-3">
+                      {template.badge}
+                    </span>
+
+                    <h3 className="text-lg font-bold text-slate-900 leading-snug mb-2 line-clamp-2">
+                      {title}
+                    </h3>
+
+                    <p className="text-sm text-slate-500 leading-relaxed mb-4 line-clamp-3">
+                      {template.description}
+                    </p>
+
+                    <div className="mt-auto flex items-center justify-between">
+                      <span className="text-xs font-medium text-slate-400">
+                        {template.readTime}
+                      </span>
+                      {readMoreUrl ? (
+                        <a
+                          href={readMoreUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-green-600 font-semibold text-sm hover:text-green-700 flex items-center gap-1"
+                        >
+                          Đọc thêm
+                        </a>
+                      ) : (
+                        <Link
+                          to="/products"
+                          className="text-green-600 font-semibold text-sm hover:text-green-700 flex items-center gap-1"
+                        >
+                          Đọc thêm
+                        </Link>
+                      )}
+                    </div>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
         </div>
       </div>
     </div>

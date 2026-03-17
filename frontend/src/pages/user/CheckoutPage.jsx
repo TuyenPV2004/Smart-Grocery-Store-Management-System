@@ -85,7 +85,7 @@ const CheckoutPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] pt-6 pb-12 px-4 sm:px-6 font-poppins relative">
+    <div className="min-h-screen bg-gradient-to-b from-emerald-50 via-slate-50 to-emerald-100 pt-6 pb-12 px-4 sm:px-6 font-poppins relative">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
 

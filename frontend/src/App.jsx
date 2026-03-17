@@ -26,7 +26,6 @@ import OrderManagementPage from "./pages/admin/OrderManagementPage";
 import HomePage from "./pages/user/HomePage";
 import PublicLayout from "./components/PublicLayout";
 import RoleBasedLayout from "./components/RoleBasedLayout";
-import CashFlowManagementPage from "./pages/admin/CashFlowManagementPage";
 import PromotionsPage from "./pages/admin/PromotionsPage";
 import VouchersPage from "./pages/admin/VouchersPage";
 import OrderHistoryPage from "./pages/user/OrderHistoryPage";
@@ -83,7 +82,6 @@ function App() {
             <Route element={<MainLayout />}>
               <Route path="/users" element={<UserListPage />} />
               <Route path="/categories" element={<CategoryPage />} />
-              <Route path="/cash-flow" element={<CashFlowManagementPage />} />
               <Route path="/promotions" element={<PromotionsPage />} />
               <Route path="/vouchers" element={<VouchersPage />} />
             </Route>

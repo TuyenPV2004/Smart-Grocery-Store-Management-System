@@ -117,7 +117,7 @@ const ProfilePage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 font-poppins">
+    <div className="min-h-screen bg-gradient-to-b from-emerald-50 via-slate-50 to-emerald-100 py-12 px-4 sm:px-6 font-poppins">
       <div className="max-w-5xl mx-auto">
         {/* Header Section */}
         <div className="mb-10 border-l-4 border-green-600 pl-6">

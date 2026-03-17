@@ -28,7 +28,7 @@ const OtpVerifyPage = () => {
     );
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-emerald-50 via-slate-50 to-emerald-100">
       <div className="bg-white p-8 rounded shadow-md w-96 text-center">
         <h2 className="text-xl font-bold mb-4">Xác thực OTP</h2>
         <p className="mb-4 text-sm text-gray-600">

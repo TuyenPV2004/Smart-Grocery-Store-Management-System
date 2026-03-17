@@ -15,7 +15,6 @@ import {
   Boxes,
   Upload,
   Database,
-  Wallet,
   Tag,
   Ticket,
 } from "lucide-react";
@@ -115,13 +114,6 @@ const Sidebar = ({ isCollapsed, onToggle }) => {
       path: "/vouchers",
       label: "Mã giảm giá",
       icon: Ticket,
-      roles: ["ADMIN"],
-    },
-    {
-      id: "cash-flow",
-      path: "/cash-flow",
-      label: "Quản lý dòng tiền",
-      icon: Wallet,
       roles: ["ADMIN"],
     },
   ];

@@ -123,7 +123,7 @@ const OrderHistoryPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 pt-6 pb-10 px-4 sm:px-6">
+    <div className="min-h-screen bg-gradient-to-b from-emerald-50 via-slate-50 to-emerald-100 pt-6 pb-10 px-4 sm:px-6">
       <div className="max-w-6xl mx-auto space-y-6">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
@@ -310,11 +310,11 @@ const OrderHistoryPage = () => {
           />
           <div className="relative bg-white w-full max-w-3xl rounded-2xl border border-slate-100 shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
             <div className="px-5 py-4 border-b border-slate-100 bg-slate-50 flex items-center justify-between">
-              <div>
+              <div className="flex items-center gap-3">
                 <h3 className="text-lg font-medium text-slate-900">
                   Chi tiết đơn hàng
                 </h3>
-                <p className="text-sm text-slate-500 font-mono mt-1">
+                <p className="text-lg text-slate-900 font-medium">
                   {selectedOrder.code}
                 </p>
               </div>
@@ -350,7 +350,6 @@ const OrderHistoryPage = () => {
 
               <div>
                 <h4 className="text-sm font-medium text-slate-800 mb-3 flex items-center gap-2">
-                  <Package size={16} />
                   Danh sách sản phẩm
                 </h4>
                 <div className="border border-slate-100 rounded-xl overflow-hidden">
@@ -386,8 +385,14 @@ const OrderHistoryPage = () => {
               </div>
             </div>
 
-            <div className="px-5 py-4 border-t border-slate-100 bg-slate-50 flex items-center justify-between gap-3">
-              {selectedOrder.status === "PENDING" ? (
+            <div
+              className={`px-5 py-4 border-t border-slate-100 bg-slate-50 flex items-center gap-3 ${
+                selectedOrder.status === "PENDING"
+                  ? "justify-between"
+                  : "justify-end"
+              }`}
+            >
+              {selectedOrder.status === "PENDING" && (
                 <button
                   onClick={() => handleCancelOrder(selectedOrder.id)}
                   disabled={cancellingOrderId === selectedOrder.id}
@@ -397,14 +402,12 @@ const OrderHistoryPage = () => {
                     ? "Đang hủy..."
                     : "Hủy đơn hàng"}
                 </button>
-              ) : (
-                <span className="text-sm text-slate-500">
-                  Đơn hàng này không thể hủy.
-                </span>
               )}
-              <div className="text-right">
-                <p className="text-xs text-slate-500">Tổng thanh toán</p>
-                <p className="text-xl font-semibold text-emerald-600">
+              <div className="flex items-baseline gap-2 text-right justify-end">
+                <p className="text-xs text-slate-500 whitespace-nowrap">
+                  Tổng thanh toán
+                </p>
+                <p className="text-xl font-medium text-slate-900">
                   {formatCurrency(selectedOrder.finalAmount)}
                 </p>
               </div>

@@ -330,7 +330,7 @@ const CartPage = () => {
   // Giao diện khi chưa đăng nhập
   if (!user) {
     return (
-      <div className="min-h-screen bg-[#F8FAFC] flex flex-col items-center justify-center p-4 font-poppins">
+      <div className="min-h-screen bg-gradient-to-b from-emerald-50 via-slate-50 to-emerald-100 flex flex-col items-center justify-center p-4 font-poppins">
         <div className="w-24 h-24 bg-emerald-100 rounded-full flex items-center justify-center mb-6 text-emerald-500">
           <User size={48} />
         </div>
@@ -354,7 +354,7 @@ const CartPage = () => {
   // Giao diện khi giỏ hàng trống
   if (cartItems.length === 0 && !orderSuccess) {
     return (
-      <div className="min-h-screen bg-[#F8FAFC] flex flex-col items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-b from-emerald-50 via-slate-50 to-emerald-100 flex flex-col items-center justify-center p-4">
         <div className="w-24 h-24 bg-slate-100 rounded-full flex items-center justify-center mb-6 text-slate-300">
           <ShoppingBag size={48} />
         </div>
@@ -384,7 +384,7 @@ const CartPage = () => {
   // Giao diện thông báo Đặt hàng thành công
   if (orderSuccess) {
     return (
-      <div className="min-h-screen bg-[#F8FAFC] flex flex-col items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-b from-emerald-50 via-slate-50 to-emerald-100 flex flex-col items-center justify-center p-4">
         <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mb-6 text-green-500">
           <CheckCircle size={48} />
         </div>
@@ -406,7 +406,7 @@ const CartPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] pt-6 pb-12 px-4 sm:px-6 font-poppins relative">
+    <div className="min-h-screen bg-gradient-to-b from-emerald-50 via-slate-50 to-emerald-100 pt-6 pb-12 px-4 sm:px-6 font-poppins relative">
       <div className="max-w-6xl mx-auto">
         {/* Header Giỏ hàng + Stepper */}
         <div className="flex items-center mb-8 gap-4">
