@@ -5,7 +5,7 @@ services:
     image: mysql:8.0
     container_name: grocery_db
     environment:
-      MYSQL_ROOT_PASSWORD: "123456"
+      MYSQL_ROOT_PASSWORD: "${DB_PASSWORD}"
       MYSQL_DATABASE: "grocery_db"
     ports:
       - "3307:3306"
@@ -28,8 +28,8 @@ services:
       - "8080:8080" 
     environment:
       - SPRING_DATASOURCE_URL=jdbc:mysql://db:3306/grocery_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
-      - SPRING_DATASOURCE_USERNAME=root
-      - SPRING_DATASOURCE_PASSWORD=123456
+      - SPRING_DATASOURCE_USERNAME=${DB_USERNAME}
+      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
     volumes:
       - ./backend/product-images:/app/product-images
       - ./backend/user-photos:/app/user-photos
