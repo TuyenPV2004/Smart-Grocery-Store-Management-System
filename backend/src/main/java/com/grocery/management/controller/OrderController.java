@@ -1,11 +1,18 @@
 package com.grocery.management.controller;
 
 import com.grocery.management.dto.OrderRequest;
+import com.grocery.management.entity.Order;
 import com.grocery.management.service.OrderService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
 
 @RestController
 @RequestMapping("/api/v1/orders")
@@ -26,6 +33,25 @@ public class OrderController {
     @GetMapping
     public ResponseEntity<?> getAllOrders() {
         return ResponseEntity.ok(orderService.getAllOrders());
+    }
+
+    @GetMapping("/{id}/export")
+    public ResponseEntity<InputStreamResource> exportOrderExcel(@PathVariable Long id) throws IOException {
+        Order order = orderService.getOrderById(id);
+        ByteArrayInputStream in = orderService.exportToExcel(id);
+
+        if (in == null) {
+            throw new IOException("Failed to generate Excel file");
+        }
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("Content-Disposition", "attachment; filename=" + order.getCode() + ".xlsx");
+
+        return ResponseEntity.ok()
+                .headers(headers)
+                .contentType(
+                        MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                .body(new InputStreamResource(in));
     }
 
     @GetMapping("/my-orders")

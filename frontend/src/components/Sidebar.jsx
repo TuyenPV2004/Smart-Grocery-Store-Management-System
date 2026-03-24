@@ -17,6 +17,7 @@ import {
   Database,
   Tag,
   Ticket,
+  MessageCircle,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -93,6 +94,13 @@ const Sidebar = ({ isCollapsed, onToggle }) => {
       path: "/orders",
       label: "Quản lý đơn hàng",
       icon: ClipboardList,
+      roles: ["ADMIN", "STAFF"],
+    },
+    {
+      id: "chat",
+      path: "/support/chat",
+      label: "Chat khách hàng",
+      icon: MessageCircle,
       roles: ["ADMIN", "STAFF"],
     },
     {
@@ -192,8 +200,8 @@ const Sidebar = ({ isCollapsed, onToggle }) => {
                     } py-3 rounded-2xl transition-all duration-200 group font-medium ${
                       location.pathname.startsWith("/inventory") ||
                       openFlyoutIndex === index
-                        ? "bg-slate-50 text-green-600"
-                        : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
+                        ? "text-green-600"
+                        : "text-slate-500 hover:text-slate-900"
                     }`}
                   >
                     <item.icon
@@ -244,8 +252,8 @@ const Sidebar = ({ isCollapsed, onToggle }) => {
                               onClick={() => handleFlyoutLinkClick(child.path)}
                               className={`w-full flex items-center gap-3 py-2 px-3 rounded-xl text-[13.5px] font-medium transition-all ${
                                 isChildActive(child.path)
-                                  ? "text-green-600 bg-green-50/50"
-                                  : "text-slate-500 hover:text-slate-900 hover:bg-slate-50"
+                                  ? "text-green-600"
+                                  : "text-slate-500 hover:text-slate-900"
                               }`}
                             >
                               <child.icon
@@ -272,8 +280,8 @@ const Sidebar = ({ isCollapsed, onToggle }) => {
                           to={child.path}
                           className={`flex items-center gap-3 py-2 px-3 rounded-xl text-[13.5px] font-medium transition-all ${
                             isChildActive(child.path)
-                              ? "text-green-600 bg-green-50/50"
-                              : "text-slate-500 hover:text-slate-900 hover:bg-slate-50"
+                              ? "text-green-600"
+                              : "text-slate-500 hover:text-slate-900"
                           }`}
                         >
                           <child.icon
@@ -303,8 +311,8 @@ const Sidebar = ({ isCollapsed, onToggle }) => {
                   isCollapsed ? "justify-center" : "px-4"
                 } py-3 rounded-2xl transition-all duration-200 group font-medium ${
                   isActive(item.path)
-                    ? "bg-green-50 text-green-600 shadow-sm shadow-green-100/50"
-                    : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
+                    ? "text-green-600"
+                    : "text-slate-500 hover:text-slate-900"
                 }`}
               >
                 <item.icon

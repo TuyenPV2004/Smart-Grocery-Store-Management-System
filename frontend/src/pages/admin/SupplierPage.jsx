@@ -191,8 +191,8 @@ const SupplierPage = () => {
           </div>
         </div>
 
-        <div className="mb-6 flex items-center gap-4">
-          <div className="relative w-[420px]">
+        <div className="mb-6 flex flex-wrap items-center gap-4">
+          <div className="relative w-full max-w-[420px]">
             <Search
               className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
               size={18}
@@ -206,7 +206,7 @@ const SupplierPage = () => {
           </div>
           <button
             onClick={() => setShowModal(true)}
-            className="bg-green-600 text-white px-4 py-2 rounded-lg flex items-center hover:bg-green-700 transition whitespace-nowrap"
+            className="ml-auto bg-green-600 text-white px-4 py-2 rounded-lg flex items-center hover:bg-green-700 transition whitespace-nowrap"
           >
             Thêm nhà cung cấp
           </button>

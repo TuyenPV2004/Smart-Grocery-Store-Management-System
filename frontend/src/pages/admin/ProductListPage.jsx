@@ -473,8 +473,8 @@ const ProductListPage = () => {
       </div>
 
       {/* Filter Bar */}
-      <div className="max-w-[1400px] mx-auto mb-6 flex gap-4">
-        <div className="relative w-[420px]">
+      <div className="max-w-[1400px] mx-auto mb-6 flex flex-wrap items-center gap-4">
+        <div className="relative w-full max-w-[420px]">
           <Search
             className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
             size={18}
@@ -487,7 +487,7 @@ const ProductListPage = () => {
           />
         </div>
         <select
-          className="border border-slate-200 rounded-xl px-4 py-2 focus:outline-none font-medium text-slate-600 bg-white cursor-pointer"
+          className="order-3 border border-slate-200 rounded-xl px-4 py-2 focus:outline-none font-medium text-slate-600 bg-white cursor-pointer"
           onChange={(e) => setFilter({ ...filter, status: e.target.value })}
         >
           <option value="">Tất cả trạng thái</option>
@@ -497,7 +497,7 @@ const ProductListPage = () => {
         </select>
         <button
           onClick={handleProductNotFound}
-          className="ml-auto bg-green-600 text-white px-5 py-2 rounded-xl flex items-center shadow-sm hover:bg-green-700 transition-all font-medium whitespace-nowrap"
+          className="order-2 ml-auto bg-green-600 text-white px-5 py-2 rounded-xl flex items-center shadow-sm hover:bg-green-700 transition-all font-medium whitespace-nowrap"
         >
           Thêm sản phẩm
         </button>

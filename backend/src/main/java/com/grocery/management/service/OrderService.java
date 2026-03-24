@@ -4,9 +4,21 @@ import com.grocery.management.dto.OrderRequest;
 import com.grocery.management.entity.*;
 import com.grocery.management.repository.*;
 import lombok.RequiredArgsConstructor;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.FillPatternType;
+import org.apache.poi.ss.usermodel.Font;
+import org.apache.poi.ss.usermodel.IndexedColors;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -138,8 +150,104 @@ public class OrderService {
                 .by(org.springframework.data.domain.Sort.Direction.DESC, "createdAt"));
     }
 
+    @Transactional(readOnly = true)
+    public Order getOrderById(Long orderId) {
+        return orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("KhÃ´ng tÃ¬m tháº¥y Ä‘Æ¡n hÃ ng"));
+    }
+
     public List<Order> getOrdersByUsername(String username) {
         return orderRepository.findByUserUsernameOrderByCreatedAtDesc(username);
+    }
+
+    @Transactional(readOnly = true)
+    public ByteArrayInputStream exportToExcel(Long orderId) throws IOException {
+        Order order = getOrderById(orderId);
+
+        try (Workbook workbook = new XSSFWorkbook(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+            Sheet sheet = workbook.createSheet(order.getCode());
+
+            Font headerFont = workbook.createFont();
+            headerFont.setBold(true);
+            headerFont.setColor(IndexedColors.WHITE.getIndex());
+
+            CellStyle headerCellStyle = workbook.createCellStyle();
+            headerCellStyle.setFont(headerFont);
+            headerCellStyle.setFillForegroundColor(IndexedColors.GREEN.getIndex());
+            headerCellStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
+
+            sheet.createRow(0).createCell(0)
+                    .setCellValue("M\u00c3 \u0110\u01a0N H\u00c0NG: " + safeString(order.getCode()));
+            sheet.createRow(1).createCell(0)
+                    .setCellValue("TH\u1edcI GIAN T\u1ea0O: "
+                            + (order.getCreatedAt() != null ? order.getCreatedAt().format(formatter) : ""));
+            sheet.createRow(2).createCell(0)
+                    .setCellValue("TH\u1edcI GIAN XU\u1ea4T: "
+                            + LocalDateTime.now().format(formatter));
+            sheet.createRow(3).createCell(0)
+                    .setCellValue("KH\u00c1CH H\u00c0NG: " + safeString(order.getCustomerName()));
+            sheet.createRow(4).createCell(0)
+                    .setCellValue("S\u1ed0 \u0110I\u1ec6N THO\u1ea0I: " + safeString(order.getCustomerPhone()));
+            sheet.createRow(5).createCell(0).setCellValue(
+                    "NH\u00c2N VI\u00caN: " + (order.getUser() != null ? safeString(order.getUser().getFullName()) : ""));
+            sheet.createRow(6).createCell(0)
+                    .setCellValue("THANH TO\u00c1N: " + safeString(getPaymentMethodLabelVi(order.getPaymentMethod())));
+            sheet.createRow(7).createCell(0)
+                    .setCellValue("TR\u1ea0NG TH\u00c1I: " + safeString(getStatusLabelVi(order.getStatus())));
+
+            String[] columns = {
+                    "STT",
+                    "T\u00ean s\u1ea3n ph\u1ea9m",
+                    "M\u00e3 SKU",
+                    "S\u1ed1 l\u01b0\u1ee3ng",
+                    "\u0110\u01a1n gi\u00e1",
+                    "Th\u00e0nh ti\u1ec1n"
+            };
+
+            Row headerRow = sheet.createRow(9);
+            for (int i = 0; i < columns.length; i++) {
+                Cell cell = headerRow.createCell(i);
+                cell.setCellValue(columns[i]);
+                cell.setCellStyle(headerCellStyle);
+            }
+
+            int rowIdx = 10;
+            int stt = 1;
+            if (order.getDetails() != null) {
+                for (OrderDetail detail : order.getDetails()) {
+                    Row row = sheet.createRow(rowIdx++);
+                    row.createCell(0).setCellValue(stt++);
+                    row.createCell(1).setCellValue(
+                            detail.getProduct() != null ? safeString(detail.getProduct().getName()) : "");
+                    row.createCell(2).setCellValue(
+                            detail.getProduct() != null ? safeString(detail.getProduct().getSku()) : "");
+                    row.createCell(3).setCellValue(detail.getQuantity());
+                    row.createCell(4).setCellValue(toDouble(detail.getPrice()));
+                    row.createCell(5).setCellValue(toDouble(detail.getTotalLine()));
+                }
+            }
+
+            Row totalRow = sheet.createRow(rowIdx + 1);
+            totalRow.createCell(4).setCellValue("T\u1ed5ng ti\u1ec1n:");
+            totalRow.createCell(5).setCellValue(toDouble(order.getTotalAmount()));
+
+            Row discountRow = sheet.createRow(rowIdx + 2);
+            discountRow.createCell(4).setCellValue("Gi\u1ea3m gi\u00e1:");
+            discountRow.createCell(5).setCellValue(toDouble(order.getDiscount()));
+
+            Row finalRow = sheet.createRow(rowIdx + 3);
+            finalRow.createCell(4).setCellValue("Thanh to\u00e1n:");
+            finalRow.createCell(5).setCellValue(toDouble(order.getFinalAmount()));
+
+            for (int i = 0; i < columns.length; i++) {
+                sheet.autoSizeColumn(i);
+            }
+
+            workbook.write(out);
+            return new ByteArrayInputStream(out.toByteArray());
+        }
     }
 
     @Transactional
@@ -189,5 +297,63 @@ public class OrderService {
 
         order.setStatus(normalizedStatus);
         return orderRepository.save(order);
+    }
+    private double toDouble(BigDecimal value) {
+        return value != null ? value.doubleValue() : 0d;
+    }
+
+    private String safeString(String value) {
+        return value != null ? value : "";
+    }
+
+    private String getPaymentMethodLabel(String method) {
+        if (method == null) {
+            return "";
+        }
+
+        return switch (method.toUpperCase()) {
+            case "CASH" -> "Tiá»n máº·t";
+            case "TRANSFER", "CHUYEN_KHOAN" -> "Chuyá»ƒn khoáº£n";
+            default -> method;
+        };
+    }
+
+    private String getStatusLabel(String status) {
+        if (status == null) {
+            return "";
+        }
+
+        return switch (status.toUpperCase()) {
+            case "COMPLETED" -> "HoÃ n thÃ nh";
+            case "CANCELLED" -> "ÄÃ£ há»§y";
+            case "PENDING" -> "Chá» xÃ¡c nháº­n";
+            case "SHIPPING" -> "Äang giao";
+            default -> status;
+        };
+    }
+    private String getPaymentMethodLabelVi(String method) {
+        if (method == null) {
+            return "";
+        }
+
+        return switch (method.toUpperCase()) {
+            case "CASH" -> "Ti\u1ec1n m\u1eb7t";
+            case "TRANSFER", "CHUYEN_KHOAN" -> "Chuy\u1ec3n kho\u1ea3n";
+            default -> method;
+        };
+    }
+
+    private String getStatusLabelVi(String status) {
+        if (status == null) {
+            return "";
+        }
+
+        return switch (status.toUpperCase()) {
+            case "COMPLETED" -> "Ho\u00e0n th\u00e0nh";
+            case "CANCELLED" -> "\u0110\u00e3 h\u1ee7y";
+            case "PENDING" -> "Ch\u1edd x\u00e1c nh\u1eadn";
+            case "SHIPPING" -> "\u0110ang giao";
+            default -> status;
+        };
     }
 }

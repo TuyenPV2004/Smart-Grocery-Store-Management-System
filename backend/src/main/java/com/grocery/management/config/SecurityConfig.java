@@ -30,12 +30,15 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
+                        .requestMatchers("/ws/**").permitAll()
                         .requestMatchers("/api/v1/auth/**", "/product-images/**", "/user-photos/**").permitAll()
                         .requestMatchers("/user-photos/**").permitAll()
                         .requestMatchers("/product-images/**").permitAll()
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/v1/products/**").permitAll()
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/v1/products/*").permitAll()
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/v1/categories/**").permitAll()
+                        .requestMatchers("/api/v1/chat/conversations/**", "/api/v1/chat/conversations").hasAnyAuthority("ADMIN", "STAFF")
+                        .requestMatchers("/api/v1/chat/**").authenticated()
                         .requestMatchers("/api/v1/users/profile", "/api/v1/users/profile/**",
                                 "/api/v1/users/change-password")
                         .authenticated()

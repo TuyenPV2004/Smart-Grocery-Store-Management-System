@@ -30,6 +30,8 @@ import PromotionsPage from "./pages/admin/PromotionsPage";
 import VouchersPage from "./pages/admin/VouchersPage";
 import OrderHistoryPage from "./pages/user/OrderHistoryPage";
 import VNPayReturnPage from "./pages/user/VNPayReturnPage";
+import ChatWidget from "./components/ChatWidget";
+import CustomerChatPage from "./pages/admin/CustomerChatPage";
 
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -76,6 +78,7 @@ function App() {
               />
               <Route path="/pos" element={<PosPage />} />
               <Route path="/orders" element={<OrderManagementPage />} />
+              <Route path="/support/chat" element={<CustomerChatPage />} />
             </Route>
           </Route>
           <Route element={<ProtectedRoute allowedRoles={["ADMIN"]} />}>
@@ -92,6 +95,7 @@ function App() {
           <Route path="/verify-otp" element={<OtpVerifyPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         </Routes>
+        <ChatWidget />
       </CartProvider>
     </AuthProvider>
   );

@@ -1,11 +1,11 @@
 import { useState, useEffect } from "react";
+import { toast } from "react-toastify";
 import {
   Search,
   Eye,
   Calendar,
   Filter,
-  ArrowUpDown,
-  Download,
+  FileSpreadsheet,
   X,
   Printer,
 } from "lucide-react";
@@ -88,6 +88,26 @@ const OrderManagementPage = () => {
     }
   };
 
+  const handleExportExcel = async (order) => {
+    try {
+      const response = await orderService.exportExcel(order.id);
+      const url = window.URL.createObjectURL(
+        new Blob([response.data], {
+          type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        }),
+      );
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", `${order.code || `Order_${order.id}`}.xlsx`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      toast.error("KhÃ´ng thá»ƒ xuáº¥t Excel cho Ä‘Æ¡n hÃ ng nÃ y.");
+    }
+  };
+
   return (
     <div className="admin-page-shell p-6 space-y-6 min-h-screen">
       {/* Header Section */}
@@ -100,16 +120,16 @@ const OrderManagementPage = () => {
             Theo dõi và quản lý tất cả đơn hàng
           </p>
         </div>
-        <div className="flex gap-3">
+        <div className="hidden">
           <button className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors">
-            <Download size={18} />
+            <FileSpreadsheet size={18} />
             Xuất Excel
           </button>
         </div>
       </div>
 
       {/* Filters Section */}
-      <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex flex-wrap gap-4 items-center justify-between">
+      <div className="flex flex-wrap gap-4 items-center">
         <div className="flex items-center gap-4 flex-1 min-w-[300px]">
           <div className="relative flex-1 max-w-md">
             <Search
@@ -139,7 +159,7 @@ const OrderManagementPage = () => {
             </select>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="hidden">
           <div className="flex items-center px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm text-slate-600">
             <Calendar size={16} className="mr-2 text-slate-400" />
             <span>Hôm nay</span>
@@ -199,7 +219,7 @@ const OrderManagementPage = () => {
                     className="hover:bg-blue-50/30 transition-colors group"
                   >
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="font-mono font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded text-sm">
+                      <span className="font-mono font-medium text-blue-600 text-sm">
                         {order.code}
                       </span>
                     </td>
@@ -239,10 +259,17 @@ const OrderManagementPage = () => {
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
                       {new Date(order.createdAt).toLocaleString("vi-VN")}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right">
+                    <td className="px-6 py-4 whitespace-nowrap text-right [direction:rtl]">
+                      <button
+                        onClick={() => handleExportExcel(order)}
+                        className="text-emerald-600 hover:text-emerald-700 p-2 transition-colors"
+                        title="Xuáº¥t Excel"
+                      >
+                        <FileSpreadsheet size={18} />
+                      </button>
                       <button
                         onClick={() => setSelectedOrder(order)}
-                        className="text-blue-600 hover:text-blue-800 p-2 hover:bg-blue-50 rounded-full transition-colors"
+                        className="text-blue-600 hover:text-blue-800 p-2 transition-colors"
                         title="Xem chi tiết"
                       >
                         <Eye size={18} />

@@ -310,7 +310,7 @@ const CategoryPage = () => {
       {showModal && (
         <div className="fixed inset-0 bg-slate-900/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
           <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-lg overflow-hidden border border-slate-200 animate-in fade-in zoom-in duration-200">
-            <div className="px-8 pt-8 pb-4 flex justify-between items-center">
+            <div className="px-8 pt-6 pb-3 flex justify-between items-center">
               <h2 className="text-lg font-medium text-slate-900 flex items-center gap-3">
                 {formData.id ? "Cập nhật danh mục" : "Tạo danh mục mới"}
               </h2>
@@ -324,27 +324,27 @@ const CategoryPage = () => {
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="p-8 pt-4 space-y-5">
+            <form onSubmit={handleSubmit} className="px-8 pb-6 pt-3 space-y-4">
               <div>
                 <label className="block text-sm font-medium text-slate-900 mb-2 ml-1">
                   Tên danh mục
                 </label>
                 <input
                   required
-                  className="w-full border border-slate-200 rounded-2xl px-5 py-3 focus:bg-white focus:border-indigo-400 outline-none transition-all font-medium text-slate-900"
+                  className="w-full border border-slate-200 rounded-2xl px-5 py-2.5 focus:bg-white focus:border-indigo-400 outline-none transition-all font-medium text-slate-900"
                   value={formData.name}
                   onChange={handleNameChange}
                   placeholder="Nhập tên danh mục"
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-5">
+              <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-slate-900 mb-2 ml-1">
                     Tên nhãn gán
                   </label>
                   <input
-                    className="w-full border border-slate-200 rounded-2xl px-5 py-3 focus:bg-white focus:border-indigo-400 outline-none transition-all font-medium text-slate-900"
+                    className="w-full border border-slate-200 rounded-2xl px-5 py-2.5 focus:bg-white focus:border-indigo-400 outline-none transition-all font-medium text-slate-900"
                     placeholder="Nhập tên nhãn"
                     value={formData.label}
                     onChange={(e) =>
@@ -356,7 +356,7 @@ const CategoryPage = () => {
                   <label className="block text-sm font-medium text-slate-600 mb-2 ml-1">
                     Màu sắc nhãn
                   </label>
-                  <div className="flex items-center gap-3 bg-slate-50 p-2 rounded-2xl border border-slate-100">
+                  <div className="flex items-center gap-3 bg-slate-50 px-3 py-2 rounded-2xl border border-slate-100">
                     <input
                       type="color"
                       className="h-8 w-14 p-0.5 rounded-lg border-none cursor-pointer bg-transparent"
@@ -373,7 +373,7 @@ const CategoryPage = () => {
               </div>
 
               {formData.label && (
-                <div className="flex items-center gap-3 text-[13px] text-slate-500 bg-indigo-50/30 p-4 rounded-2xl border border-indigo-100">
+                <div className="flex items-center gap-3 text-[13px] text-slate-500 bg-indigo-50/30 px-4 py-3 rounded-2xl border border-indigo-100">
                   <span className="font-medium">Xem trước nhãn:</span>
                   <span
                     className="px-3 py-1 rounded-lg text-[11px] font-medium text-white shadow-sm"
@@ -390,7 +390,7 @@ const CategoryPage = () => {
                 </label>
                 <div className="relative">
                   <select
-                    className="w-full border border-slate-200 rounded-2xl px-5 py-3 focus:bg-white focus:border-indigo-400 outline-none transition-all font-medium text-slate-700 appearance-none cursor-pointer"
+                    className="w-full border border-slate-200 rounded-2xl px-5 py-2.5 focus:bg-white focus:border-indigo-400 outline-none transition-all font-medium text-slate-700 appearance-none cursor-pointer"
                     value={formData.parentId}
                     onChange={(e) =>
                       setFormData({ ...formData, parentId: e.target.value })
@@ -417,8 +417,8 @@ const CategoryPage = () => {
                   Mô tả chi tiết
                 </label>
                 <textarea
-                  rows="3"
-                  className="w-full border border-slate-200 rounded-[1.5rem] px-5 py-3 focus:bg-white focus:border-indigo-400 outline-none transition-all font-medium text-slate-900 resize-none"
+                  rows="2"
+                  className="w-full border border-slate-200 rounded-[1.5rem] px-5 py-2.5 focus:bg-white focus:border-indigo-400 outline-none transition-all font-medium text-slate-900 resize-none"
                   placeholder="Mô tả ngắn gọn về danh mục"
                   value={formData.description}
                   onChange={(e) =>
@@ -427,7 +427,7 @@ const CategoryPage = () => {
                 ></textarea>
               </div>
 
-              <div className="flex justify-end gap-3 pt-4">
+              <div className="flex justify-end gap-3 pt-2">
                 <button
                   type="submit"
                   className="px-8 py-2.5 bg-green-600 text-white rounded-xl hover:bg-green-700 font-medium shadow-sm shadow-green-100 transition-all active:scale-95"

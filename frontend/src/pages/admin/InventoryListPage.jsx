@@ -33,7 +33,10 @@ const DetailModal = ({ isOpen, onClose, note }) => {
           </button>
         </div>
 
-        <div className="p-6 overflow-y-auto flex-1 space-y-6">
+        <div
+          className="p-6 overflow-y-auto flex-1 space-y-6 [&::-webkit-scrollbar]:w-0"
+          style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+        >
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-100">
             <div>
               <p className="text-xs text-slate-500 font-medium mb-2">
