@@ -8,6 +8,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
 import java.util.*;
 
 @Service
@@ -16,7 +17,8 @@ public class VNPayService {
     @Autowired
     private VNPayConfig vnPayConfig;
 
-    public String createPaymentUrl(String orderCode, long amount, String ipAddress) throws UnsupportedEncodingException {
+    public String createPaymentUrl(String orderCode, long amount, String ipAddress, LocalDateTime expiresAt)
+            throws UnsupportedEncodingException {
         String vnp_Version = vnPayConfig.getVnp_Version();
         String vnp_Command = vnPayConfig.getVnp_Command();
         String vnp_TmnCode = vnPayConfig.getVnp_TmnCode();
@@ -40,9 +42,21 @@ public class VNPayService {
         String vnp_CreateDate = formatter.format(cld.getTime());
         vnp_Params.put("vnp_CreateDate", vnp_CreateDate);
 
-        cld.add(Calendar.MINUTE, 15);
-        String vnp_ExpireDate = formatter.format(cld.getTime());
-        vnp_Params.put("vnp_ExpireDate", vnp_ExpireDate);
+        if (expiresAt != null) {
+            Calendar expireCalendar = Calendar.getInstance(TimeZone.getTimeZone("Etc/GMT+7"));
+            expireCalendar.set(
+                    expiresAt.getYear(),
+                    expiresAt.getMonthValue() - 1,
+                    expiresAt.getDayOfMonth(),
+                    expiresAt.getHour(),
+                    expiresAt.getMinute(),
+                    expiresAt.getSecond());
+            vnp_Params.put("vnp_ExpireDate", formatter.format(expireCalendar.getTime()));
+        } else {
+            cld.add(Calendar.MINUTE, 15);
+            String vnp_ExpireDate = formatter.format(cld.getTime());
+            vnp_Params.put("vnp_ExpireDate", vnp_ExpireDate);
+        }
 
         List<String> fieldNames = new ArrayList<>(vnp_Params.keySet());
         Collections.sort(fieldNames);

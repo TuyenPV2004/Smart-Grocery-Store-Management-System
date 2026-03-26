@@ -3,6 +3,7 @@ import axiosClient from "./axiosClient";
 const orderService = {
   create: (data) => axiosClient.post("/orders", data),
   getAll: () => axiosClient.get("/orders"),
+  getByCode: (code) => axiosClient.get(`/orders/code/${code}`),
   exportExcel: (id) =>
     axiosClient.get(`/orders/${id}/export`, { responseType: "blob" }),
   getMyOrders: () => axiosClient.get("/orders/my-orders"),

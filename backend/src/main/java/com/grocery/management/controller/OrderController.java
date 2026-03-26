@@ -60,6 +60,16 @@ public class OrderController {
         return ResponseEntity.ok(orderService.getOrdersByUsername(username));
     }
 
+    @GetMapping("/code/{code}")
+    public ResponseEntity<?> getOrderByCode(@PathVariable String code) {
+        try {
+            String username = SecurityContextHolder.getContext().getAuthentication().getName();
+            return ResponseEntity.ok(orderService.getOrderByCodeForUser(code, username));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
     @PatchMapping("/{id}/cancel")
     public ResponseEntity<?> cancelOrder(@PathVariable Long id) {
         try {

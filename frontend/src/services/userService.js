@@ -106,6 +106,13 @@ const userService = {
     },
 
     /**
+     * Gửi lại mã OTP kích hoạt tài khoản
+     */
+    resendOtp: (email) => {
+        return axiosClient.post('/auth/resend-otp', { email });
+    },
+
+    /**
      * Gửi yêu cầu quên mật khẩu
      */
     forgotPassword: (email) => {

@@ -1,8 +1,17 @@
 package com.grocery.management.service;
 
 import com.grocery.management.dto.OrderRequest;
-import com.grocery.management.entity.*;
-import com.grocery.management.repository.*;
+import com.grocery.management.entity.Order;
+import com.grocery.management.entity.OrderDetail;
+import com.grocery.management.entity.Product;
+import com.grocery.management.entity.ProductBatch;
+import com.grocery.management.entity.Role;
+import com.grocery.management.entity.User;
+import com.grocery.management.entity.Voucher;
+import com.grocery.management.repository.OrderRepository;
+import com.grocery.management.repository.ProductBatchRepository;
+import com.grocery.management.repository.ProductRepository;
+import com.grocery.management.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
@@ -37,29 +46,32 @@ public class OrderService {
 
     @Transactional
     public Order createOrder(OrderRequest request, String username) {
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng"));
+        User user = getUserByUsername(username);
+        boolean requiresConfirmation = Boolean.TRUE.equals(request.getPendingConfirmation());
+        LocalDateTime now = LocalDateTime.now();
 
         Order order = new Order();
-        // Sinh mã hóa đơn: ORD + YYMMDD + Random/Time
-        String orderCode = "ORD" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyMMddHHmmss"));
-        order.setCode(orderCode);
-        order.setCreatedAt(LocalDateTime.now());
+        order.setCode("ORD" + now.format(DateTimeFormatter.ofPattern("yyMMddHHmmss")));
+        order.setCreatedAt(now);
         order.setUser(user);
         order.setCustomerName(request.getCustomerName());
         order.setCustomerPhone(request.getCustomerPhone());
         order.setPaymentMethod(request.getPaymentMethod());
-        if (Boolean.TRUE.equals(request.getPendingConfirmation())) {
+        order.setInventoryAllocated(false);
+        order.setVoucherUsageCommitted(false);
+        order.setPaymentTransactionNo(null);
+        order.setPaymentFailureReason(null);
+        order.setPaymentConfirmedAt(null);
+
+        if (requiresConfirmation) {
             order.setStatus("PENDING");
+            order.setPaymentStatus("PENDING");
+            order.setPaymentExpiresAt(now.plusMinutes(15));
         } else {
-            String paymentMethod = request.getPaymentMethod() != null ? request.getPaymentMethod().toUpperCase() : "";
-            // Don chuyen khoan can duoc xac nhan xu ly; tien mat tai quay co the hoan tat
-            // ngay.
-            if ("CHUYEN_KHOAN".equals(paymentMethod) || "TRANSFER".equals(paymentMethod)) {
-                order.setStatus("PENDING");
-            } else {
-                order.setStatus("COMPLETED");
-            }
+            order.setStatus("COMPLETED");
+            order.setPaymentStatus("PAID");
+            order.setPaymentConfirmedAt(now);
+            order.setPaymentExpiresAt(null);
         }
 
         List<OrderDetail> details = new ArrayList<>();
@@ -69,37 +81,11 @@ public class OrderService {
             Product product = productRepository.findById(item.getProductId())
                     .orElseThrow(() -> new RuntimeException("Sản phẩm không tồn tại: " + item.getProductId()));
 
-            // 1. Kiểm tra tồn kho tổng
             if (product.getStockQuantity() < item.getQuantity()) {
                 throw new RuntimeException(
                         "Sản phẩm '" + product.getName() + "' không đủ hàng. Tồn: " + product.getStockQuantity());
             }
 
-            // 2. LOGIC FEFO TỰ ĐỘNG (Trừ kho Batch)
-            int quantityToDeduct = item.getQuantity();
-            List<ProductBatch> batches = productBatchRepository
-                    .findByProductIdAndQuantityGreaterThanOrderByExpiryDateAsc(product.getId(), 0);
-
-            for (ProductBatch batch : batches) {
-                if (quantityToDeduct <= 0)
-                    break;
-
-                int taken = Math.min(batch.getQuantity(), quantityToDeduct);
-                batch.setQuantity(batch.getQuantity() - taken);
-                productBatchRepository.save(batch);
-
-                quantityToDeduct -= taken;
-            }
-
-            if (quantityToDeduct > 0) {
-                throw new RuntimeException("Lỗi dữ liệu kho: Tổng tồn kho và chi tiết lô không khớp.");
-            }
-
-            // 3. Trừ kho tổng Product
-            product.setStockQuantity(product.getStockQuantity() - item.getQuantity());
-            productRepository.save(product);
-
-            // 4. Tạo chi tiết
             OrderDetail detail = new OrderDetail();
             detail.setOrder(order);
             detail.setProduct(product);
@@ -131,20 +117,25 @@ public class OrderService {
                 discount = voucher.getDiscountValue();
             }
 
-            // if discount is greater than total, cap it
-            if (discount.compareTo(totalAmount) > 0)
+            if (discount.compareTo(totalAmount) > 0) {
                 discount = totalAmount;
+            }
 
-            voucherService.incrementUsage(voucher.getId());
             order.setVoucherCode(voucher.getCode());
         }
 
         order.setDiscount(discount);
         order.setFinalAmount(totalAmount.subtract(discount));
 
-        return orderRepository.save(order);
+        Order savedOrder = orderRepository.save(order);
+        if ("COMPLETED".equalsIgnoreCase(savedOrder.getStatus())) {
+            savedOrder = completePendingOrder(savedOrder, null, now);
+        }
+
+        return savedOrder;
     }
 
+    @Transactional(readOnly = true)
     public List<Order> getAllOrders() {
         return orderRepository.findAll(org.springframework.data.domain.Sort
                 .by(org.springframework.data.domain.Sort.Direction.DESC, "createdAt"));
@@ -153,9 +144,27 @@ public class OrderService {
     @Transactional(readOnly = true)
     public Order getOrderById(Long orderId) {
         return orderRepository.findById(orderId)
-                .orElseThrow(() -> new RuntimeException("KhÃ´ng tÃ¬m tháº¥y Ä‘Æ¡n hÃ ng"));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng"));
     }
 
+    @Transactional(readOnly = true)
+    public Order getOrderByCode(String code) {
+        return orderRepository.findByCode(code)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng"));
+    }
+
+    @Transactional(readOnly = true)
+    public Order getOrderByCodeForUser(String code, String username) {
+        User currentUser = getUserByUsername(username);
+        if (currentUser.getRole() == Role.ADMIN || currentUser.getRole() == Role.STAFF) {
+            return getOrderByCode(code);
+        }
+
+        return orderRepository.findByCodeAndUserUsername(code, username)
+                .orElseThrow(() -> new RuntimeException("Bạn không có quyền xem đơn hàng này"));
+    }
+
+    @Transactional(readOnly = true)
     public List<Order> getOrdersByUsername(String username) {
         return orderRepository.findByUserUsernameOrderByCreatedAtDesc(username);
     }
@@ -178,32 +187,28 @@ public class OrderService {
 
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
 
-            sheet.createRow(0).createCell(0)
-                    .setCellValue("M\u00c3 \u0110\u01a0N H\u00c0NG: " + safeString(order.getCode()));
-            sheet.createRow(1).createCell(0)
-                    .setCellValue("TH\u1edcI GIAN T\u1ea0O: "
-                            + (order.getCreatedAt() != null ? order.getCreatedAt().format(formatter) : ""));
+            sheet.createRow(0).createCell(0).setCellValue("MÃ ĐƠN HÀNG: " + safeString(order.getCode()));
+            sheet.createRow(1).createCell(0).setCellValue(
+                    "THỜI GIAN TẠO: " + (order.getCreatedAt() != null ? order.getCreatedAt().format(formatter) : ""));
             sheet.createRow(2).createCell(0)
-                    .setCellValue("TH\u1edcI GIAN XU\u1ea4T: "
-                            + LocalDateTime.now().format(formatter));
-            sheet.createRow(3).createCell(0)
-                    .setCellValue("KH\u00c1CH H\u00c0NG: " + safeString(order.getCustomerName()));
+                    .setCellValue("THỜI GIAN XUẤT: " + LocalDateTime.now().format(formatter));
+            sheet.createRow(3).createCell(0).setCellValue("KHÁCH HÀNG: " + safeString(order.getCustomerName()));
             sheet.createRow(4).createCell(0)
-                    .setCellValue("S\u1ed0 \u0110I\u1ec6N THO\u1ea0I: " + safeString(order.getCustomerPhone()));
+                    .setCellValue("SỐ ĐIỆN THOẠI: " + safeString(order.getCustomerPhone()));
             sheet.createRow(5).createCell(0).setCellValue(
-                    "NH\u00c2N VI\u00caN: " + (order.getUser() != null ? safeString(order.getUser().getFullName()) : ""));
+                    "NHÂN VIÊN: " + (order.getUser() != null ? safeString(order.getUser().getFullName()) : ""));
             sheet.createRow(6).createCell(0)
-                    .setCellValue("THANH TO\u00c1N: " + safeString(getPaymentMethodLabelVi(order.getPaymentMethod())));
+                    .setCellValue("THANH TOÁN: " + safeString(getPaymentMethodLabelVi(order.getPaymentMethod())));
             sheet.createRow(7).createCell(0)
-                    .setCellValue("TR\u1ea0NG TH\u00c1I: " + safeString(getStatusLabelVi(order.getStatus())));
+                    .setCellValue("TRẠNG THÁI: " + safeString(getStatusLabelVi(order.getStatus())));
 
             String[] columns = {
                     "STT",
-                    "T\u00ean s\u1ea3n ph\u1ea9m",
-                    "M\u00e3 SKU",
-                    "S\u1ed1 l\u01b0\u1ee3ng",
-                    "\u0110\u01a1n gi\u00e1",
-                    "Th\u00e0nh ti\u1ec1n"
+                    "Tên sản phẩm",
+                    "Mã SKU",
+                    "Số lượng",
+                    "Đơn giá",
+                    "Thành tiền"
             };
 
             Row headerRow = sheet.createRow(9);
@@ -230,15 +235,15 @@ public class OrderService {
             }
 
             Row totalRow = sheet.createRow(rowIdx + 1);
-            totalRow.createCell(4).setCellValue("T\u1ed5ng ti\u1ec1n:");
+            totalRow.createCell(4).setCellValue("Tổng tiền:");
             totalRow.createCell(5).setCellValue(toDouble(order.getTotalAmount()));
 
             Row discountRow = sheet.createRow(rowIdx + 2);
-            discountRow.createCell(4).setCellValue("Gi\u1ea3m gi\u00e1:");
+            discountRow.createCell(4).setCellValue("Giảm giá:");
             discountRow.createCell(5).setCellValue(toDouble(order.getDiscount()));
 
             Row finalRow = sheet.createRow(rowIdx + 3);
-            finalRow.createCell(4).setCellValue("Thanh to\u00e1n:");
+            finalRow.createCell(4).setCellValue("Thanh toán:");
             finalRow.createCell(5).setCellValue(toDouble(order.getFinalAmount()));
 
             for (int i = 0; i < columns.length; i++) {
@@ -252,8 +257,7 @@ public class OrderService {
 
     @Transactional
     public Order cancelOrder(Long orderId, String username) {
-        User currentUser = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng"));
+        User currentUser = getUserByUsername(username);
 
         Order order;
         if (currentUser.getRole() == Role.ADMIN || currentUser.getRole() == Role.STAFF) {
@@ -268,23 +272,18 @@ public class OrderService {
             throw new RuntimeException("Chỉ có thể hủy đơn hàng ở trạng thái chờ xác nhận");
         }
 
-        order.setStatus("CANCELLED");
-        return orderRepository.save(order);
+        return markPendingOrderAsCancelled(order, "Đơn hàng đã bị hủy");
     }
 
     @Transactional
     public Order updateOrderStatus(Long orderId, String username, String newStatus) {
-        User currentUser = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng"));
-
-        Order order;
-        if (currentUser.getRole() == Role.ADMIN || currentUser.getRole() == Role.STAFF) {
-            order = orderRepository.findById(orderId)
-                    .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng"));
-        } else {
-            order = orderRepository.findByIdAndUserUsername(orderId, username)
-                    .orElseThrow(() -> new RuntimeException("Bạn không có quyền thao tác đơn hàng này"));
+        User currentUser = getUserByUsername(username);
+        if (currentUser.getRole() != Role.ADMIN && currentUser.getRole() != Role.STAFF) {
+            throw new RuntimeException("Bạn không có quyền cập nhật trạng thái đơn hàng");
         }
+
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng"));
 
         String normalizedStatus = newStatus == null ? "" : newStatus.toUpperCase();
         if (!"COMPLETED".equals(normalizedStatus) && !"CANCELLED".equals(normalizedStatus)) {
@@ -292,12 +291,182 @@ public class OrderService {
         }
 
         if (!"PENDING".equalsIgnoreCase(order.getStatus())) {
-            throw new RuntimeException("Chỉ có thể cập nhật đơn hàng đang chờ thanh toán");
+            throw new RuntimeException("Chỉ có thể cập nhật đơn hàng đang chờ xử lý");
         }
 
-        order.setStatus(normalizedStatus);
+        if ("COMPLETED".equals(normalizedStatus)) {
+            return completePendingOrder(order, null, LocalDateTime.now());
+        }
+
+        return markPendingOrderAsCancelled(order, "Đơn hàng đã bị hủy");
+    }
+
+    @Transactional(readOnly = true)
+    public Order getOrderForPayment(Long orderId, String username) {
+        User currentUser = getUserByUsername(username);
+        Order order;
+
+        if (currentUser.getRole() == Role.ADMIN || currentUser.getRole() == Role.STAFF) {
+            order = orderRepository.findById(orderId)
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng"));
+        } else {
+            order = orderRepository.findByIdAndUserUsername(orderId, username)
+                    .orElseThrow(() -> new RuntimeException("Bạn không có quyền thanh toán đơn hàng này"));
+        }
+
+        if (!"PENDING".equalsIgnoreCase(order.getStatus())) {
+            throw new RuntimeException("Đơn hàng không còn ở trạng thái chờ thanh toán");
+        }
+
+        if (!"PENDING".equalsIgnoreCase(order.getPaymentStatus())) {
+            throw new RuntimeException("Đơn hàng không còn ở trạng thái chờ thanh toán");
+        }
+
+        if (order.getPaymentExpiresAt() != null && order.getPaymentExpiresAt().isBefore(LocalDateTime.now())) {
+            throw new RuntimeException("Đơn hàng đã hết hạn thanh toán");
+        }
+
+        return order;
+    }
+
+    @Transactional
+    public Order markOrderPaid(String orderCode, String transactionNo, LocalDateTime paidAt) {
+        Order order = getOrderByCode(orderCode);
+
+        if ("PAID".equalsIgnoreCase(order.getPaymentStatus())) {
+            return order;
+        }
+
+        if (!"PENDING".equalsIgnoreCase(order.getStatus())) {
+            return order;
+        }
+
+        return completePendingOrder(order, transactionNo, paidAt != null ? paidAt : LocalDateTime.now());
+    }
+
+    @Transactional
+    public Order markOrderPaymentFailed(String orderCode, String failureReason, String paymentStatus) {
+        Order order = getOrderByCode(orderCode);
+
+        if ("PAID".equalsIgnoreCase(order.getPaymentStatus())) {
+            return order;
+        }
+
+        if (!"PENDING".equalsIgnoreCase(order.getStatus())) {
+            return order;
+        }
+
+        order.setStatus("CANCELLED");
+        order.setPaymentStatus(paymentStatus);
+        order.setPaymentFailureReason(failureReason);
+        order.setPaymentExpiresAt(null);
         return orderRepository.save(order);
     }
+
+    @Transactional
+    public int expirePendingPayments() {
+        List<Order> expiredOrders = orderRepository.findByPaymentStatusAndPaymentExpiresAtBefore(
+                "PENDING",
+                LocalDateTime.now());
+
+        int updatedCount = 0;
+        for (Order order : expiredOrders) {
+            if (!"PENDING".equalsIgnoreCase(order.getStatus())) {
+                continue;
+            }
+
+            order.setStatus("CANCELLED");
+            order.setPaymentStatus("EXPIRED");
+            order.setPaymentFailureReason("Quá hạn thanh toán");
+            order.setPaymentExpiresAt(null);
+            orderRepository.save(order);
+            updatedCount++;
+        }
+
+        return updatedCount;
+    }
+
+    private User getUserByUsername(String username) {
+        return userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng"));
+    }
+
+    private void allocateInventory(Order order) {
+        if (order.getDetails() == null) {
+            return;
+        }
+
+        for (OrderDetail detail : order.getDetails()) {
+            Product product = productRepository.findById(detail.getProduct().getId())
+                    .orElseThrow(() -> new RuntimeException("Sản phẩm không tồn tại: " + detail.getProduct().getId()));
+
+            if (product.getStockQuantity() < detail.getQuantity()) {
+                throw new RuntimeException(
+                        "Sản phẩm '" + product.getName() + "' không đủ hàng để hoàn tất thanh toán.");
+            }
+
+            int quantityToDeduct = detail.getQuantity();
+            List<ProductBatch> batches = productBatchRepository
+                    .findByProductIdAndQuantityGreaterThanOrderByExpiryDateAsc(product.getId(), 0);
+
+            for (ProductBatch batch : batches) {
+                if (quantityToDeduct <= 0) {
+                    break;
+                }
+
+                int taken = Math.min(batch.getQuantity(), quantityToDeduct);
+                batch.setQuantity(batch.getQuantity() - taken);
+                productBatchRepository.save(batch);
+                quantityToDeduct -= taken;
+            }
+
+            if (quantityToDeduct > 0) {
+                throw new RuntimeException("Lỗi dữ liệu kho: tổng tồn kho và chi tiết lô không khớp.");
+            }
+
+            product.setStockQuantity(product.getStockQuantity() - detail.getQuantity());
+            productRepository.save(product);
+        }
+    }
+
+    private void commitVoucherUsageIfNeeded(Order order) {
+        if (order.isVoucherUsageCommitted()) {
+            return;
+        }
+
+        if (order.getVoucherCode() == null || order.getVoucherCode().isBlank()) {
+            return;
+        }
+
+        Voucher voucher = voucherService.getVoucherByCode(order.getVoucherCode());
+        voucherService.incrementUsage(voucher.getId());
+        order.setVoucherUsageCommitted(true);
+    }
+
+    private Order completePendingOrder(Order order, String transactionNo, LocalDateTime paidAt) {
+        if (!order.isInventoryAllocated()) {
+            allocateInventory(order);
+            order.setInventoryAllocated(true);
+        }
+
+        commitVoucherUsageIfNeeded(order);
+        order.setStatus("COMPLETED");
+        order.setPaymentStatus("PAID");
+        order.setPaymentFailureReason(null);
+        order.setPaymentTransactionNo(transactionNo);
+        order.setPaymentConfirmedAt(paidAt);
+        order.setPaymentExpiresAt(null);
+        return orderRepository.save(order);
+    }
+
+    private Order markPendingOrderAsCancelled(Order order, String message) {
+        order.setStatus("CANCELLED");
+        order.setPaymentStatus("CANCELLED");
+        order.setPaymentFailureReason(message);
+        order.setPaymentExpiresAt(null);
+        return orderRepository.save(order);
+    }
+
     private double toDouble(BigDecimal value) {
         return value != null ? value.doubleValue() : 0d;
     }
@@ -306,39 +475,14 @@ public class OrderService {
         return value != null ? value : "";
     }
 
-    private String getPaymentMethodLabel(String method) {
-        if (method == null) {
-            return "";
-        }
-
-        return switch (method.toUpperCase()) {
-            case "CASH" -> "Tiá»n máº·t";
-            case "TRANSFER", "CHUYEN_KHOAN" -> "Chuyá»ƒn khoáº£n";
-            default -> method;
-        };
-    }
-
-    private String getStatusLabel(String status) {
-        if (status == null) {
-            return "";
-        }
-
-        return switch (status.toUpperCase()) {
-            case "COMPLETED" -> "HoÃ n thÃ nh";
-            case "CANCELLED" -> "ÄÃ£ há»§y";
-            case "PENDING" -> "Chá» xÃ¡c nháº­n";
-            case "SHIPPING" -> "Äang giao";
-            default -> status;
-        };
-    }
     private String getPaymentMethodLabelVi(String method) {
         if (method == null) {
             return "";
         }
 
         return switch (method.toUpperCase()) {
-            case "CASH" -> "Ti\u1ec1n m\u1eb7t";
-            case "TRANSFER", "CHUYEN_KHOAN" -> "Chuy\u1ec3n kho\u1ea3n";
+            case "CASH" -> "Tiền mặt";
+            case "TRANSFER", "CHUYEN_KHOAN" -> "Chuyển khoản";
             default -> method;
         };
     }
@@ -349,10 +493,10 @@ public class OrderService {
         }
 
         return switch (status.toUpperCase()) {
-            case "COMPLETED" -> "Ho\u00e0n th\u00e0nh";
-            case "CANCELLED" -> "\u0110\u00e3 h\u1ee7y";
-            case "PENDING" -> "Ch\u1edd x\u00e1c nh\u1eadn";
-            case "SHIPPING" -> "\u0110ang giao";
+            case "COMPLETED" -> "Hoàn thành";
+            case "CANCELLED" -> "Đã hủy";
+            case "PENDING" -> "Chờ xác nhận";
+            case "SHIPPING" -> "Đang giao";
             default -> status;
         };
     }

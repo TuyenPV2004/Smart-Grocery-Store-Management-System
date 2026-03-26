@@ -96,12 +96,12 @@ const ForgotPasswordPage = () => {
               <div className="absolute -bottom-10 -right-10 w-24 h-24 bg-white rounded-full"></div>
             </div>
             <div className="relative z-10 flex flex-col items-center">
-              <div className="bg-white/20 backdrop-blur-md p-3 rounded-2xl mb-2 border border-white/30 shadow-inner">
-                <KeyRound className="w-6 h-6 text-white" />
-              </div>
               <h2 className="text-xl font-medium text-white tracking-tight">
                 Khôi phục mật khẩu
               </h2>
+              <p className="text-emerald-100/80 text-[13px] mt-0.5 font-medium">
+                Nhập email để nhận mã OTP
+              </p>
             </div>
           </div>
 
@@ -111,28 +111,19 @@ const ForgotPasswordPage = () => {
                 onSubmit={handleRequestOtp}
                 className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-500"
               >
-                <div className="text-center mb-4">
-                  <h3 className="text-lg font-medium text-slate-800">
-                    Xác thực tài khoản
-                  </h3>
-                  <p className="text-[13px] text-slate-400 mt-1 font-medium">
-                    Nhập email để nhận mã OTP
-                  </p>
-                </div>
-
                 <div className="space-y-1.5">
-                  <label className="block text-[12px] font-medium text-slate-500 ml-1">
+                  <label className="block text-[12px] font-medium text-slate-800 ml-1">
                     Địa chỉ email
                   </label>
                   <div className="relative group">
                     <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                      <Mail className="h-4.5 w-4.5 text-slate-300 group-focus-within:text-emerald-500 transition-colors" />
+                      <Mail className="h-4.5 w-4.5 text-emerald-500 transition-colors" />
                     </div>
                     <input
                       type="email"
                       required
-                      placeholder="email@vidu.com"
-                      className="w-full pl-11 pr-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl focus:outline-none focus:ring-4 focus:ring-emerald-500/5 focus:border-emerald-400 focus:bg-white transition-all font-medium text-slate-900 text-[14px]"
+                      placeholder="email@example.com"
+                      className="w-full pl-11 pr-4 py-2.5 bg-white border border-slate-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-emerald-500/5 focus:border-emerald-400 transition-all font-medium text-slate-900 text-[14px]"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                     />
@@ -146,7 +137,7 @@ const ForgotPasswordPage = () => {
                   {loading ? (
                     <Loader2 className="w-5 h-5 animate-spin" />
                   ) : (
-                    "Gửi mã xác thực ngay"
+                    "Gửi mã xác thực"
                   )}
                 </button>
               </form>
@@ -177,8 +168,8 @@ const ForgotPasswordPage = () => {
 
                 <div className="space-y-1.5">
                   <div className="flex justify-between items-center ml-1">
-                    <label className="block text-[12px] font-medium text-slate-500">
-                      Mã xác thực (6 số)
+                    <label className="block text-[12px] font-medium text-slate-800">
+                      Mã xác thực
                     </label>
                     {countdown === 0 && (
                       <button
@@ -186,7 +177,7 @@ const ForgotPasswordPage = () => {
                         onClick={resendOtp}
                         className="text-[12px] text-indigo-600 hover:underline font-medium"
                       >
-                        Gửi lại mã?
+                        Gửi lại mã
                       </button>
                     )}
                   </div>
@@ -195,25 +186,25 @@ const ForgotPasswordPage = () => {
                     required
                     maxLength="6"
                     placeholder="••••••"
-                    className="w-full p-2.5 bg-slate-50 border border-slate-100 rounded-xl focus:outline-none focus:ring-4 focus:ring-emerald-500/5 focus:border-emerald-400 focus:bg-white transition-all text-center tracking-[0.8em] font-bold text-lg text-emerald-600 placeholder:tracking-normal placeholder:font-medium placeholder:text-slate-300"
+                    className="w-full p-2.5 bg-white border border-slate-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-emerald-500/5 focus:border-emerald-400 transition-all text-center tracking-[0.8em] font-bold text-lg text-emerald-600 placeholder:tracking-normal placeholder:font-medium placeholder:text-slate-300"
                     value={otp}
                     onChange={(e) => setOtp(e.target.value)}
                   />
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="block text-[12px] font-medium text-slate-500 ml-1">
+                  <label className="block text-[12px] font-medium text-slate-800 ml-1">
                     Mật khẩu mới
                   </label>
                   <div className="relative group">
                     <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                      <Lock className="h-4.5 w-4.5 text-slate-300 group-focus-within:text-emerald-500 transition-colors" />
+                      <Lock className="h-4.5 w-4.5 text-emerald-500 transition-colors" />
                     </div>
                     <input
                       type="password"
                       required
-                      placeholder="Nhập mật khẩu mới..."
-                      className="w-full pl-11 pr-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl focus:outline-none focus:ring-4 focus:ring-emerald-500/5 focus:border-emerald-400 focus:bg-white transition-all font-medium text-slate-900 text-[14px]"
+                      placeholder="Mật khẩu mới"
+                      className="w-full pl-11 pr-4 py-2.5 bg-white border border-slate-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-emerald-500/5 focus:border-emerald-400 transition-all font-medium text-slate-900 text-[14px]"
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
                     />
@@ -235,7 +226,7 @@ const ForgotPasswordPage = () => {
               </form>
             )}
 
-            <div className="mt-6 text-center border-t border-slate-50 pt-4">
+            <div className="mt-3 text-center pt-2">
               <Link
                 to="/login"
                 className="inline-flex items-center gap-2 text-[13px] text-emerald-600 hover:text-emerald-700 font-semibold transition-all group"

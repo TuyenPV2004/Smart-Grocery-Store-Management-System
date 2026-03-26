@@ -8,7 +8,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.Data;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.web.bind.annotation.*;
 
@@ -23,23 +26,28 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest request) {
-        authenticationManager.authenticate(
-            new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword())
-        );
-        User user = userRepository.findByUsername(request.getUsername()).orElseThrow();
-        String token = jwtUtils.generateToken(user);
-        return ResponseEntity.ok(new AuthResponse(token, user.getFullName(), user.getRole().name()));
+        try {
+            authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword())
+            );
+            User user = userRepository.findByUsername(request.getUsername()).orElseThrow();
+            String token = jwtUtils.generateToken(user);
+            return ResponseEntity.ok(new AuthResponse(token, user.getFullName(), user.getRole().name()));
+        } catch (DisabledException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body("Tài khoản chưa được xác thực OTP. Vui lòng kiểm tra email và xác thực trước khi đăng nhập.");
+        } catch (BadCredentialsException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body("Tên đăng nhập hoặc mật khẩu không chính xác.");
+        }
     }
 
     // Đưa hàm register vào BÊN TRONG class
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody User user) {
         try {
-            // --- SỬA DÒNG NÀY ---
-            // Cũ (Sai): return ResponseEntity.ok(userService.createUser(user));
-            
-            // Mới (Đúng): Gọi hàm có logic gửi mail OTP
-            return ResponseEntity.ok(userService.registerUser(user)); 
+            userService.registerUser(user);
+            return ResponseEntity.ok("Đăng ký thành công. Vui lòng kiểm tra email để lấy mã OTP.");
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
@@ -49,8 +57,18 @@ public class AuthController {
     @PostMapping("/verify-otp")
     public ResponseEntity<?> verifyOtp(@RequestBody VerifyOtpRequest request) {
         try {
-            // userService.verifyOtp(request.getEmail(), request.getOtp()); // Uncomment khi đã viết hàm verifyOtp bên Service
-            return ResponseEntity.ok("Tính năng xác thực đang phát triển.");
+            userService.verifyOtp(request.getEmail(), request.getOtp());
+            return ResponseEntity.ok("Xác thực OTP thành công. Bạn có thể đăng nhập.");
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @PostMapping("/resend-otp")
+    public ResponseEntity<?> resendOtp(@RequestBody ResendOtpRequest request) {
+        try {
+            userService.resendOtp(request.getEmail());
+            return ResponseEntity.ok("Đã gửi lại mã OTP mới đến email của bạn.");
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
@@ -102,6 +120,11 @@ class VerifyOtpRequest {
 }
 
 @Data
+class ResendOtpRequest {
+    private String email;
+}
+
+@Data
 class ForgotPasswordRequest { 
     private String email; 
 }
@@ -112,4 +135,3 @@ class ResetPasswordRequest {
     private String otp; 
     private String newPassword; 
 }
-

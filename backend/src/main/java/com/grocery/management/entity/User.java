@@ -1,5 +1,7 @@
 package com.grocery.management.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import lombok.Data;
 import org.springframework.security.core.GrantedAuthority;
@@ -19,6 +21,8 @@ public class User implements UserDetails {
     private Long id;
 
     private String username;
+
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String password;
 
     @Column(name = "fullname")
@@ -41,23 +45,41 @@ public class User implements UserDetails {
     private String avatarUrl;
     
     @Column(name = "verification_code")
+    @JsonIgnore
     private String verificationCode;
 
     @Column(name = "verification_expiration")
+    @JsonIgnore
     private LocalDateTime verificationExpiration;
 
     private boolean enabled; 
 
     @Override
+    @JsonIgnore
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return List.of(new SimpleGrantedAuthority(role.name()));
     }
 
-    @Override public boolean isAccountNonExpired() { return true; }
-    @Override public boolean isAccountNonLocked() { return status == Status.ACTIVE; }
-    @Override public boolean isCredentialsNonExpired() { return true; }
+    @Override
+    @JsonIgnore
+    public boolean isAccountNonExpired() {
+        return true;
+    }
 
     @Override
+    @JsonIgnore
+    public boolean isAccountNonLocked() {
+        return status == Status.ACTIVE;
+    }
+
+    @Override
+    @JsonIgnore
+    public boolean isCredentialsNonExpired() {
+        return true;
+    }
+
+    @Override
+    @JsonIgnore
     public boolean isEnabled() {
         return this.status == Status.ACTIVE && this.enabled;
     }

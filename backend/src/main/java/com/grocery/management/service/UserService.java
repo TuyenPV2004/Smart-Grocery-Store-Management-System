@@ -1,6 +1,7 @@
 package com.grocery.management.service;
 
 import com.grocery.management.dto.ChangePasswordRequest;
+import com.grocery.management.dto.UserUpdateRequest;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -78,6 +79,47 @@ public class UserService {
         return userRepository.save(currentUser);
     }
 
+    public User updateUser(@NonNull Long id, UserUpdateRequest updatedInfo) {
+        User targetUser = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        if (updatedInfo.getUsername() != null
+                && !updatedInfo.getUsername().isBlank()
+                && !updatedInfo.getUsername().equals(targetUser.getUsername())
+                && userRepository.findByUsername(updatedInfo.getUsername()).isPresent()) {
+            throw new RuntimeException("Username đã tồn tại");
+        }
+
+        if (updatedInfo.getEmail() != null
+                && !updatedInfo.getEmail().isBlank()
+                && !updatedInfo.getEmail().equals(targetUser.getEmail())
+                && userRepository.findByEmail(updatedInfo.getEmail()).isPresent()) {
+            throw new RuntimeException("Email đã được sử dụng");
+        }
+
+        if (updatedInfo.getFullName() != null) {
+            targetUser.setFullName(updatedInfo.getFullName());
+        }
+        if (updatedInfo.getUsername() != null && !updatedInfo.getUsername().isBlank()) {
+            targetUser.setUsername(updatedInfo.getUsername());
+        }
+        if (updatedInfo.getEmail() != null) {
+            targetUser.setEmail(updatedInfo.getEmail());
+        }
+        if (updatedInfo.getAddress() != null) {
+            targetUser.setAddress(updatedInfo.getAddress());
+        }
+        if (updatedInfo.getPhone() != null) {
+            targetUser.setPhone(updatedInfo.getPhone());
+        }
+
+        if (updatedInfo.getPassword() != null && !updatedInfo.getPassword().isBlank()) {
+            targetUser.setPassword(passwordEncoder.encode(updatedInfo.getPassword()));
+        }
+
+        return userRepository.save(targetUser);
+    }
+
     public void changePassword(ChangePasswordRequest request) {
         User user = getCurrentUser();
         if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
@@ -134,6 +176,9 @@ public class UserService {
         if (userRepository.findByUsername(user.getUsername()).isPresent()) {
             throw new RuntimeException("Username đã tồn tại");
         }
+        if (userRepository.findByEmail(user.getEmail()).isPresent()) {
+            throw new RuntimeException("Email đã được sử dụng");
+        }
 
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         user.setRole(Role.CUSTOMER);
@@ -164,6 +209,10 @@ public class UserService {
             throw new RuntimeException("Tài khoản đã được xác thực trước đó.");
         }
 
+        if (user.getVerificationCode() == null || user.getVerificationExpiration() == null) {
+            throw new RuntimeException("Mã OTP không hợp lệ hoặc đã hết hạn");
+        }
+
         if (user.getVerificationExpiration().isBefore(LocalDateTime.now())) {
             throw new RuntimeException("Mã OTP đã hết hạn");
         }
@@ -171,6 +220,7 @@ public class UserService {
         if (user.getVerificationCode().equals(otp)) {
             user.setEnabled(true);
             user.setVerificationCode(null);
+            user.setVerificationExpiration(null);
             userRepository.save(user);
         } else {
             throw new RuntimeException("Mã OTP không chính xác");
@@ -224,10 +274,11 @@ public class UserService {
 
     public void resendOtp(String email) {
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy tài khoản với email này"));
 
-        if (user.isEnabled())
-            return;
+        if (user.isEnabled()) {
+            throw new RuntimeException("Tài khoản này đã được xác thực. Bạn có thể đăng nhập.");
+        }
 
         String otp = String.valueOf(new Random().nextInt(900000) + 100000);
         user.setVerificationCode(otp);

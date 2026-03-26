@@ -2,16 +2,12 @@ import { toast } from "react-toastify";
 import { useEffect, useState } from "react";
 import userService from "../../services/userService";
 import {
-  Plus,
   Edit,
   Trash2,
   Search,
-  X,
   Lock,
   Unlock,
   Shield,
-  ChevronDown,
-  UserCircle,
 } from "lucide-react";
 import Swal from "sweetalert2";
 
@@ -25,7 +21,7 @@ const UserListPage = () => {
     fullName: "",
     username: "",
     email: "",
-    role: "ADMIN",
+    address: "",
     password: "",
   });
   const [isEdit, setIsEdit] = useState(false);
@@ -61,7 +57,14 @@ const UserListPage = () => {
     e.preventDefault();
     try {
       if (isEdit) {
-        await userService.updateUser(formData.id, formData);
+        const updatePayload = {
+          fullName: formData.fullName,
+          username: formData.username,
+          email: formData.email,
+          address: formData.address,
+          password: formData.password,
+        };
+        await userService.updateUser(formData.id, updatePayload);
         toast.success("Cập nhật thành công");
       } else {
         await userService.createUser(formData);
@@ -70,7 +73,10 @@ const UserListPage = () => {
       setShowModal(false);
       fetchUsers();
     } catch (error) {
-      toast.error("Có lỗi xảy ra, vui lòng kiểm tra lại thông tin.");
+      toast.error(
+        error.response?.data ||
+          "Có lỗi xảy ra, vui lòng kiểm tra lại thông tin.",
+      );
     }
   };
 
@@ -97,7 +103,14 @@ const UserListPage = () => {
   };
 
   const openEdit = (user) => {
-    setFormData({ ...user, password: "" });
+    setFormData({
+      id: user.id,
+      fullName: user.fullName || "",
+      username: user.username || "",
+      email: user.email || "",
+      address: user.address || "",
+      password: "",
+    });
     setIsEdit(true);
     setShowModal(true);
   };
@@ -108,7 +121,7 @@ const UserListPage = () => {
       fullName: "",
       username: "",
       email: "",
-      role: "ADMIN",
+      address: "",
       password: "",
     });
     setIsEdit(false);
@@ -180,7 +193,7 @@ const UserListPage = () => {
             />
             <input
               type="text"
-              placeholder="Tìm kiếm theo họ tên hoặc địa chỉ email..."
+              placeholder="Tìm kiếm theo họ tên hoặc địa chỉ email"
               className="w-full pl-11 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:bg-white focus:border-indigo-300 transition-all font-medium placeholder:text-slate-400"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -200,25 +213,28 @@ const UserListPage = () => {
             <table className="w-full border-collapse">
               <thead>
                 <tr className="bg-slate-50/50 border-b border-slate-200">
-                  <th className="px-6 py-4 text-left text-[13px] font-medium text-slate-900">
+                  <th className="px-6 py-4 text-left text-sm font-medium text-slate-900">
                     ID
                   </th>
-                  <th className="px-6 py-4 text-left text-[13px] font-medium text-slate-900">
-                    Họ tên nhân viên
+                  <th className="px-6 py-4 text-left text-sm font-medium text-slate-900">
+                    Họ tên
                   </th>
-                  <th className="px-6 py-4 text-left text-[13px] font-medium text-slate-900">
+                  <th className="px-6 py-4 text-left text-sm font-medium text-slate-900">
                     Username
                   </th>
-                  <th className="px-6 py-4 text-left text-[13px] font-medium text-slate-900">
+                  <th className="px-6 py-4 text-left text-sm font-medium text-slate-900">
                     Email
                   </th>
-                  <th className="px-6 py-4 text-left text-[13px] font-medium text-slate-900">
+                  <th className="px-6 py-4 text-left text-sm font-medium text-slate-900">
+                    Địa chỉ
+                  </th>
+                  <th className="px-6 py-4 text-left text-sm font-medium text-slate-900">
                     Vai trò
                   </th>
-                  <th className="px-6 py-4 text-left text-[13px] font-medium text-slate-900">
+                  <th className="px-6 py-4 text-left text-sm font-medium text-slate-900">
                     Trạng thái
                   </th>
-                  <th className="px-6 py-4 text-center text-[13px] font-medium text-slate-900 w-[200px]">
+                  <th className="px-6 py-4 text-center text-sm font-medium text-slate-900 w-[200px]">
                     Thao tác
                   </th>
                 </tr>
@@ -230,27 +246,30 @@ const UserListPage = () => {
                     className="hover:bg-slate-50/30 transition-colors"
                   >
                     {/* --- HIỂN THỊ MÃ NHÂN VIÊN --- */}
-                    <td className="px-6 py-4 whitespace-nowrap text-[14px] font-bold text-indigo-600 font-mono">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-indigo-800">
                       #{user.staffCode || "---"}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-[14px] font-medium text-slate-900">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-800">
                       {user.fullName}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-[14px] font-medium text-slate-700">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-800">
                       {user.username}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-[14px] font-medium text-slate-500">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-800">
                       {user.email}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-800">
+                      {user.address || "---"}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span
                         className={`px-2.5 py-1 text-[11px] font-medium rounded-lg border
                           ${
                             user.role === "ADMIN"
-                              ? "bg-rose-50 text-rose-700 border-rose-100"
+                              ? "bg-rose-600 text-white border-rose-100"
                               : user.role === "STAFF"
-                                ? "bg-blue-50 text-blue-700 border-blue-100"
-                                : "bg-emerald-50 text-emerald-700 border-emerald-100"
+                                ? "bg-blue-600 text-white border-blue-100"
+                                : "bg-emerald-600 text-white border-emerald-100"
                           }`}
                       >
                         {user.role}
@@ -266,8 +285,8 @@ const UserListPage = () => {
                           }`}
                       >
                         {user.status === "ACTIVE"
-                          ? "Đang hoạt động"
-                          : "Đã khóa"}
+                          ? "Active"
+                          : "Inactive"}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -322,50 +341,51 @@ const UserListPage = () => {
         </div>
       </div>
 
-      {/* Modal Thêm/Sửa nhân viên giữ nguyên như bản cũ */}
+      {/* Modal Thêm/Sửa nhân viên */}
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
           <div
-            className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
+            className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm animate-fade-in"
             onClick={() => setShowModal(false)}
           />
-          <div className="relative bg-white w-full max-w-md overflow-hidden rounded-[2.5rem] shadow-2xl border border-slate-200 animate-in fade-in zoom-in duration-200">
-            <div className="px-8 pt-8 pb-4">
-              <button
-                onClick={() => setShowModal(false)}
-                className="absolute top-6 right-6 p-2 rounded-full text-slate-400 hover:bg-slate-50 transition-colors"
-              >
-                <X size={20} />
-              </button>
-              <h3 className="text-2xl font-medium text-slate-900">
-                {isEdit ? "Cập nhật nhân viên" : "Thêm nhân viên mới"}
-              </h3>
+          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in duration-300">
+            <div className="px-6 py-5 border-b border-slate-100 flex justify-between items-center bg-gradient-to-r from-slate-50 to-white">
+              <div>
+                <h3 className="text-xl font-medium text-slate-800 leading-tight">
+                  {isEdit ? "Cập nhật nhân viên" : "Thêm nhân viên mới"}
+                </h3>
+                <p className="text-xs text-slate-500 font-medium mt-1">
+                  {isEdit ? "Chỉnh sửa thông tin nhân viên trên hệ thống" : "Điền thông tin để tạo tài khoản mới"}
+                </p>
+              </div>
             </div>
-            <form onSubmit={handleSubmit} className="px-8 pb-8 space-y-5 mt-4">
-              <div className="space-y-4">
+            
+            <form onSubmit={handleSubmit}>
+              <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
                 <div>
-                  <label className="block text-[13px] font-medium text-slate-600 mb-2 ml-1">
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5 ml-1">
                     Họ tên
                   </label>
                   <input
                     required
                     type="text"
-                    className="w-full px-5 py-3 bg-slate-50 border border-slate-100 rounded-2xl focus:bg-white outline-none transition-all font-medium text-slate-900"
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-indigo-300 focus:ring-2 focus:ring-indigo-500/10 outline-none transition-all font-medium text-slate-800 text-sm"
                     value={formData.fullName}
                     onChange={(e) =>
                       setFormData({ ...formData, fullName: e.target.value })
                     }
                   />
                 </div>
+                
                 {!isEdit && (
                   <div>
-                    <label className="block text-[13px] font-medium text-slate-600 mb-2 ml-1">
+                    <label className="block text-sm font-medium text-slate-700 mb-1.5 ml-1">
                       Tên đăng nhập
                     </label>
                     <input
                       required
                       type="text"
-                      className="w-full px-5 py-3 bg-slate-50 border border-slate-100 rounded-2xl focus:bg-white outline-none transition-all font-medium text-slate-900"
+                      className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-indigo-300 focus:ring-2 focus:ring-indigo-500/10 outline-none transition-all font-medium text-slate-800 text-sm"
                       value={formData.username}
                       onChange={(e) =>
                         setFormData({ ...formData, username: e.target.value })
@@ -373,66 +393,61 @@ const UserListPage = () => {
                     />
                   </div>
                 )}
+                
                 <div>
-                  <label className="block text-[13px] font-medium text-slate-600 mb-2 ml-1">
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5 ml-1">
                     Địa chỉ email
                   </label>
                   <input
                     required
                     type="email"
-                    className="w-full px-5 py-3 bg-slate-50 border border-slate-100 rounded-2xl focus:bg-white outline-none transition-all font-medium text-slate-900"
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-indigo-300 focus:ring-2 focus:ring-indigo-500/10 outline-none transition-all font-medium text-slate-800 text-sm"
                     value={formData.email}
                     onChange={(e) =>
                       setFormData({ ...formData, email: e.target.value })
                     }
                   />
                 </div>
+
                 <div>
-                  <label className="block text-[13px] font-medium text-slate-600 mb-2 ml-1">
-                    Mật khẩu
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5 ml-1">
+                    Địa chỉ
+                  </label>
+                  <input
+                    type="text"
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-indigo-300 focus:ring-2 focus:ring-indigo-500/10 outline-none transition-all font-medium text-slate-800 text-sm"
+                    value={formData.address || ""}
+                    onChange={(e) =>
+                      setFormData({ ...formData, address: e.target.value })
+                    }
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5 ml-1">
+                    Mật khẩu {isEdit && <span className="text-slate-400 font-normal text-xs">(Bỏ trống nếu không đổi)</span>}
                   </label>
                   <input
                     type="password"
-                    className="w-full px-5 py-3 bg-slate-50 border border-slate-100 rounded-2xl focus:bg-white outline-none transition-all font-medium text-slate-900"
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-indigo-300 focus:ring-2 focus:ring-indigo-500/10 outline-none transition-all font-medium text-slate-800 text-sm"
                     value={formData.password}
                     onChange={(e) =>
                       setFormData({ ...formData, password: e.target.value })
                     }
                   />
                 </div>
-                <div>
-                  <label className="block text-[13px] font-medium text-slate-600 mb-2 ml-1">
-                    Vai trò
-                  </label>
-                  <div className="relative">
-                    <select
-                      className="w-full px-5 py-3 bg-slate-50 border border-slate-100 rounded-2xl focus:bg-white outline-none appearance-none transition-all font-medium text-slate-700 cursor-pointer"
-                      value={formData.role}
-                      onChange={(e) =>
-                        setFormData({ ...formData, role: e.target.value })
-                      }
-                    >
-                      <option value="ADMIN">Quản trị viên</option>
-                      <option value="STAFF">Nhân viên</option>
-                    </select>
-                    <ChevronDown
-                      size={18}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
-                    />
-                  </div>
-                </div>
               </div>
-              <div className="pt-4 flex gap-3">
+              <div className="px-6 pb-6 pt-2 flex gap-3">
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  className="flex-1 px-5 py-3 bg-slate-100 text-slate-600 rounded-2xl font-medium hover:bg-slate-200 transition-all"
+                  className="flex-1 px-4 py-2.5 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-all"
                 >
-                  Hủy
+                  Hủy bỏ
                 </button>
                 <button
                   type="submit"
-                  className="flex-2 px-8 py-3 bg-green-600 text-white rounded-2xl font-medium hover:bg-green-700 shadow-sm transition-all"
+                  className="flex-1 px-4 py-2.5 text-sm font-medium text-white bg-green-600 rounded-xl hover:bg-green-600 shadow-md shadow-emerald-200 active:scale-95 transition-all"
                 >
                   {isEdit ? "Cập nhật" : "Tạo tài khoản"}
                 </button>
@@ -452,11 +467,8 @@ const UserListPage = () => {
           <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-300">
             <div className="px-6 py-5 border-b border-slate-100 flex justify-between items-center bg-gradient-to-r from-slate-50 to-white">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-indigo-50 rounded-lg">
-                  <Shield className="text-indigo-600" size={22} />
-                </div>
                 <div>
-                  <h3 className="text-lg font-semibold text-slate-800 leading-tight">
+                  <h3 className="text-xl font-medium text-slate-800 leading-tight">
                     Phân quyền hệ thống
                   </h3>
                   <p className="text-xs text-slate-500 font-medium">
@@ -464,29 +476,10 @@ const UserListPage = () => {
                   </p>
                 </div>
               </div>
-              <button
-                onClick={() => setShowRoleModal(false)}
-                className="p-2 hover:bg-slate-100 rounded-full text-slate-400 hover:text-slate-600 transition-colors"
-              >
-                <X size={20} />
-              </button>
             </div>
             <div className="p-6">
-              <div className="mb-8 p-4 bg-slate-50 rounded-xl border border-slate-100 flex items-center gap-4">
-                <div className="h-12 w-12 rounded-full bg-indigo-600 flex items-center justify-center text-white font-bold text-lg shadow-inner">
-                  {selectedUserForRole.username.charAt(0).toUpperCase()}
-                </div>
-                <div>
-                  <p className="text-xs text-slate-500 font-bold">
-                    Tài khoản đang chọn
-                  </p>
-                  <p className="text-base font-semibold text-slate-800">
-                    {selectedUserForRole.username}
-                  </p>
-                </div>
-              </div>
               <div className="space-y-3">
-                <label className="text-sm font-semibold text-slate-700 ml-1">
+                <label className="text-sm font-medium text-slate-700 ml-1">
                   Chọn vai trò mới
                 </label>
                 <div className="grid grid-cols-1 gap-3">
@@ -494,20 +487,20 @@ const UserListPage = () => {
                     {
                       id: "ADMIN",
                       label: "ADMIN",
-                      badge: "TOÀN QUYỀN",
-                      badgeColor: "bg-rose-100 text-rose-700",
+                      badge: "Toàn quyền",
+                      badgeColor: "bg-rose-500 text-white",
                     },
                     {
                       id: "STAFF",
                       label: "STAFF",
-                      badge: "GIỚI HẠN",
-                      badgeColor: "bg-amber-100 text-amber-700",
+                      badge: "Giới hạn",
+                      badgeColor: "bg-amber-500 text-white",
                     },
                     {
                       id: "CUSTOMER",
                       label: "CUSTOMER",
-                      badge: "PHỔ THÔNG",
-                      badgeColor: "bg-blue-100 text-blue-700",
+                      badge: "Phổ thông",
+                      badgeColor: "bg-blue-500 text-white",
                     },
                   ].map((role) => (
                     <button
@@ -542,7 +535,7 @@ const UserListPage = () => {
                         </span>
                       </div>
                       <span
-                        className={`text-[10px] px-2 py-1 rounded-md font-bold ${role.badgeColor}`}
+                        className={`text-[10px] px-2 py-1 rounded-md font-medium ${role.badgeColor}`}
                       >
                         {role.badge}
                       </span>
@@ -551,10 +544,10 @@ const UserListPage = () => {
                 </div>
               </div>
             </div>
-            <div className="px-6 py-5 bg-slate-50 flex gap-3">
+            <div className="px-6 py-5 flex gap-3">
               <button
                 onClick={() => setShowRoleModal(false)}
-                className="flex-1 px-4 py-2.5 text-sm font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-all"
+                className="flex-1 px-4 py-2.5 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-all"
               >
                 Hủy bỏ
               </button>

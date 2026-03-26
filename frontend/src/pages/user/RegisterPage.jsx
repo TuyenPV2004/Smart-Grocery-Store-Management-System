@@ -35,10 +35,13 @@ const RegisterPage = () => {
     setLoading(true);
     try {
       await userService.register(formData);
+      sessionStorage.setItem("pendingOtpEmail", formData.email);
       toast.success(
         "Đăng ký thành công! Vui lòng kiểm tra email để lấy mã OTP.",
       );
-      navigate("/verify-otp", { state: { email: formData.email } });
+      navigate(`/verify-otp?email=${encodeURIComponent(formData.email)}`, {
+        state: { email: formData.email },
+      });
     } catch (error) {
       toast.error(error.response?.data || "Đăng ký thất bại");
     } finally {
@@ -66,9 +69,6 @@ const RegisterPage = () => {
             </div>
 
             <div className="relative z-10 flex flex-col items-center">
-              <div className="bg-white/20 backdrop-blur-md p-3 rounded-2xl mb-2 border border-white/30 shadow-inner">
-                <UserPlus className="w-6 h-6 text-white" />
-              </div>
               <h2 className="text-xl font-medium text-white tracking-tight">
                 Tham gia cùng chúng tôi
               </h2>
@@ -84,16 +84,16 @@ const RegisterPage = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <label className="block text-[12px] font-medium text-slate-500 ml-1">
-                    Họ và tên
+                    Họ tên
                   </label>
                   <div className="relative group">
                     <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                      <User className="h-4.5 w-4.5 text-slate-300 group-focus-within:text-emerald-500 transition-colors" />
+                      <User className="h-4.5 w-4.5 text-emerald-500 transition-colors" />
                     </div>
                     <input
                       required
                       placeholder="Nguyễn Văn A"
-                      className="w-full pl-11 pr-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl focus:outline-none focus:ring-4 focus:ring-emerald-500/5 focus:border-emerald-400 focus:bg-white transition-all font-medium text-slate-900 text-[14px]"
+                      className="w-full pl-11 pr-4 py-2.5 bg-white border border-slate-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-emerald-500/5 focus:border-emerald-400 transition-all font-medium text-slate-900 text-[14px]"
                       onChange={(e) =>
                         setFormData({ ...formData, fullName: e.target.value })
                       }
@@ -106,12 +106,12 @@ const RegisterPage = () => {
                   </label>
                   <div className="relative group">
                     <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                      <User className="h-4.5 w-4.5 text-slate-300 group-focus-within:text-emerald-500 transition-colors" />
+                      <User className="h-4.5 w-4.5 text-emerald-500 transition-colors" />
                     </div>
                     <input
                       required
                       placeholder="username123"
-                      className="w-full pl-11 pr-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl focus:outline-none focus:ring-4 focus:ring-emerald-500/5 focus:border-emerald-400 focus:bg-white transition-all font-medium text-slate-900 text-[14px]"
+                      className="w-full pl-11 pr-4 py-2.5 bg-white border border-slate-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-emerald-500/5 focus:border-emerald-400 transition-all font-medium text-slate-900 text-[14px]"
                       onChange={(e) =>
                         setFormData({ ...formData, username: e.target.value })
                       }
@@ -124,17 +124,17 @@ const RegisterPage = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <label className="block text-[12px] font-medium text-slate-500 ml-1">
-                    Địa chỉ email
+                    Email
                   </label>
                   <div className="relative group">
                     <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                      <Mail className="h-4.5 w-4.5 text-slate-300 group-focus-within:text-emerald-500 transition-colors" />
+                      <Mail className="h-4.5 w-4.5 text-emerald-500 transition-colors" />
                     </div>
                     <input
                       required
                       type="email"
                       placeholder="example@gmail.com"
-                      className="w-full pl-11 pr-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl focus:outline-none focus:ring-4 focus:ring-emerald-500/5 focus:border-emerald-400 focus:bg-white transition-all font-medium text-slate-900 text-[14px]"
+                      className="w-full pl-11 pr-4 py-2.5 bg-white border border-slate-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-emerald-500/5 focus:border-emerald-400 transition-all font-medium text-slate-900 text-[14px]"
                       onChange={(e) =>
                         setFormData({ ...formData, email: e.target.value })
                       }
@@ -147,12 +147,12 @@ const RegisterPage = () => {
                   </label>
                   <div className="relative group">
                     <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                      <Phone className="h-4.5 w-4.5 text-slate-300 group-focus-within:text-emerald-500 transition-colors" />
+                      <Phone className="h-4.5 w-4.5 text-emerald-500 transition-colors" />
                     </div>
                     <input
                       required
                       placeholder="09xx xxx xxx"
-                      className="w-full pl-11 pr-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl focus:outline-none focus:ring-4 focus:ring-emerald-500/5 focus:border-emerald-400 focus:bg-white transition-all font-medium text-slate-900 text-[14px]"
+                      className="w-full pl-11 pr-4 py-2.5 bg-white border border-slate-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-emerald-500/5 focus:border-emerald-400 transition-all font-medium text-slate-900 text-[14px]"
                       onChange={(e) =>
                         setFormData({ ...formData, phone: e.target.value })
                       }
@@ -168,12 +168,12 @@ const RegisterPage = () => {
                 </label>
                 <div className="relative group">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                    <MapPin className="h-4.5 w-4.5 text-slate-300 group-focus-within:text-emerald-500 transition-colors" />
+                    <MapPin className="h-4.5 w-4.5 text-emerald-500 transition-colors" />
                   </div>
                   <input
                     required
-                    placeholder="Số nhà, tên đường, quận/huyện..."
-                    className="w-full pl-11 pr-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl focus:outline-none focus:ring-4 focus:ring-emerald-500/5 focus:border-emerald-400 focus:bg-white transition-all font-medium text-slate-900 text-[14px]"
+                    placeholder="Số nhà, tên đường, quận"
+                    className="w-full pl-11 pr-4 py-2.5 bg-white border border-slate-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-emerald-500/5 focus:border-emerald-400 transition-all font-medium text-slate-900 text-[14px]"
                     onChange={(e) =>
                       setFormData({ ...formData, address: e.target.value })
                     }
@@ -189,13 +189,13 @@ const RegisterPage = () => {
                   </label>
                   <div className="relative group">
                     <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                      <Lock className="h-4.5 w-4.5 text-slate-300 group-focus-within:text-emerald-500 transition-colors" />
+                      <Lock className="h-4.5 w-4.5 text-emerald-500 transition-colors" />
                     </div>
                     <input
                       required
                       type="password"
                       placeholder="••••••••"
-                      className="w-full pl-11 pr-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl focus:outline-none focus:ring-4 focus:ring-emerald-500/5 focus:border-emerald-400 focus:bg-white transition-all font-medium text-slate-900 text-[14px]"
+                      className="w-full pl-11 pr-4 py-2.5 bg-white border border-slate-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-emerald-500/5 focus:border-emerald-400 transition-all font-medium text-slate-900 text-[14px]"
                       onChange={(e) =>
                         setFormData({ ...formData, password: e.target.value })
                       }
@@ -208,13 +208,13 @@ const RegisterPage = () => {
                   </label>
                   <div className="relative group">
                     <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                      <Lock className="h-4.5 w-4.5 text-slate-300 group-focus-within:text-emerald-500 transition-colors" />
+                      <Lock className="h-4.5 w-4.5 text-emerald-500 transition-colors" />
                     </div>
                     <input
                       required
                       type="password"
                       placeholder="••••••••"
-                      className="w-full pl-11 pr-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl focus:outline-none focus:ring-4 focus:ring-emerald-500/5 focus:border-emerald-400 focus:bg-white transition-all font-medium text-slate-900 text-[14px]"
+                      className="w-full pl-11 pr-4 py-2.5 bg-white border border-slate-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-emerald-500/5 focus:border-emerald-400 transition-all font-medium text-slate-900 text-[14px]"
                       onChange={(e) =>
                         setFormData({
                           ...formData,
@@ -236,14 +236,14 @@ const RegisterPage = () => {
                   {loading ? (
                     <Loader2 className="w-5 h-5 animate-spin" />
                   ) : (
-                    "Tạo tài khoản ngay"
+                    "Tạo tài khoản"
                   )}
                 </button>
               </div>
             </form>
 
             {/* Footer Link */}
-            <div className="mt-6 text-center border-t border-slate-50 pt-4">
+            <div className="mt-4 text-center">
               <p className="text-slate-400 text-[13px] font-medium">
                 Đã có tài khoản hệ thống?{" "}
                 <Link

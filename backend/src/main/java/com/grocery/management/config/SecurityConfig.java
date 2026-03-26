@@ -37,12 +37,21 @@ public class SecurityConfig {
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/v1/products/**").permitAll()
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/v1/products/*").permitAll()
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/v1/categories/**").permitAll()
-                        .requestMatchers("/api/v1/chat/conversations/**", "/api/v1/chat/conversations").hasAnyAuthority("ADMIN", "STAFF")
+                        .requestMatchers("/api/v1/payment/vnpay_return", "/api/v1/payment/vnpay_ipn").permitAll()
+                        .requestMatchers("/api/v1/chat/conversations/**", "/api/v1/chat/conversations")
+                        .hasAnyAuthority("ADMIN", "STAFF")
                         .requestMatchers("/api/v1/chat/**").authenticated()
+                        .requestMatchers("/api/v1/payment/create_payment/**").authenticated()
+                        .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/v1/orders").authenticated()
+                        .requestMatchers("/api/v1/orders/my-orders", "/api/v1/orders/code/**", "/api/v1/orders/*/cancel")
+                        .authenticated()
+                        .requestMatchers("/api/v1/orders/*/status", "/api/v1/orders/*/export", "/api/v1/orders")
+                        .hasAnyAuthority("ADMIN", "STAFF")
                         .requestMatchers("/api/v1/users/profile", "/api/v1/users/profile/**",
                                 "/api/v1/users/change-password")
                         .authenticated()
-                        .requestMatchers("/api/v1/users/**").hasAnyAuthority("ADMIN", "STAFF")
+                        .requestMatchers("/api/v1/users/code/**").hasAnyAuthority("ADMIN", "STAFF")
+                        .requestMatchers("/api/v1/users/**").hasAuthority("ADMIN")
                         .requestMatchers("/api/v1/inventory/**").hasAnyAuthority("ADMIN", "STAFF")
                         .anyRequest().authenticated())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -55,7 +64,6 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        // Cho phép frontend từ localhost
         configuration.setAllowedOrigins(List.of("http://localhost:5173", "http://localhost:3000"));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));

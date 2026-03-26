@@ -1,94 +1,19 @@
-import { toast } from "react-toastify";
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
+import {
+  Loader2,
+  Minus,
+  Plus,
+  ShoppingBag,
+  Trash2,
+  User,
+  X,
+} from "lucide-react";
 import { useCart } from "../../context/CartContext";
 import { useAuth } from "../../context/AuthContext";
 import orderService from "../../services/orderService";
-import paymentService from "../../services/paymentService";
-import bankAccountService from "../../services/bankAccountService";
 import voucherService from "../../services/voucherService";
-import {
-  Trash2,
-  Plus,
-  Minus,
-  ArrowLeft,
-  ShoppingBag,
-  QrCode,
-  X,
-  CheckCircle,
-  Loader2,
-  User,
-  XCircle,
-} from "lucide-react";
-
-const bankOptions = [
-  {
-    name: "Ngân hàng Quân đội",
-    code: "MB",
-    logo: "https://api.vietqr.io/img/MB.png",
-    brand: "MB Bank",
-  },
-  {
-    name: "Ngân hàng TMCP Công Thương Việt Nam",
-    code: "ICB",
-    logo: "https://rabbitcare.vn/_next/image?url=https%3A%2F%2Fstorage.googleapis.com%2Fround-fold%2FVietinbank_logo_40f464dd33%2FVietinbank_logo_40f464dd33.jpg&w=3840&q=25",
-    brand: "VietinBank",
-  },
-  {
-    name: "Ngân hàng TMCP Phát triển TP. Hồ Chí Minh",
-    code: "HDB",
-    logo: "https://api.vietqr.io/img/HDB.png",
-    brand: "HDBank",
-  },
-  {
-    name: "Ngân hàng TMCP Đại Dương",
-    code: "OJB",
-    logo: "https://api.vietqr.io/img/OJB.png",
-    brand: "OceanBank",
-  },
-  {
-    name: "Ngân hàng TMCP Việt Nam Thịnh Vượng",
-    code: "VPB",
-    logo: "https://api.vietqr.io/img/VPB.png",
-    brand: "VPBank",
-  },
-  {
-    name: "Ngân hàng TMCP Xuất nhập khẩu Việt Nam",
-    code: "EIB",
-    logo: "https://api.vietqr.io/img/EIB.png",
-    brand: "Eximbank",
-  },
-  {
-    name: "Ngân hàng TMCP Đông Nam Á",
-    code: "SEAB",
-    logo: "https://api.vietqr.io/img/SEAB.png",
-    brand: "SeABank",
-  },
-  {
-    name: "Ngân hàng TMCP Sài Gòn",
-    code: "SCB",
-    logo: "https://api.vietqr.io/img/SCB.png",
-    brand: "Saigonbank",
-  },
-  {
-    name: "Ngân hàng TMCP Tiên Phong",
-    code: "TPB",
-    logo: "https://api.vietqr.io/img/TPB.png",
-    brand: "TPBank",
-  },
-];
-
-const findBank = (bankName) => {
-  if (!bankName) return null;
-  const normalized = bankName.toLowerCase();
-  return bankOptions.find(
-    (b) =>
-      normalized.includes(b.name.toLowerCase()) ||
-      normalized.includes(b.brand.toLowerCase()) ||
-      b.name.toLowerCase().includes(normalized) ||
-      b.brand.toLowerCase().includes(normalized),
-  );
-};
 
 const CartPage = () => {
   const {
@@ -99,22 +24,9 @@ const CartPage = () => {
     clearCart,
     getProductPrice,
   } = useCart();
-  const { user } = useAuth(); // Lấy thông tin user đang đăng nhập
+  const { user } = useAuth();
   const navigate = useNavigate();
 
-  // State cho Modal Thanh toán
-  const [showCheckoutModal, setShowCheckoutModal] = useState(false);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [orderSuccess, setOrderSuccess] = useState(false);
-  const [bankAccounts, setBankAccounts] = useState([]);
-  const [generatedOrderCode, setGeneratedOrderCode] = useState("");
-  const [selectedQR, setSelectedQR] = useState(null);
-  const [waitingOrder, setWaitingOrder] = useState(null);
-  const [waitingSeconds, setWaitingSeconds] = useState(300);
-  const [finalizingStatus, setFinalizingStatus] = useState(false);
-  const [finalResult, setFinalResult] = useState(null);
-
-  // Thêm State Cho Voucher
   const [voucherCode, setVoucherCode] = useState("");
   const [appliedVoucher, setAppliedVoucher] = useState(null);
   const [voucherError, setVoucherError] = useState("");
@@ -125,54 +37,44 @@ const CartPage = () => {
   const [selectedVoucherOption, setSelectedVoucherOption] = useState(null);
   const [voucherConditionTarget, setVoucherConditionTarget] = useState(null);
 
-  const generateOrderCode = () => {
-    const now = new Date();
-    const yy = now.getFullYear().toString().slice(-2);
-    const mm = (now.getMonth() + 1).toString().padStart(2, "0");
-    const dd = now.getDate().toString().padStart(2, "0");
-    const hh = now.getHours().toString().padStart(2, "0");
-    const min = now.getMinutes().toString().padStart(2, "0");
-    const ss = now.getSeconds().toString().padStart(2, "0");
-    return `ORD${yy}${mm}${dd}${hh}${min}${ss}`;
-  };
-
   useEffect(() => {
-    const fetchBankAccounts = async () => {
+    const reconcilePendingPayment = async () => {
+      if (!user) return;
+
+      const pendingOrderCode = localStorage.getItem("pendingVnpayOrderCode");
+      if (!pendingOrderCode) return;
+
       try {
-        const res = await bankAccountService.getAll();
-        const activeAccounts = res.data.filter(
-          (acc) => acc.status === "ACTIVE",
-        );
-        setBankAccounts(activeAccounts);
+        const res = await orderService.getByCode(pendingOrderCode);
+        const order = res.data;
+
+        if (order?.paymentStatus === "PAID" || order?.status === "COMPLETED") {
+          clearCart();
+          localStorage.removeItem("pendingVnpayOrderCode");
+        } else if (
+          ["FAILED", "CANCELLED", "EXPIRED"].includes(order?.paymentStatus) ||
+          order?.status === "CANCELLED"
+        ) {
+          localStorage.removeItem("pendingVnpayOrderCode");
+        }
       } catch (error) {
-        console.error("Lỗi tải danh sách ngân hàng:", error);
+        localStorage.removeItem("pendingVnpayOrderCode");
       }
     };
-    fetchBankAccounts();
-  }, []);
 
-  useEffect(() => {
-    if (!waitingOrder || finalResult) return;
+    reconcilePendingPayment();
+  }, [clearCart, user]);
 
-    const interval = setInterval(() => {
-      setWaitingSeconds((prev) => {
-        if (prev <= 1) {
-          clearInterval(interval);
-          handleFinalizeOrder("CANCELLED", true);
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [waitingOrder, finalResult]);
-
-  const formatCurrency = (amount) => {
-    return new Intl.NumberFormat("vi-VN", {
+  const formatCurrency = (amount) =>
+    new Intl.NumberFormat("vi-VN", {
       style: "currency",
       currency: "VND",
-    }).format(amount);
+    }).format(Number(amount || 0));
+
+  const getImageUrl = (path) => {
+    if (!path) return "https://via.placeholder.com/100x100?text=No+Image";
+    if (path.startsWith("http")) return path;
+    return `http://localhost:8080/${path}`;
   };
 
   const formatVoucherDiscount = (voucher) => {
@@ -187,14 +89,9 @@ const CartPage = () => {
     return new Date(date).toLocaleString("vi-VN");
   };
 
-  const getImageUrl = (path) => {
-    if (!path) return "https://via.placeholder.com/100x100?text=No+Image";
-    if (path.startsWith("http")) return path;
-    return `http://localhost:8080/${path}`;
-  };
-
   const calculateDiscount = () => {
     if (!appliedVoucher) return 0;
+
     let discount = 0;
     if (appliedVoucher.discountType === "PERCENTAGE") {
       discount = (cartTotal * appliedVoucher.discountValue) / 100;
@@ -207,25 +104,30 @@ const CartPage = () => {
     } else {
       discount = appliedVoucher.discountValue;
     }
+
     return discount > cartTotal ? cartTotal : discount;
   };
 
   const applyVoucherByCode = async (code) => {
     if (!code?.trim()) return false;
+
     setIsApplyingVoucher(true);
     setVoucherError("");
     setAppliedVoucher(null);
+
     try {
       const res = await voucherService.validate(code.trim());
-      const resVoucher = res.data;
-      if (resVoucher.minOrderValue && cartTotal < resVoucher.minOrderValue) {
+      const voucher = res.data;
+
+      if (voucher.minOrderValue && cartTotal < voucher.minOrderValue) {
         setVoucherError(
-          `Đơn hàng cần đạt tối thiểu ${formatCurrency(resVoucher.minOrderValue)}`,
+          `Đơn hàng cần đạt tối thiểu ${formatCurrency(voucher.minOrderValue)}`,
         );
         return false;
       }
-      setVoucherCode(resVoucher.code);
-      setAppliedVoucher(resVoucher);
+
+      setVoucherCode(voucher.code);
+      setAppliedVoucher(voucher);
       toast.success("Áp dụng mã giảm giá thành công!");
       return true;
     } catch (error) {
@@ -253,6 +155,7 @@ const CartPage = () => {
     setSelectedVoucherOption(appliedVoucher?.code || null);
     setVoucherError("");
     setIsLoadingVouchers(true);
+
     try {
       const res = await voucherService.getActive();
       setAvailableVouchers(Array.isArray(res.data) ? res.data : []);
@@ -286,107 +189,6 @@ const CartPage = () => {
   const cartDiscount = calculateDiscount();
   const finalTotal = cartTotal - cartDiscount;
 
-  const formatCountdown = (seconds) => {
-    const mm = Math.floor(seconds / 60)
-      .toString()
-      .padStart(2, "0");
-    const ss = (seconds % 60).toString().padStart(2, "0");
-    return `${mm}:${ss}`;
-  };
-
-  const resetWaitingFlow = () => {
-    setTimeout(() => {
-      setWaitingOrder(null);
-      setWaitingSeconds(300);
-      setFinalResult(null);
-    }, 1200);
-  };
-
-  const handleFinalizeOrder = async (status, isAutoCancel = false) => {
-    if (!waitingOrder?.id) return;
-
-    setFinalizingStatus(true);
-    try {
-      await orderService.updateStatus(waitingOrder.id, status);
-      setFinalResult(status);
-
-      if (status === "COMPLETED") {
-        clearCart();
-        setOrderSuccess(true);
-        toast.success("Thanh toán hoàn thành");
-      } else if (!isAutoCancel) {
-        toast.info("Đơn hàng đã hủy");
-      }
-
-      resetWaitingFlow();
-    } catch (error) {
-      toast.error(error.response?.data || "Không thể cập nhật trạng thái đơn");
-    } finally {
-      setFinalizingStatus(false);
-    }
-  };
-
-  const handleCreateVNPAYPayment = async (orderId) => {
-    try {
-      const res = await paymentService.createPayment(orderId);
-      if (res.data && res.data.paymentUrl) {
-        window.location.href = res.data.paymentUrl;
-      } else {
-        toast.error("Không lấy được URL thanh toán từ hệ thống.");
-      }
-    } catch (error) {
-      console.error("Lỗi khi tạo URL thanh toán VNPAY:", error);
-      toast.error(
-        "Có lỗi xảy ra khi tạo mã thanh toán VNPAY. Vui lòng thử lại!",
-      );
-      setIsProcessing(false);
-    }
-  };
-
-  // Hàm xử lý khi ấn Xác nhận thanh toán
-  const handleConfirmCheckout = async () => {
-    if (!user) {
-      toast.warning("Vui lòng đăng nhập để thanh toán!");
-      navigate("/login");
-      return;
-    }
-
-    setIsProcessing(true);
-
-    // Chuẩn bị dữ liệu gửi lên backend khớp với OrderRequest.java
-    const orderData = {
-      customerName: user.fullName || user.username || "Khách hàng",
-      customerPhone: user.phone || "Đang cập nhật",
-      paymentMethod: "CHUYEN_KHOAN", // Phương thức chuyển khoản
-      pendingConfirmation: true,
-      discount: cartDiscount,
-      voucherCode: appliedVoucher ? appliedVoucher.code : "",
-      items: cartItems.map((item) => ({
-        productId: item.product.id,
-        quantity: item.quantity,
-        price: getProductPrice(item.product),
-      })),
-    };
-
-    try {
-      const res = await orderService.create(orderData);
-
-      // Thành công tạo đơn, gọi VNPAY URL
-      const orderCreated = res.data;
-      await handleCreateVNPAYPayment(orderCreated.id);
-
-      // setWaitingOrder(res.data);
-      // setWaitingSeconds(300);
-      // setFinalResult(null);
-      // setShowCheckoutModal(false);
-    } catch (error) {
-      console.error("Lỗi khi đặt hàng:", error);
-      toast.error("Có lỗi xảy ra khi đặt hàng. Vui lòng thử lại!");
-      setIsProcessing(false);
-    }
-  };
-
-  // Giao diện khi chưa đăng nhập
   if (!user) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-emerald-50 via-slate-50 to-emerald-100 flex flex-col items-center justify-center p-4 font-poppins">
@@ -410,8 +212,7 @@ const CartPage = () => {
     );
   }
 
-  // Giao diện khi giỏ hàng trống
-  if (cartItems.length === 0 && !orderSuccess) {
+  if (cartItems.length === 0) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-emerald-50 via-slate-50 to-emerald-100 flex flex-col items-center justify-center p-4">
         <div className="w-24 h-24 bg-slate-100 rounded-full flex items-center justify-center mb-6 text-slate-300">
@@ -440,34 +241,9 @@ const CartPage = () => {
     );
   }
 
-  // Giao diện thông báo Đặt hàng thành công
-  if (orderSuccess) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-emerald-50 via-slate-50 to-emerald-100 flex flex-col items-center justify-center p-4">
-        <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mb-6 text-green-500">
-          <CheckCircle size={48} />
-        </div>
-        <h2 className="text-2xl font-medium text-slate-800 mb-2">
-          Đặt hàng thành công!
-        </h2>
-        <p className="text-slate-500 mb-8 text-center max-w-md">
-          Cảm ơn bạn đã mua sắm. Đơn hàng của bạn đang được xử lý và sẽ sớm giao
-          đến bạn.
-        </p>
-        <Link
-          to="/products"
-          className="px-8 py-3 bg-green-600 text-white rounded-xl font-medium hover:bg-green-700 transition-all shadow-lg shadow-green-200"
-        >
-          Tiếp tục mua sắm
-        </Link>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-gradient-to-b from-emerald-50 via-slate-50 to-emerald-100 pt-6 pb-12 px-4 sm:px-6 font-poppins relative">
       <div className="max-w-6xl mx-auto">
-        {/* Header Giỏ hàng + Stepper */}
         <div className="flex items-center mb-8 gap-4">
           <h1 className="text-2xl font-medium text-slate-900">
             Giỏ hàng của bạn
@@ -478,7 +254,6 @@ const CartPage = () => {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          {/* Danh sách sản phẩm */}
           <div className="lg:col-span-7 space-y-4">
             {cartItems.map((item) => (
               <div
@@ -505,11 +280,13 @@ const CartPage = () => {
                       <Trash2 size={18} />
                     </button>
                   </div>
+
                   <div className="mb-2">
                     <p className="text-slate-500 text-sm">
                       Đơn vị: {item.product.unit}
                     </p>
                   </div>
+
                   <div className="flex items-end justify-between mt-auto">
                     <div className="flex items-center gap-3 bg-slate-50 rounded-xl p-1 border border-slate-100 w-fit">
                       <button
@@ -533,18 +310,16 @@ const CartPage = () => {
                         <Plus size={14} />
                       </button>
                     </div>
+
                     <div className="text-right">
                       <p className="font-medium text-slate-900 text-lg">
                         {formatCurrency(
                           getProductPrice(item.product) * item.quantity,
                         )}
                       </p>
-                      {item.product.sellPrice >
-                        getProductPrice(item.product) && (
+                      {item.product.sellPrice > getProductPrice(item.product) && (
                         <p className="text-xs text-slate-400 line-through mt-1">
-                          {formatCurrency(
-                            item.product.sellPrice * item.quantity,
-                          )}
+                          {formatCurrency(item.product.sellPrice * item.quantity)}
                         </p>
                       )}
                     </div>
@@ -552,6 +327,7 @@ const CartPage = () => {
                 </div>
               </div>
             ))}
+
             <button
               onClick={clearCart}
               className="text-rose-500 font-medium hover:text-rose-700 hover:underline px-2"
@@ -560,12 +336,12 @@ const CartPage = () => {
             </button>
           </div>
 
-          {/* Tổng đơn hàng (Cột phải) */}
           <div className="lg:col-span-4">
             <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm sticky top-24">
               <h3 className="text-xl font-medium text-slate-800 mb-6">
                 Tổng đơn hàng
               </h3>
+
               <div className="space-y-4 mb-6">
                 <div className="flex justify-between text-slate-500">
                   <span>Tạm tính</span>
@@ -579,9 +355,8 @@ const CartPage = () => {
                     {formatCurrency(cartDiscount)}
                   </span>
                 </div>
-                <div className="h-px bg-slate-100 my-4"></div>
+                <div className="h-px bg-slate-100 my-4" />
 
-                {/* Voucher Section */}
                 <div className="mb-4">
                   <div className="mb-2 flex justify-end">
                     <button
@@ -592,6 +367,7 @@ const CartPage = () => {
                       Voucher
                     </button>
                   </div>
+
                   <div className="flex gap-2">
                     <input
                       type="text"
@@ -603,6 +379,7 @@ const CartPage = () => {
                       }
                       disabled={!!appliedVoucher || isApplyingVoucher}
                     />
+
                     {appliedVoucher ? (
                       <button
                         onClick={handleRemoveVoucher}
@@ -620,6 +397,7 @@ const CartPage = () => {
                       </button>
                     )}
                   </div>
+
                   {voucherError && (
                     <p className="text-rose-500 text-xs font-medium mt-2">
                       {voucherError}
@@ -640,7 +418,6 @@ const CartPage = () => {
                 </div>
               </div>
 
-              {/* Nút Kích hoạt Modal Thanh toán -> Đổi thành chuyển hướng */}
               <button
                 onClick={() => {
                   if (!user) {
@@ -648,6 +425,7 @@ const CartPage = () => {
                     navigate("/login");
                     return;
                   }
+
                   navigate("/checkout", {
                     state: {
                       appliedVoucher,
@@ -657,42 +435,12 @@ const CartPage = () => {
                 }}
                 className="w-full rounded-xl bg-green-600 py-3 text-white font-medium hover:bg-green-700 transition-all shadow-lg shadow-green-200 active:scale-95 flex items-center justify-center gap-2"
               >
-                Xác nhận
+                Tiến hành checkout
               </button>
             </div>
           </div>
         </div>
       </div>
-
-      {/* Full screen QR Modal */}
-      {selectedQR && (
-        <div
-          className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
-          onClick={() => setSelectedQR(null)}
-        >
-          <div className="relative animate-in zoom-in-95 duration-200 flex flex-col items-center">
-            <button
-              onClick={() => setSelectedQR(null)}
-              className="absolute -top-12 -right-4 text-white hover:text-red-400 p-2 transition-colors z-[120] bg-black/40 rounded-full"
-            >
-              <X size={28} />
-            </button>
-            <div
-              className="bg-white p-6 rounded-3xl shadow-2xl"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <img
-                src={selectedQR}
-                alt="QR Code Full"
-                className="w-80 md:w-96 md:h-96 h-80 object-contain rounded-xl"
-              />
-              <p className="text-center font-medium text-slate-600 mt-4">
-                Quét mã để chuyển khoản
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
 
       {showVoucherModal && (
         <div className="fixed inset-0 z-[140] flex items-center justify-center bg-black/55 p-4 backdrop-blur-sm">
@@ -748,26 +496,24 @@ const CartPage = () => {
                           <div className="flex-[1.45] rounded-xl bg-white px-1 py-0.5">
                             <div className="mb-1.5 flex items-start justify-between gap-2">
                               <div className="space-y-1.5">
-                                <div>
-                                  <p className="text-xs font-medium text-slate-800">
-                                    {formatVoucherDiscount(voucher)}
-                                  </p>
-                                </div>
-                                <div>
-                                  <p className="text-xs font-medium text-slate-800">
-                                    {voucher.discountType === "PERCENTAGE" &&
-                                    voucher.maxDiscountAmount
-                                      ? formatCurrency(
-                                          voucher.maxDiscountAmount || 0,
-                                        )
-                                      : "Không giới hạn"}
-                                  </p>
-                                </div>
+                                <p className="text-xs font-medium text-slate-800">
+                                  {formatVoucherDiscount(voucher)}
+                                </p>
+                                <p className="text-xs font-medium text-slate-800">
+                                  {voucher.discountType === "PERCENTAGE" &&
+                                  voucher.maxDiscountAmount
+                                    ? formatCurrency(
+                                        voucher.maxDiscountAmount || 0,
+                                      )
+                                    : "Không giới hạn"}
+                                </p>
                               </div>
 
                               <button
                                 type="button"
-                                onClick={() => handleToggleVoucherOption(voucher.code)}
+                                onClick={() =>
+                                  handleToggleVoucherOption(voucher.code)
+                                }
                                 className="mt-0.5 flex h-5 w-5 items-center justify-center rounded-full border border-slate-300 bg-white transition-all"
                                 aria-label={
                                   isSelected
@@ -777,29 +523,27 @@ const CartPage = () => {
                               >
                                 <span
                                   className={`h-3 w-3 rounded-full ${
-                                    isSelected ? "bg-indigo-600" : "bg-transparent"
+                                    isSelected
+                                      ? "bg-indigo-600"
+                                      : "bg-transparent"
                                   }`}
                                 />
                               </button>
                             </div>
 
-                            <div className="pt-0.5">
-                              <div className="space-y-1.5">
-                                <div>
-                                  <button
-                                    type="button"
-                                    onClick={() => setVoucherConditionTarget(voucher)}
-                                    className="text-[11px] font-medium text-indigo-600 transition-all hover:text-indigo-800 hover:underline"
-                                  >
-                                    Xem điều kiện
-                                  </button>
-                                </div>
-                                <div>
-                                  <p className="text-xs font-medium text-slate-800">
-                                    {formatVoucherExpiry(voucher.endDate)}
-                                  </p>
-                                </div>
-                              </div>
+                            <div className="space-y-1.5 pt-0.5">
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setVoucherConditionTarget(voucher)
+                                }
+                                className="text-[11px] font-medium text-indigo-600 transition-all hover:text-indigo-800 hover:underline"
+                              >
+                                Xem điều kiện
+                              </button>
+                              <p className="text-xs font-medium text-slate-800">
+                                {formatVoucherExpiry(voucher.endDate)}
+                              </p>
                             </div>
                           </div>
                         </div>
@@ -887,59 +631,6 @@ const CartPage = () => {
                 </span>
               </div>
             </div>
-          </div>
-        </div>
-      )}
-
-      {waitingOrder && (
-        <div className="fixed inset-0 z-[130] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl w-full max-w-md p-6 shadow-2xl border border-slate-100 text-center">
-            <p className="text-sm text-slate-500 mb-2">
-              Mã đơn: {waitingOrder.code}
-            </p>
-            <h3 className="text-2xl font-semibold text-slate-900 mb-1">
-              Chờ thanh toán
-            </h3>
-            <p className="text-sm text-slate-500">
-              Vui lòng hoàn tất chuyển khoản trong vòng 5 phút
-            </p>
-
-            {!finalResult ? (
-              <>
-                <div className="w-24 h-24 mx-auto my-5 rounded-full border-4 border-indigo-100 border-t-indigo-600 animate-spin" />
-                <p className="text-slate-600 mb-1">Thời gian còn lại</p>
-                <p className="text-3xl font-bold text-indigo-600 mb-5">
-                  {formatCountdown(waitingSeconds)}
-                </p>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <button
-                    onClick={() => handleFinalizeOrder("COMPLETED")}
-                    disabled={finalizingStatus}
-                    className="py-2.5 rounded-xl bg-green-600 text-white font-medium hover:bg-green-700 disabled:opacity-60"
-                  >
-                    {finalizingStatus ? "Đang xử lý" : "Hoàn thành"}
-                  </button>
-                  <button
-                    onClick={() => handleFinalizeOrder("CANCELLED")}
-                    disabled={finalizingStatus}
-                    className="py-2.5 rounded-xl bg-rose-50 text-rose-700 font-medium hover:bg-rose-100 disabled:opacity-60"
-                  >
-                    Hủy
-                  </button>
-                </div>
-              </>
-            ) : finalResult === "COMPLETED" ? (
-              <div className="py-8 flex flex-col items-center gap-3 text-green-600">
-                <CheckCircle size={56} />
-                <p className="text-lg font-medium">Thanh toán hoàn thành</p>
-              </div>
-            ) : (
-              <div className="py-8 flex flex-col items-center gap-3 text-rose-600">
-                <XCircle size={56} />
-                <p className="text-lg font-medium">Đơn hàng đã hủy</p>
-              </div>
-            )}
           </div>
         </div>
       )}

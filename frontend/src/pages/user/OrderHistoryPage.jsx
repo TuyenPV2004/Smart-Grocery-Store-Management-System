@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import { Link } from "react-router-dom";
 import {
   ArrowLeft,
@@ -302,119 +303,121 @@ const OrderHistoryPage = () => {
         </div>
       </div>
 
-      {selectedOrder && (
-        <div className="fixed inset-0 z-[120] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-          <div
-            className="absolute inset-0"
-            onClick={() => setSelectedOrder(null)}
-          />
-          <div className="relative bg-white w-full max-w-3xl rounded-2xl border border-slate-100 shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
-            <div className="px-5 py-4 border-b border-slate-100 bg-slate-50 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <h3 className="text-lg font-medium text-slate-900">
-                  Chi tiết đơn hàng
-                </h3>
-                <p className="text-lg text-slate-900 font-medium">
-                  {selectedOrder.code}
-                </p>
-              </div>
-              <button
-                onClick={() => setSelectedOrder(null)}
-                className="p-1.5 text-slate-500 hover:bg-white rounded-full"
-              >
-                <X size={20} />
-              </button>
-            </div>
-
-            <div className="p-5 overflow-y-auto space-y-5 flex-1">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
-                <div className="p-3 rounded-xl border border-slate-100 bg-slate-50">
-                  <p className="text-slate-500">Trạng thái</p>
-                  <p className="font-medium text-slate-800 mt-1">
-                    {getStatusMeta(selectedOrder.status).label}
-                  </p>
-                </div>
-                <div className="p-3 rounded-xl border border-slate-100 bg-slate-50">
-                  <p className="text-slate-500">Voucher</p>
-                  <p className="font-medium text-slate-800 mt-1">
-                    {selectedOrder.voucherCode || "Không có"}
-                  </p>
-                </div>
-                <div className="p-3 rounded-xl border border-slate-100 bg-slate-50">
-                  <p className="text-slate-500">Thời gian đặt</p>
-                  <p className="font-medium text-slate-800 mt-1">
-                    {new Date(selectedOrder.createdAt).toLocaleString("vi-VN")}
-                  </p>
-                </div>
-              </div>
-
-              <div>
-                <h4 className="text-sm font-medium text-slate-800 mb-3 flex items-center gap-2">
-                  Danh sách sản phẩm
-                </h4>
-                <div className="border border-slate-100 rounded-xl overflow-hidden">
-                  <table className="w-full text-sm">
-                    <thead className="bg-slate-50 text-slate-500">
-                      <tr>
-                        <th className="px-3 py-2.5 text-left">Sản phẩm</th>
-                        <th className="px-3 py-2.5 text-center">SL</th>
-                        <th className="px-3 py-2.5 text-right">Đơn giá</th>
-                        <th className="px-3 py-2.5 text-right">Thành tiền</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100">
-                      {(selectedOrder.details || []).map((item, idx) => (
-                        <tr key={idx}>
-                          <td className="px-3 py-2.5 text-slate-800">
-                            {item.product?.name || "Sản phẩm"}
-                          </td>
-                          <td className="px-3 py-2.5 text-center text-slate-600">
-                            {item.quantity}
-                          </td>
-                          <td className="px-3 py-2.5 text-right text-slate-600">
-                            {formatCurrency(item.price)}
-                          </td>
-                          <td className="px-3 py-2.5 text-right font-medium text-slate-800">
-                            {formatCurrency(item.totalLine)}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
-
+      {selectedOrder &&
+        createPortal(
+          <div className="fixed inset-0 z-[120] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
             <div
-              className={`px-5 py-4 border-t border-slate-100 bg-slate-50 flex items-center gap-3 ${
-                selectedOrder.status === "PENDING"
-                  ? "justify-between"
-                  : "justify-end"
-              }`}
-            >
-              {selectedOrder.status === "PENDING" && (
+              className="absolute inset-0"
+              onClick={() => setSelectedOrder(null)}
+            />
+            <div className="relative bg-white w-full max-w-3xl rounded-2xl border border-slate-100 shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
+              <div className="px-5 py-4 border-b border-slate-100 bg-slate-50 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <h3 className="text-lg font-medium text-slate-900">
+                    Chi tiết đơn hàng
+                  </h3>
+                  <p className="text-lg text-slate-900 font-medium">
+                    {selectedOrder.code}
+                  </p>
+                </div>
                 <button
-                  onClick={() => handleCancelOrder(selectedOrder.id)}
-                  disabled={cancellingOrderId === selectedOrder.id}
-                  className="px-4 py-2 rounded-xl bg-rose-50 text-rose-700 font-medium hover:bg-rose-100 disabled:opacity-60"
+                  onClick={() => setSelectedOrder(null)}
+                  className="p-1.5 text-slate-500 hover:bg-white rounded-full"
                 >
-                  {cancellingOrderId === selectedOrder.id
-                    ? "Đang hủy..."
-                    : "Hủy đơn hàng"}
+                  <X size={20} />
                 </button>
-              )}
-              <div className="flex items-baseline gap-2 text-right justify-end">
-                <p className="text-xs text-slate-500 whitespace-nowrap">
-                  Tổng thanh toán
-                </p>
-                <p className="text-xl font-medium text-slate-900">
-                  {formatCurrency(selectedOrder.finalAmount)}
-                </p>
+              </div>
+
+              <div className="p-5 overflow-y-auto space-y-5 flex-1">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
+                  <div className="p-3 rounded-xl border border-slate-100 bg-slate-50">
+                    <p className="text-slate-500">Trạng thái</p>
+                    <p className="font-medium text-slate-800 mt-1">
+                      {getStatusMeta(selectedOrder.status).label}
+                    </p>
+                  </div>
+                  <div className="p-3 rounded-xl border border-slate-100 bg-slate-50">
+                    <p className="text-slate-500">Voucher</p>
+                    <p className="font-medium text-slate-800 mt-1">
+                      {selectedOrder.voucherCode || "Không có"}
+                    </p>
+                  </div>
+                  <div className="p-3 rounded-xl border border-slate-100 bg-slate-50">
+                    <p className="text-slate-500">Thời gian đặt</p>
+                    <p className="font-medium text-slate-800 mt-1">
+                      {new Date(selectedOrder.createdAt).toLocaleString("vi-VN")}
+                    </p>
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="text-sm font-medium text-slate-800 mb-3 flex items-center gap-2">
+                    Danh sách sản phẩm
+                  </h4>
+                  <div className="border border-slate-100 rounded-xl overflow-hidden">
+                    <table className="w-full text-sm">
+                      <thead className="bg-slate-50 text-slate-500">
+                        <tr>
+                          <th className="px-3 py-2.5 text-left">Sản phẩm</th>
+                          <th className="px-3 py-2.5 text-center">SL</th>
+                          <th className="px-3 py-2.5 text-right">Đơn giá</th>
+                          <th className="px-3 py-2.5 text-right">Thành tiền</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {(selectedOrder.details || []).map((item, idx) => (
+                          <tr key={idx}>
+                            <td className="px-3 py-2.5 text-slate-800">
+                              {item.product?.name || "Sản phẩm"}
+                            </td>
+                            <td className="px-3 py-2.5 text-center text-slate-600">
+                              {item.quantity}
+                            </td>
+                            <td className="px-3 py-2.5 text-right text-slate-600">
+                              {formatCurrency(item.price)}
+                            </td>
+                            <td className="px-3 py-2.5 text-right font-medium text-slate-800">
+                              {formatCurrency(item.totalLine)}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+
+              <div
+                className={`px-5 py-4 border-t border-slate-100 bg-slate-50 flex items-center gap-3 ${
+                  selectedOrder.status === "PENDING"
+                    ? "justify-between"
+                    : "justify-end"
+                }`}
+              >
+                {selectedOrder.status === "PENDING" && (
+                  <button
+                    onClick={() => handleCancelOrder(selectedOrder.id)}
+                    disabled={cancellingOrderId === selectedOrder.id}
+                    className="px-4 py-2 rounded-xl bg-rose-50 text-rose-700 font-medium hover:bg-rose-100 disabled:opacity-60"
+                  >
+                    {cancellingOrderId === selectedOrder.id
+                      ? "Đang hủy..."
+                      : "Hủy đơn hàng"}
+                  </button>
+                )}
+                <div className="flex items-baseline gap-2 text-right justify-end">
+                  <p className="text-xs text-slate-500 whitespace-nowrap">
+                    Tổng thanh toán
+                  </p>
+                  <p className="text-xl font-medium text-slate-900">
+                    {formatCurrency(selectedOrder.finalAmount)}
+                  </p>
+                </div>
               </div>
             </div>
-          </div>
-        </div>
-      )}
+          </div>,
+          document.body,
+        )}
     </div>
   );
 };

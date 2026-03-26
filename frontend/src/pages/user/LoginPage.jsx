@@ -40,7 +40,11 @@ const LoginPage = () => {
     } catch (err) {
       console.error(err);
       if (err.response && err.response.status === 401) {
-        setError("Tên đăng nhập hoặc mật khẩu không chính xác.");
+        setError(
+          err.response?.data || "Tên đăng nhập hoặc mật khẩu không chính xác.",
+        );
+      } else if (err.response?.data) {
+        setError(err.response.data);
       } else {
         setError("Đã có lỗi xảy ra. Vui lòng thử lại sau.");
       }
@@ -69,41 +73,32 @@ const LoginPage = () => {
             </div>
 
             <div className="relative z-10 flex flex-col items-center">
-              <div className="bg-white/20 backdrop-blur-md p-3 rounded-2xl mb-2 border border-white/30 shadow-inner">
-                <Store className="w-6 h-6 text-white" />
-              </div>
               <h2 className="text-xl font-medium text-white tracking-tight">
-                Grocery System
+                Chào mừng trở lại
               </h2>
+              <p className="text-emerald-100/80 text-[13px] mt-0.5 font-medium">
+                Hãy đăng nhập để tiếp tục làm việc
+              </p>
             </div>
           </div>
 
           {/* Form Section */}
           <div className="px-8 py-6">
             <form onSubmit={handleLogin} className="space-y-4">
-              <div className="text-center mb-6">
-                <h3 className="text-lg font-medium text-slate-800">
-                  Chào mừng trở lại
-                </h3>
-                <p className="text-[13px] text-slate-400 font-medium">
-                  Đăng nhập để tiếp tục làm việc
-                </p>
-              </div>
-
               {/* Username Input */}
               <div className="space-y-1.5">
-                <label className="block text-[12px] font-medium text-slate-500 ml-1">
+                <label className="block text-[12px] font-medium text-slate-800 ml-1">
                   Tên đăng nhập
                 </label>
                 <div className="relative group">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                    <User className="h-4.5 w-4.5 text-slate-300 group-focus-within:text-emerald-500 transition-colors" />
+                    <User className="h-4.5 w-4.5 text-emerald-500 transition-colors" />
                   </div>
                   <input
                     required
-                    className="w-full pl-11 pr-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl focus:outline-none focus:ring-4 focus:ring-emerald-500/5 focus:border-emerald-400 focus:bg-white transition-all font-medium text-slate-900 text-[14px] placeholder:text-slate-300"
+                    className="w-full pl-11 pr-4 py-2.5 bg-white border border-slate-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-emerald-500/5 focus:border-emerald-400 transition-all font-medium text-slate-900 text-[14px] placeholder:text-slate-400"
                     type="text"
-                    placeholder="Nhập tài khoản..."
+                    placeholder="Nhập tài khoản"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                   />
@@ -112,18 +107,18 @@ const LoginPage = () => {
 
               {/* Password Input */}
               <div className="space-y-1.5">
-                <label className="block text-[12px] font-medium text-slate-500 ml-1">
+                <label className="block text-[12px] font-medium text-slate-800 ml-1">
                   Mật khẩu
                 </label>
                 <div className="relative group">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                    <Lock className="h-4.5 w-4.5 text-slate-300 group-focus-within:text-emerald-500 transition-colors" />
+                    <Lock className="h-4.5 w-4.5 text-emerald-500 transition-colors" />
                   </div>
                   <input
                     required
-                    className="w-full pl-11 pr-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl focus:outline-none focus:ring-4 focus:ring-emerald-500/5 focus:border-emerald-400 focus:bg-white transition-all font-medium text-slate-900 text-[14px] placeholder:text-slate-300"
+                    className="w-full pl-11 pr-4 py-2.5 bg-white border border-slate-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-emerald-500/5 focus:border-emerald-400 transition-all font-medium text-slate-900 text-[14px] placeholder:text-slate-400"
                     type="password"
-                    placeholder="Nhập mật khẩu..."
+                    placeholder="Nhập mật khẩu"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                   />

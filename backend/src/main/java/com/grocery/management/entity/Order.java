@@ -23,6 +23,13 @@ public class Order {
     private BigDecimal finalAmount;
     private String voucherCode;
     private String status;
+    private String paymentStatus;
+    private String paymentTransactionNo;
+    private String paymentFailureReason;
+    private LocalDateTime paymentConfirmedAt;
+    private LocalDateTime paymentExpiresAt;
+    private boolean inventoryAllocated;
+    private boolean voucherUsageCommitted;
     private LocalDateTime createdAt;
 
     @ManyToOne

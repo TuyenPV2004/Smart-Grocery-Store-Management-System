@@ -8,7 +8,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -22,7 +21,10 @@ public class VoucherService {
 
     public List<Voucher> getActiveVouchers() {
         LocalDateTime now = LocalDateTime.now();
-        return voucherRepository.findByStatusAndStartDateLessThanEqualAndEndDateGreaterThanEqual("ACTIVE", now, now);
+        return voucherRepository.findByStatusAndStartDateLessThanEqualAndEndDateGreaterThanEqual(
+                "ACTIVE",
+                now,
+                now);
     }
 
     public Voucher getVoucherById(Long id) {
@@ -30,9 +32,13 @@ public class VoucherService {
                 .orElseThrow(() -> new RuntimeException("Voucher not found"));
     }
 
-    public Voucher validateVoucher(String code) {
-        Voucher voucher = voucherRepository.findByCode(code)
+    public Voucher getVoucherByCode(String code) {
+        return voucherRepository.findByCode(code)
                 .orElseThrow(() -> new RuntimeException("Mã voucher không tồn tại"));
+    }
+
+    public Voucher validateVoucher(String code) {
+        Voucher voucher = getVoucherByCode(code);
 
         if (!"ACTIVE".equals(voucher.getStatus())) {
             throw new RuntimeException("Voucher đã bị vô hiệu hóa");

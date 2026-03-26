@@ -49,4 +49,6 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 
     java.util.Optional<Order> findByIdAndUserUsername(Long id, String username);
     Optional<Order> findByCode(String code);
+    Optional<Order> findByCodeAndUserUsername(String code, String username);
+    List<Order> findByPaymentStatusAndPaymentExpiresAtBefore(String paymentStatus, LocalDateTime dateTime);
 }
