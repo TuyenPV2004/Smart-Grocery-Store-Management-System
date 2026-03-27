@@ -1,5 +1,6 @@
 import { toast } from "react-toastify";
 import React, { useState, useEffect } from "react";
+import ReactPaginate from "react-paginate";
 import {
   Package,
   TrendingDown,
@@ -450,6 +451,7 @@ const StockCardTab = ({ selectedProduct, onSelectProduct }) => {
 
 // ===== MAIN COMPONENT =====
 const StockManagementPage = () => {
+  const stockItemsPerPage = 10;
   const [activeTab, setActiveTab] = useState("summary");
   const [stats, setStats] = useState({
     totalValue: 0,
@@ -461,11 +463,16 @@ const StockManagementPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [selectedProductForCard, setSelectedProductForCard] = useState("");
+  const [currentPage, setCurrentPage] = useState(0);
 
   useEffect(() => {
     fetchDashboardStats();
     fetchStockSummary();
   }, [statusFilter]);
+
+  useEffect(() => {
+    setCurrentPage(0);
+  }, [searchTerm, statusFilter]);
 
   const fetchDashboardStats = async () => {
     try {
@@ -561,6 +568,26 @@ const StockManagementPage = () => {
       item.productName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.sku.toLowerCase().includes(searchTerm.toLowerCase()),
   );
+  const pageCount = Math.ceil(filteredData.length / stockItemsPerPage);
+  const currentStockData = filteredData.slice(
+    currentPage * stockItemsPerPage,
+    currentPage * stockItemsPerPage + stockItemsPerPage,
+  );
+
+  useEffect(() => {
+    if (pageCount === 0) {
+      setCurrentPage(0);
+      return;
+    }
+
+    if (currentPage > pageCount - 1) {
+      setCurrentPage(pageCount - 1);
+    }
+  }, [currentPage, pageCount]);
+
+  const handlePageClick = ({ selected }) => {
+    setCurrentPage(selected);
+  };
 
   return (
     <div className="admin-page-shell p-4 md:p-6 min-h-screen">
@@ -722,7 +749,7 @@ const StockManagementPage = () => {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
-                      {filteredData.map((item) => (
+                      {currentStockData.map((item) => (
                         <tr
                           key={item.productId}
                           className="hover:bg-indigo-50/30 transition-colors cursor-pointer"
@@ -798,6 +825,51 @@ const StockManagementPage = () => {
                       <p className="text-slate-500 font-medium">
                         Không tìm thấy sản phẩm nào
                       </p>
+                    </div>
+                  )}
+
+                  {filteredData.length > 0 && pageCount > 1 && (
+                    <div className="mt-6 flex flex-col gap-4 border-t border-slate-200 pt-4 lg:flex-row lg:items-center lg:justify-between">
+                      <div className="text-sm text-slate-600">
+                        Hiển thị{" "}
+                        <span className="font-medium text-slate-900">
+                          {currentPage * stockItemsPerPage + 1}
+                        </span>{" "}
+                        -{" "}
+                        <span className="font-medium text-slate-900">
+                          {Math.min(
+                            (currentPage + 1) * stockItemsPerPage,
+                            filteredData.length,
+                          )}
+                        </span>{" "}
+                        /{" "}
+                        <span className="font-medium text-slate-900">
+                          {filteredData.length}
+                        </span>{" "}
+                        sản phẩm
+                      </div>
+
+                      <ReactPaginate
+                        previousLabel="‹"
+                        nextLabel="›"
+                        breakLabel="..."
+                        pageCount={pageCount}
+                        marginPagesDisplayed={1}
+                        pageRangeDisplayed={3}
+                        forcePage={currentPage}
+                        onPageChange={handlePageClick}
+                        containerClassName="flex items-center justify-center gap-2 lg:justify-end"
+                        pageClassName="w-10 h-10"
+                        pageLinkClassName="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
+                        previousClassName="w-10 h-10"
+                        previousLinkClassName="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 text-slate-700 transition-colors hover:bg-slate-50"
+                        nextClassName="w-10 h-10"
+                        nextLinkClassName="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 text-slate-700 transition-colors hover:bg-slate-50"
+                        breakClassName="w-10 h-10"
+                        breakLinkClassName="flex h-10 w-10 items-center justify-center text-slate-400"
+                        activeLinkClassName="border-indigo-600 bg-indigo-600 text-white shadow-sm hover:bg-indigo-600"
+                        disabledLinkClassName="cursor-not-allowed opacity-40 hover:bg-transparent"
+                      />
                     </div>
                   )}
                 </div>

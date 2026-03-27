@@ -176,8 +176,8 @@ const ProfilePage = () => {
                   <span
                     className={`px-4 py-1 rounded-lg text-sm font-medium tracking-wide border ${
                       user.role === "ADMIN"
-                        ? "bg-rose-50 text-rose-700 border-rose-100"
-                        : "bg-green-50 text-green-700 border-green-100"
+                        ? "bg-rose-600 text-white border-rose-600"
+                        : "bg-green-600 text-white border-green-600"
                     }`}
                   >
                     {user.role === "ADMIN" ? "Quản trị viên" : "Người dùng"}
@@ -194,10 +194,9 @@ const ProfilePage = () => {
               </h4>
               <button
                 onClick={() => setShowPasswordModal(true)}
-                className="w-full flex items-center justify-between p-4 rounded-2xl bg-rose-600 text-white hover:bg-rose-700 transition-all duration-300 shadow-md"
+                className="w-full flex items-center justify-between p-4 rounded-2xl bg-[#161F30] text-white hover:bg-[#161F30]/80 transition-all duration-300 shadow-md"
               >
                 <div className="flex items-center gap-3">
-                  <KeyRound size={20} />
                   <span className="text-base font-medium">
                     Thay đổi mật khẩu
                   </span>

@@ -41,6 +41,8 @@ const ChatWidget = () => {
   const [conversationId, setConversationId] = useState(null);
   const [draft, setDraft] = useState("");
   const [isStaffTyping, setIsStaffTyping] = useState(false);
+  const [assignedStaffDisplayName, setAssignedStaffDisplayName] = useState("");
+  const [isResolved, setIsResolved] = useState(false);
   const wsRef = useRef(null);
   const reconnectRef = useRef(null);
   const messagesRef = useRef(null);
@@ -55,57 +57,89 @@ const ChatWidget = () => {
 
     let isMounted = true;
 
-    const connect = () => {
-      const socket = chatService.connect();
-      wsRef.current = socket;
-
-      socket.onopen = () => {
-        if (!isMounted) return;
-        setIsConnected(true);
-      };
-
-      socket.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
-          if (data.type === "INIT_CUSTOMER") {
-            setConversationId(data.payload?.conversationId || null);
-            setMessages(Array.isArray(data.payload?.messages) ? data.payload.messages : []);
-            setIsStaffOnline(Boolean(data.payload?.staffOnline));
-            setIsStaffTyping(false);
-          }
-
-          if (data.type === "MESSAGE") {
-            setMessages((prev) => [...prev, data.payload]);
-            setIsStaffTyping(false);
-          }
-
-          if (data.type === "STAFF_STATUS") {
-            setIsStaffOnline(Boolean(data.payload?.online));
-          }
-
-          if (data.type === "TYPING" && data.payload?.senderRole !== "CUSTOMER" && data.payload?.senderRole !== "GUEST") {
-            setIsStaffTyping(Boolean(data.payload?.typing));
-          }
-        } catch (error) {
-          console.error("Chat parse error:", error);
+    const connect = async () => {
+      try {
+        const socket = await chatService.connect();
+        if (!isMounted) {
+          socket.close();
+          return;
         }
-      };
 
-      socket.onclose = () => {
+        wsRef.current = socket;
+
+        socket.onopen = () => {
+          if (!isMounted) return;
+          setIsConnected(true);
+        };
+
+        socket.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            if (data.type === "INIT_CUSTOMER") {
+              setConversationId(data.payload?.conversationId || null);
+              setMessages(Array.isArray(data.payload?.messages) ? data.payload.messages : []);
+              setIsStaffOnline(Boolean(data.payload?.staffOnline));
+              setAssignedStaffDisplayName(data.payload?.assignedStaffDisplayName || "");
+              setIsResolved(Boolean(data.payload?.resolved));
+              setIsStaffTyping(false);
+            }
+
+            if (data.type === "MESSAGE") {
+              setMessages((prev) => [...prev, data.payload]);
+              setIsStaffTyping(false);
+            }
+
+            if (data.type === "STAFF_STATUS") {
+              setIsStaffOnline(Boolean(data.payload?.online));
+            }
+
+            if (data.type === "CONVERSATION_STATE") {
+              setAssignedStaffDisplayName(data.payload?.assignedStaffDisplayName || "");
+              setIsResolved(Boolean(data.payload?.resolved));
+            }
+
+            if (
+              data.type === "TYPING" &&
+              data.payload?.senderRole !== "CUSTOMER" &&
+              data.payload?.senderRole !== "GUEST"
+            ) {
+              setIsStaffTyping(Boolean(data.payload?.typing));
+            }
+
+            if (data.type === "ERROR" && data.payload?.message) {
+              toast.error(data.payload.message);
+            }
+          } catch (error) {
+            console.error("Chat parse error:", error);
+          }
+        };
+
+        socket.onclose = () => {
+          if (!isMounted) return;
+          setIsConnected(false);
+          reconnectRef.current = window.setTimeout(() => {
+            connect();
+          }, 2500);
+        };
+
+        socket.onerror = () => {
+          socket.close();
+        };
+      } catch (error) {
         if (!isMounted) return;
         setIsConnected(false);
-        reconnectRef.current = window.setTimeout(connect, 2500);
-      };
-
-      socket.onerror = () => {
-        socket.close();
-      };
+        reconnectRef.current = window.setTimeout(() => {
+          connect();
+        }, 2500);
+      }
     };
 
     setMessages([]);
     setConversationId(null);
     setIsStaffOnline(false);
     setIsStaffTyping(false);
+    setAssignedStaffDisplayName("");
+    setIsResolved(false);
     connect();
 
     return () => {
@@ -120,7 +154,7 @@ const ChatWidget = () => {
         wsRef.current.close();
       }
     };
-  }, [isAdminView, user?.role]);
+  }, [isAdminView]);
 
   useEffect(() => {
     if (!isOpen || !messagesRef.current) return;
@@ -229,15 +263,18 @@ const ChatWidget = () => {
                 <div className="mt-1 flex items-center gap-2">
                   <span
                     className={`h-2.5 w-2.5 rounded-full ${
-                      isConnected && isStaffOnline
-                        ? "bg-emerald-500"
-                        : "bg-slate-300"
+                      isConnected && isStaffOnline ? "bg-emerald-500" : "bg-slate-300"
                     }`}
                   />
                   <span className="text-xs text-slate-500">
                     {isConnected && isStaffOnline ? "Online" : "Offline"}
                   </span>
                 </div>
+                {assignedStaffDisplayName && (
+                  <p className="mt-1 text-xs text-slate-500">
+                    Phụ trách: {assignedStaffDisplayName}
+                  </p>
+                )}
               </div>
             </div>
             <button
@@ -250,24 +287,27 @@ const ChatWidget = () => {
             </button>
           </div>
 
+          {isResolved && (
+            <div className="border-b border-amber-100 bg-amber-50 px-4 py-2 text-xs text-amber-700">
+              Hội thoại đã được đóng. Gửi tin nhắn mới để mở lại cuộc trò chuyện.
+            </div>
+          )}
+
           <div
             ref={messagesRef}
             className="flex h-[320px] flex-col gap-3 overflow-y-auto bg-slate-50/60 px-4 py-4"
           >
             {messages.map((message) => {
-              const isStaffMessage = message.senderRole !== "CUSTOMER" && message.senderRole !== "GUEST";
+              const isStaffMessage =
+                message.senderRole !== "CUSTOMER" && message.senderRole !== "GUEST";
               return (
                 <div
                   key={message.id}
-                  className={`flex ${
-                    isStaffMessage ? "justify-start" : "justify-end"
-                  }`}
+                  className={`flex ${isStaffMessage ? "justify-start" : "justify-end"}`}
                 >
                   <div
                     className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm leading-relaxed shadow-sm ${
-                      isStaffMessage
-                        ? "bg-white text-slate-700"
-                        : "bg-green-600 text-white"
+                      isStaffMessage ? "bg-white text-slate-700" : "bg-green-600 text-white"
                     }`}
                   >
                     <p className="whitespace-pre-line">{message.content}</p>

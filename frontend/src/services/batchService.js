@@ -18,9 +18,9 @@ const batchService = {
    * @param {number} size - Page size (default: 20)
    * @param {string} search - Search keyword (optional)
    */
-  getAll: (page = 0, size = 20, search = "") => {
+  getAll: (page = 0, size = 20, search = "", status = "ALL") => {
     return axiosClient.get("/batches", {
-      params: { page, size, search },
+      params: { page, size, search, status },
     });
   },
 

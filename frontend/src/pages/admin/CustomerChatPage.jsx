@@ -1,10 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
+  CheckCheck,
   Download,
   Loader2,
+  LockOpen,
   MessageCircle,
+  Search,
   SendHorizonal,
   Trash2,
+  UserCheck,
 } from "lucide-react";
 import { toast } from "react-toastify";
 import { useAuth } from "../../context/AuthContext";
@@ -74,6 +78,48 @@ const sanitizeFileName = (value) =>
     .replace(/[<>:"/\\|?*\s]+/g, "_")
     .replace(/^_+|_+$/g, "");
 
+const sortConversations = (conversations) =>
+  [...conversations].sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+
+const applyConversationFilter = (conversations, keyword, scope, staffKey) => {
+  const normalizedKeyword = (keyword || "").trim().toLowerCase();
+  const normalizedScope = scope || "ALL";
+
+  return sortConversations(
+    (Array.isArray(conversations) ? conversations : []).filter((conversation) => {
+      const matchesKeyword =
+        !normalizedKeyword ||
+        conversation.customerDisplayName?.toLowerCase().includes(normalizedKeyword) ||
+        conversation.customerKey?.toLowerCase().includes(normalizedKeyword) ||
+        conversation.assignedStaffDisplayName?.toLowerCase().includes(normalizedKeyword);
+
+      const matchesScope =
+        normalizedScope === "ALL" ||
+        (normalizedScope === "UNASSIGNED" && !conversation.assignedStaffKey) ||
+        (normalizedScope === "MINE" && conversation.assignedStaffKey === staffKey) ||
+        (normalizedScope === "ACTIVE" && !conversation.resolved) ||
+        (normalizedScope === "RESOLVED" && conversation.resolved);
+
+      return matchesKeyword && matchesScope;
+    }),
+  );
+};
+
+const upsertConversation = (conversations, summary) => {
+  const next = [...conversations];
+  const index = next.findIndex(
+    (conversation) => conversation.conversationId === summary.conversationId,
+  );
+
+  if (index >= 0) {
+    next[index] = { ...next[index], ...summary };
+  } else {
+    next.unshift(summary);
+  }
+
+  return sortConversations(next);
+};
+
 const TypingIndicator = () => (
   <div className="flex justify-start">
     <div className="inline-flex items-center gap-2 rounded-2xl bg-white px-4 py-3 text-sm text-slate-500 shadow-sm">
@@ -91,19 +137,62 @@ const TypingIndicator = () => (
   </div>
 );
 
+const ConversationBadge = ({ conversation, currentStaffKey }) => {
+  if (conversation.resolved) {
+    return (
+      <span className="rounded-full bg-slate-200 px-2.5 py-1 text-[11px] font-medium text-slate-700">
+        Đã đóng
+      </span>
+    );
+  }
+
+  if (!conversation.assignedStaffKey) {
+    return (
+      <span className="rounded-full bg-amber-100 px-2.5 py-1 text-[11px] font-medium text-amber-700">
+        Chưa nhận
+      </span>
+    );
+  }
+
+  if (conversation.assignedStaffKey === currentStaffKey) {
+    return (
+      <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-medium text-emerald-700">
+        Bạn đang xử lý
+      </span>
+    );
+  }
+
+  return (
+    <span className="rounded-full bg-indigo-100 px-2.5 py-1 text-[11px] font-medium text-indigo-700">
+      {conversation.assignedStaffDisplayName || "Đã nhận xử lý"}
+    </span>
+  );
+};
+
 const CustomerChatPage = () => {
   const { user } = useAuth();
+  const currentStaffKey = user?.username || user?.email || "";
+  const isAdmin = user?.role === "ADMIN";
+
   const [conversations, setConversations] = useState([]);
   const [selectedConversationId, setSelectedConversationId] = useState(null);
   const [messageMap, setMessageMap] = useState({});
   const [typingMap, setTypingMap] = useState({});
   const [draft, setDraft] = useState("");
+  const [keyword, setKeyword] = useState("");
+  const [scope, setScope] = useState("ALL");
   const [loadingMessages, setLoadingMessages] = useState(false);
+  const [actionLoading, setActionLoading] = useState(false);
   const wsRef = useRef(null);
   const reconnectRef = useRef(null);
   const messagesEndRef = useRef(null);
   const typingTimeoutRef = useRef(null);
   const typingSentRef = useRef(false);
+  const filtersRef = useRef({ keyword: "", scope: "ALL", staffKey: "" });
+
+  useEffect(() => {
+    filtersRef.current = { keyword, scope, staffKey: currentStaffKey };
+  }, [keyword, scope, currentStaffKey]);
 
   const selectedConversation = useMemo(
     () =>
@@ -114,18 +203,41 @@ const CustomerChatPage = () => {
   );
 
   const currentMessages = messageMap[selectedConversationId] || [];
+  const isMine = selectedConversation?.assignedStaffKey === currentStaffKey;
+  const canClaim =
+    Boolean(selectedConversationId) &&
+    (!selectedConversation?.assignedStaffKey || isAdmin);
+  const canRelease =
+    Boolean(selectedConversation?.assignedStaffKey) && (isMine || isAdmin);
+  const canManageStatus =
+    Boolean(selectedConversationId) &&
+    (!selectedConversation?.assignedStaffKey || isMine || isAdmin);
+  const canReply =
+    Boolean(selectedConversationId) &&
+    (!selectedConversation?.assignedStaffKey || isMine || isAdmin);
 
-  const loadConversations = async () => {
+  const syncSelection = (nextConversations) => {
+    setSelectedConversationId((prev) => {
+      if (prev && nextConversations.some((item) => item.conversationId === prev)) {
+        return prev;
+      }
+      return nextConversations[0]?.conversationId || null;
+    });
+  };
+
+  useEffect(() => {
+    syncSelection(conversations);
+  }, [conversations]);
+
+  const loadConversations = async (overrideKeyword = keyword, overrideScope = scope) => {
     try {
-      const res = await chatService.getConversations();
+      const res = await chatService.getConversations({
+        keyword: overrideKeyword || undefined,
+        scope: overrideScope || "ALL",
+      });
       const nextConversations = Array.isArray(res.data) ? res.data : [];
       setConversations(nextConversations);
-      setSelectedConversationId((prev) => {
-        if (prev && nextConversations.some((item) => item.conversationId === prev)) {
-          return prev;
-        }
-        return nextConversations[0]?.conversationId || null;
-      });
+      syncSelection(nextConversations);
     } catch (error) {
       toast.error("Không thể tải danh sách cuộc trò chuyện");
     }
@@ -133,65 +245,92 @@ const CustomerChatPage = () => {
 
   useEffect(() => {
     loadConversations();
-  }, []);
+  }, [keyword, scope]);
 
   useEffect(() => {
     let isMounted = true;
 
-    const connect = () => {
-      const socket = chatService.connect();
-      wsRef.current = socket;
-
-      socket.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
-
-          if (data.type === "ADMIN_SNAPSHOT") {
-            const nextConversations = Array.isArray(data.payload?.conversations)
-              ? data.payload.conversations
-              : [];
-            setConversations(nextConversations);
-            setSelectedConversationId((prev) => {
-              if (prev && nextConversations.some((item) => item.conversationId === prev)) {
-                return prev;
-              }
-              return nextConversations[0]?.conversationId || null;
-            });
-          }
-
-          if (data.type === "MESSAGE") {
-            setMessageMap((prev) => ({
-              ...prev,
-              [data.payload.conversationId]: mergeMessages(
-                prev[data.payload.conversationId] || [],
-                [data.payload],
-              ),
-            }));
-            setTypingMap((prev) => ({
-              ...prev,
-              [data.payload.conversationId]: false,
-            }));
-          }
-
-          if (data.type === "TYPING" && data.payload?.conversationId) {
-            setTypingMap((prev) => ({
-              ...prev,
-              [data.payload.conversationId]: Boolean(data.payload?.typing),
-            }));
-          }
-        } catch (error) {
-          console.error("Admin chat parse error:", error);
+    const connect = async () => {
+      try {
+        const socket = await chatService.connect();
+        if (!isMounted) {
+          socket.close();
+          return;
         }
-      };
 
-      socket.onclose = () => {
+        wsRef.current = socket;
+
+        socket.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+
+            if (data.type === "ADMIN_SNAPSHOT") {
+              const nextConversations = applyConversationFilter(
+                data.payload?.conversations,
+                filtersRef.current.keyword,
+                filtersRef.current.scope,
+                filtersRef.current.staffKey,
+              );
+              setConversations(nextConversations);
+              syncSelection(nextConversations);
+            }
+
+            if (data.type === "MESSAGE") {
+              setMessageMap((prev) => ({
+                ...prev,
+                [data.payload.conversationId]: mergeMessages(
+                  prev[data.payload.conversationId] || [],
+                  [data.payload],
+                ),
+              }));
+              setTypingMap((prev) => ({
+                ...prev,
+                [data.payload.conversationId]: false,
+              }));
+            }
+
+            if (data.type === "CONVERSATION_STATE") {
+              setConversations((prev) =>
+                applyConversationFilter(
+                  upsertConversation(prev, data.payload),
+                  filtersRef.current.keyword,
+                  filtersRef.current.scope,
+                  filtersRef.current.staffKey,
+                ),
+              );
+            }
+
+            if (data.type === "TYPING" && data.payload?.conversationId) {
+              setTypingMap((prev) => ({
+                ...prev,
+                [data.payload.conversationId]: Boolean(data.payload?.typing),
+              }));
+            }
+
+            if (data.type === "ERROR" && data.payload?.message) {
+              toast.error(data.payload.message);
+            }
+          } catch (error) {
+            console.error("Admin chat parse error:", error);
+          }
+        };
+
+        socket.onclose = () => {
+          if (!isMounted) return;
+          reconnectRef.current = window.setTimeout(() => {
+            connect();
+          }, 2500);
+        };
+
+        socket.onerror = () => {
+          socket.close();
+        };
+      } catch (error) {
         if (!isMounted) return;
-        reconnectRef.current = window.setTimeout(connect, 2500);
-      };
-
-      socket.onerror = () => {
-        socket.close();
-      };
+        reconnectRef.current = window.setTimeout(() => {
+          connect();
+        }, 2500);
+      }
     };
 
     connect();
@@ -259,7 +398,7 @@ const CustomerChatPage = () => {
   };
 
   useEffect(() => {
-    if (!selectedConversationId) {
+    if (!selectedConversationId || !canReply) {
       if (typingTimeoutRef.current) {
         window.clearTimeout(typingTimeoutRef.current);
       }
@@ -296,7 +435,7 @@ const CustomerChatPage = () => {
         window.clearTimeout(typingTimeoutRef.current);
       }
     };
-  }, [draft, selectedConversationId]);
+  }, [draft, selectedConversationId, canReply]);
 
   const handleSendMessage = () => {
     if (!draft.trim() || !selectedConversationId) return;
@@ -326,6 +465,28 @@ const CustomerChatPage = () => {
     }
   };
 
+  const handleConversationAction = async (executor, successMessage) => {
+    if (!selectedConversationId) return;
+
+    setActionLoading(true);
+    try {
+      const res = await executor(selectedConversationId);
+      setConversations((prev) =>
+        applyConversationFilter(
+          upsertConversation(prev, res.data),
+          filtersRef.current.keyword,
+          filtersRef.current.scope,
+          filtersRef.current.staffKey,
+        ),
+      );
+      toast.success(successMessage);
+    } catch (error) {
+      toast.error(error.response?.data?.message || error.response?.data || "Không thể cập nhật cuộc trò chuyện");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   const handleExportConversation = () => {
     if (!selectedConversation) return;
 
@@ -339,13 +500,13 @@ const CustomerChatPage = () => {
     const fileName = `${sanitizeFileName(customerName)}_${sanitizeFileName(adminName)}_${exportedAt.file}.txt`;
 
     const content = [
-      "LỊCH SỬ HỘI THOẠI",
-      `Khách hàng: ${customerName}`,
-      `Nhân viên: ${adminName}`,
-      `Thời gian xuất: ${exportedAt.label}`,
+      "LICH SU HOI THOAI",
+      `Khach hang: ${customerName}`,
+      `Nhan vien: ${adminName}`,
+      `Thoi gian xuat: ${exportedAt.label}`,
       "",
       ...currentMessages.map((message) => {
-        const senderName = message.senderDisplayName || "Ẩn danh";
+        const senderName = message.senderDisplayName || "An danh";
         const sentAt = formatExportMessageTime(message.createdAt);
         return `[${sentAt}] ${senderName}: ${message.content}`;
       }),
@@ -397,20 +558,48 @@ const CustomerChatPage = () => {
   return (
     <div className="admin-page-shell min-h-screen p-6 font-poppins antialiased text-slate-600">
       <div className="mx-auto flex max-w-7xl gap-6">
-        <div className="w-[320px] rounded-[2rem] border border-slate-100 bg-white/95 p-4 shadow-sm backdrop-blur-sm">
+        <div className="w-[360px] rounded-[2rem] border border-slate-100 bg-white/95 p-4 shadow-sm backdrop-blur-sm">
           <div className="mb-4">
             <h1 className="text-xl font-semibold text-slate-900">
               Chat khách hàng
             </h1>
             <p className="mt-1 text-sm text-slate-500">
-              Theo dõi và phản hồi tin nhắn theo thời gian thực
+              Theo dõi, nhận xử lý và phản hồi khách hàng theo thời gian thực
             </p>
+          </div>
+
+          <div className="mb-4 space-y-3">
+            <div className="relative">
+              <Search
+                size={16}
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+              />
+              <input
+                type="text"
+                value={keyword}
+                onChange={(event) => setKeyword(event.target.value)}
+                placeholder="Tìm theo khách hàng hoặc nhân viên phụ trách"
+                className="w-full rounded-2xl border border-slate-200 bg-slate-50 py-2.5 pl-10 pr-4 text-sm text-slate-700 outline-none transition-all focus:border-green-400 focus:bg-white"
+              />
+            </div>
+
+            <select
+              value={scope}
+              onChange={(event) => setScope(event.target.value)}
+              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-slate-700 outline-none transition-all focus:border-green-400 focus:bg-white"
+            >
+              <option value="ALL">Tất cả cuộc trò chuyện</option>
+              <option value="UNASSIGNED">Chưa nhận xử lý</option>
+              <option value="MINE">Cuộc trò chuyện của tôi</option>
+              <option value="ACTIVE">Đang hoạt động</option>
+              <option value="RESOLVED">Đã đóng</option>
+            </select>
           </div>
 
           <div className="space-y-3">
             {conversations.length === 0 ? (
               <div className="rounded-2xl border border-dashed border-slate-200 px-4 py-8 text-center text-sm text-slate-500">
-                Chưa có cuộc trò chuyện nào
+                Chưa có cuộc trò chuyện phù hợp
               </div>
             ) : (
               conversations.map((conversation) => {
@@ -430,8 +619,8 @@ const CustomerChatPage = () => {
                     }`}
                   >
                     <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <p className="font-medium text-slate-900">
+                      <div className="min-w-0">
+                        <p className="truncate font-medium text-slate-900">
                           {conversation.customerDisplayName}
                         </p>
                         <p className="mt-1 text-xs uppercase tracking-wide text-slate-400">
@@ -446,6 +635,20 @@ const CustomerChatPage = () => {
                         }`}
                       />
                     </div>
+
+                    <div className="mt-2">
+                      <ConversationBadge
+                        conversation={conversation}
+                        currentStaffKey={currentStaffKey}
+                      />
+                    </div>
+
+                    {conversation.assignedStaffDisplayName && (
+                      <p className="mt-2 text-xs text-slate-500">
+                        Phụ trách: {conversation.assignedStaffDisplayName}
+                      </p>
+                    )}
+
                     <p className="mt-2 line-clamp-2 text-sm text-slate-500">
                       {conversation.lastMessage}
                     </p>
@@ -473,11 +676,90 @@ const CustomerChatPage = () => {
                 <span className="text-xs text-slate-500">
                   {selectedConversation?.customerOnline ? "Online" : "Offline"}
                 </span>
+                {selectedConversation && (
+                  <ConversationBadge
+                    conversation={selectedConversation}
+                    currentStaffKey={currentStaffKey}
+                  />
+                )}
               </div>
+              {selectedConversation?.assignedStaffDisplayName && (
+                <p className="mt-2 text-xs text-slate-500">
+                  Nhân viên phụ trách: {selectedConversation.assignedStaffDisplayName}
+                </p>
+              )}
             </div>
 
             {selectedConversationId && (
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center justify-end gap-2">
+                {canClaim && (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      handleConversationAction(
+                        chatService.claimConversation,
+                        "Đã nhận xử lý cuộc trò chuyện",
+                      )
+                    }
+                    disabled={actionLoading}
+                    className="inline-flex items-center gap-2 rounded-2xl border border-green-200 bg-green-50 px-4 py-2 text-sm font-medium text-green-700 transition-all hover:bg-green-100 disabled:opacity-60"
+                  >
+                    <UserCheck size={16} />
+                    Nhận xử lý
+                  </button>
+                )}
+
+                {canRelease && (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      handleConversationAction(
+                        chatService.releaseConversation,
+                        "Đã nhả cuộc trò chuyện",
+                      )
+                    }
+                    disabled={actionLoading}
+                    className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition-all hover:bg-slate-50 disabled:opacity-60"
+                  >
+                    <LockOpen size={16} />
+                    Nhả xử lý
+                  </button>
+                )}
+
+                {canManageStatus && !selectedConversation?.resolved && (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      handleConversationAction(
+                        chatService.resolveConversation,
+                        "Đã đóng cuộc trò chuyện",
+                      )
+                    }
+                    disabled={actionLoading}
+                    className="inline-flex items-center gap-2 rounded-2xl border border-indigo-200 bg-indigo-50 px-4 py-2 text-sm font-medium text-indigo-700 transition-all hover:bg-indigo-100 disabled:opacity-60"
+                  >
+                    <CheckCheck size={16} />
+                    Đóng hội thoại
+                  </button>
+                )}
+
+                {canManageStatus && selectedConversation?.resolved && (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      handleConversationAction(
+                        chatService.reopenConversation,
+                        "Đã mở lại cuộc trò chuyện",
+                      )
+                    }
+                    disabled={actionLoading}
+                    className="inline-flex items-center gap-2 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-2 text-sm font-medium text-amber-700 transition-all hover:bg-amber-100 disabled:opacity-60"
+                  >
+                    <LockOpen size={16} />
+                    Mở lại
+                  </button>
+                )}
+
                 <button
                   type="button"
                   onClick={handleExportConversation}
@@ -497,6 +779,18 @@ const CustomerChatPage = () => {
               </div>
             )}
           </div>
+
+          {!canReply && selectedConversationId && (
+            <div className="border-b border-amber-100 bg-amber-50 px-6 py-3 text-sm text-amber-700">
+              Cuộc trò chuyện này đang được {selectedConversation?.assignedStaffDisplayName} xử lý. Bạn chỉ có thể xem cho đến khi được nhả hoặc được admin nhận lại.
+            </div>
+          )}
+
+          {selectedConversation?.resolved && (
+            <div className="border-b border-slate-100 bg-slate-50 px-6 py-3 text-sm text-slate-600">
+              Hội thoại đang ở trạng thái đã đóng. Nhắn tin mới hoặc bấm "Mở lại" để tiếp tục xử lý.
+            </div>
+          )}
 
           <div
             ref={messagesEndRef}
@@ -560,13 +854,13 @@ const CustomerChatPage = () => {
                 onChange={(event) => setDraft(event.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder="Nhập phản hồi cho khách hàng..."
-                disabled={!selectedConversationId}
+                disabled={!selectedConversationId || !canReply}
                 className="min-h-[48px] flex-1 resize-none rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 outline-none transition-all focus:border-green-400 focus:bg-white disabled:cursor-not-allowed disabled:opacity-60"
               />
               <button
                 type="button"
                 onClick={handleSendMessage}
-                disabled={!draft.trim() || !selectedConversationId}
+                disabled={!draft.trim() || !selectedConversationId || !canReply}
                 className="flex h-12 w-12 items-center justify-center rounded-2xl bg-green-600 text-white transition-all hover:bg-green-700 disabled:opacity-50"
               >
                 <SendHorizonal size={18} />

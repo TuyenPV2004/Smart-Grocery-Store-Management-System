@@ -24,10 +24,17 @@ public class ProductController {
     private final ProductService productService;
 
     @GetMapping
-    public ResponseEntity<List<Product>> getProducts(
+    public ResponseEntity<?> getProducts(
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) ProductStatus status,
-            @RequestParam(required = false) Long categoryId) {
+            @RequestParam(required = false) Long categoryId,
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size) {
+        if (page != null || size != null) {
+            int safePage = page != null ? Math.max(page, 0) : 0;
+            int safeSize = size != null ? Math.max(size, 1) : 20;
+            return ResponseEntity.ok(productService.getProductsPage(keyword, status, categoryId, safePage, safeSize));
+        }
         return ResponseEntity.ok(productService.getAllProducts(keyword, status, categoryId));
     }
 

@@ -1,19 +1,17 @@
 import { toast } from "react-toastify";
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import batchService from "../../services/batchService";
 import {
-  Package,
   Eye,
   X,
   Search,
-  Calendar,
   AlertCircle,
   CheckCircle,
   Clock,
   Trash2,
 } from "lucide-react";
 import Swal from "sweetalert2";
+import ReactPaginate from "react-paginate";
 
 // Detail Modal Component
 const DetailModal = ({ isOpen, onClose, batch }) => {
@@ -127,29 +125,49 @@ const DetailModal = ({ isOpen, onClose, batch }) => {
 
 // Main Component
 const BatchListPage = () => {
-  const navigate = useNavigate();
+  const batchesPerPage = 10;
   const [batches, setBatches] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [selectedBatch, setSelectedBatch] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
+  const [totalBatches, setTotalBatches] = useState(0);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
 
   useEffect(() => {
     fetchBatches();
-  }, [currentPage]);
+  }, [currentPage, debouncedSearchTerm, statusFilter]);
+
+  useEffect(() => {
+    setCurrentPage(0);
+  }, [searchTerm, statusFilter]);
 
   const fetchBatches = async () => {
     try {
       setLoading(true);
-      const res = await batchService.getAll(currentPage, 20);
+      const res = await batchService.getAll(
+        currentPage,
+        batchesPerPage,
+        debouncedSearchTerm,
+        statusFilter,
+      );
       const dataList = Array.isArray(res.data)
         ? res.data
         : res.data.content || [];
       setBatches(dataList);
       setTotalPages(res.data.totalPages || 0);
+      setTotalBatches(res.data.totalElements ?? dataList.length);
     } catch (error) {
       console.error("Lỗi tải danh sách lô hàng:", error);
     } finally {
@@ -187,6 +205,10 @@ const BatchListPage = () => {
     }
   };
 
+  const handlePageClick = (event) => {
+    setCurrentPage(event.selected);
+  };
+
   const getExpiryStatus = (expiryDate) => {
     if (!expiryDate)
       return { status: "unknown", color: "bg-slate-500 text-white" };
@@ -218,24 +240,6 @@ const BatchListPage = () => {
       };
     }
   };
-
-  const filteredBatches = batches.filter((batch) => {
-    const searchLower = searchTerm.toLowerCase();
-    const expiryStatus = getExpiryStatus(batch.expiryDate);
-
-    const matchesSearch =
-      (batch.batchCode || "").toLowerCase().includes(searchLower) ||
-      (batch.product?.sku || "").toLowerCase().includes(searchLower) ||
-      (batch.product?.name || "").toLowerCase().includes(searchLower) ||
-      (batch.supplier?.vietnameseName || "")
-        .toLowerCase()
-        .includes(searchLower);
-
-    const matchesStatus =
-      statusFilter === "ALL" || expiryStatus.status === statusFilter;
-
-    return matchesSearch && matchesStatus;
-  });
 
   return (
     <div className="admin-page-shell min-h-screen p-6 font-poppins text-slate-600">
@@ -324,7 +328,7 @@ const BatchListPage = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-50">
-                  {filteredBatches.map((batch) => {
+                  {batches.map((batch) => {
                     const expiryStatus = getExpiryStatus(batch.expiryDate);
                     const StatusIcon = expiryStatus.icon;
 
@@ -386,13 +390,13 @@ const BatchListPage = () => {
                       </tr>
                     );
                   })}
-                  {filteredBatches.length === 0 && (
+                  {batches.length === 0 && (
                     <tr>
                       <td
                         colSpan="9"
                         className="p-8 text-center text-slate-400"
                       >
-                        {searchTerm
+                        {searchTerm || statusFilter !== "ALL"
                           ? "Không tìm thấy lô hàng nào phù hợp."
                           : "Chưa có lô hàng nào."}
                       </td>
@@ -402,31 +406,40 @@ const BatchListPage = () => {
               </table>
             </div>
 
-            {/* Pagination */}
-            {totalPages > 1 && (
-              <div className="p-4 border-t border-slate-100 flex justify-center gap-2">
-                <button
-                  onClick={() => setCurrentPage((p) => Math.max(0, p - 1))}
-                  disabled={currentPage === 0}
-                  className="px-4 py-2 bg-slate-100 text-slate-700 rounded-lg font-medium hover:bg-slate-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Trước
-                </button>
-                <span className="px-4 py-2 text-slate-600">
-                  Trang {currentPage + 1} / {totalPages}
-                </span>
-                <button
-                  onClick={() =>
-                    setCurrentPage((p) => Math.min(totalPages - 1, p + 1))
-                  }
-                  disabled={currentPage >= totalPages - 1}
-                  className="px-4 py-2 bg-slate-100 text-slate-700 rounded-lg font-medium hover:bg-slate-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Sau
-                </button>
-              </div>
-            )}
           </>
+        )}
+      </div>
+
+      <div className="max-w-[1400px] mx-auto mt-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 font-medium text-slate-700 shadow-sm">
+          <span>Tổng lô hàng:</span>
+          <span className="text-slate-900">{totalBatches}</span>
+        </div>
+
+        {totalPages > 1 && (
+          <ReactPaginate
+            breakLabel="..."
+            nextLabel=">"
+            onPageChange={handlePageClick}
+            pageRangeDisplayed={3}
+            marginPagesDisplayed={1}
+            pageCount={totalPages}
+            previousLabel="<"
+            forcePage={currentPage}
+            renderOnZeroPageCount={null}
+            containerClassName="flex items-center gap-1"
+            pageClassName=""
+            pageLinkClassName="min-w-9 h-9 px-2 flex items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-700 text-sm font-medium hover:bg-slate-50 transition-colors"
+            previousClassName=""
+            previousLinkClassName="min-w-9 h-9 px-2 flex items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-700 text-sm font-medium hover:bg-slate-50 transition-colors"
+            nextClassName=""
+            nextLinkClassName="min-w-9 h-9 px-2 flex items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-700 text-sm font-medium hover:bg-slate-50 transition-colors"
+            breakClassName=""
+            breakLinkClassName="min-w-9 h-9 px-2 flex items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 text-sm font-medium"
+            activeClassName=""
+            activeLinkClassName="!bg-green-600 !text-white !border-green-600"
+            disabledClassName="opacity-40 pointer-events-none"
+          />
         )}
       </div>
 

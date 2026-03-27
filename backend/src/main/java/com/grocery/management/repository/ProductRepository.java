@@ -2,6 +2,9 @@ package com.grocery.management.repository;
 
 import com.grocery.management.entity.Product;
 import com.grocery.management.entity.ProductStatus;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
@@ -24,6 +27,25 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
             +
             "(:categoryId IS NULL OR EXISTS (SELECT l FROM p.labels l WHERE l.id = :categoryId OR l.parent.id = :categoryId))")
     List<Product> searchProducts(String keyword, ProductStatus status, Long categoryId);
+
+    @EntityGraph(attributePaths = { "supplier" })
+    @Query(value = "SELECT DISTINCT p FROM Product p " +
+            "LEFT JOIN p.labels l " +
+            "WHERE (:keyword IS NULL OR LOWER(p.name) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
+            "OR LOWER(COALESCE(p.brand, '')) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
+            "OR LOWER(COALESCE(p.barcode, '')) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
+            "OR LOWER(COALESCE(p.sku, '')) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
+            "AND (:status IS NULL OR p.status = :status) " +
+            "AND (:categoryId IS NULL OR l.id = :categoryId OR l.parent.id = :categoryId)",
+            countQuery = "SELECT COUNT(DISTINCT p) FROM Product p " +
+                    "LEFT JOIN p.labels l " +
+                    "WHERE (:keyword IS NULL OR LOWER(p.name) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
+                    "OR LOWER(COALESCE(p.brand, '')) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
+                    "OR LOWER(COALESCE(p.barcode, '')) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
+                    "OR LOWER(COALESCE(p.sku, '')) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
+                    "AND (:status IS NULL OR p.status = :status) " +
+                    "AND (:categoryId IS NULL OR l.id = :categoryId OR l.parent.id = :categoryId)")
+    Page<Product> searchProductsPage(String keyword, ProductStatus status, Long categoryId, Pageable pageable);
 
     Optional<Product> findBySku(String sku);
 

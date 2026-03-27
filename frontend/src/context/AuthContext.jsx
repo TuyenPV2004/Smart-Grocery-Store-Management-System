@@ -24,11 +24,7 @@ export const AuthProvider = ({ children }) => {
     localStorage.setItem("token", token);
     setUser(userData);
     setIsAuthenticated(true);
-    if (userData.role === "ADMIN" || userData.role === "STAFF") {
-      navigate("/dashboard");
-    } else {
-      navigate("/");
-    }
+    navigate("/");
   };
   const updateUser = (newUserData) => {
     setUser(newUserData);

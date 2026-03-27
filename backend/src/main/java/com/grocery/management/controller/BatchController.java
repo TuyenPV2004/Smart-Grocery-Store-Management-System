@@ -16,6 +16,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.time.LocalDate;
 
 @RestController
 @RequestMapping("/api/v1/batches")
@@ -69,9 +70,18 @@ public class BatchController {
     public ResponseEntity<Page<ProductBatch>> getAllBatches(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
-            @RequestParam(required = false) String search) {
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) String status) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "id"));
-        Page<ProductBatch> batches = productBatchRepository.findAll(pageable);
+        String normalizedSearch = search != null && !search.trim().isEmpty() ? search.trim() : null;
+        String normalizedStatus = status != null && !status.trim().isEmpty() ? status.trim() : "ALL";
+
+        Page<ProductBatch> batches = productBatchRepository.searchBatches(
+                normalizedSearch,
+                normalizedStatus,
+                LocalDate.now(),
+                LocalDate.now().plusDays(30),
+                pageable);
 
         // Populate transient fields
         for (ProductBatch batch : batches) {

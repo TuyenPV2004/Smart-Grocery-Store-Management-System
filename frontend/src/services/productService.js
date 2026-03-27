@@ -1,7 +1,35 @@
 import axiosClient from "./axiosClient";
 
+const normalizeQueryParams = (params = {}) => {
+  const normalized = { ...params };
+
+  if (normalized.search && !normalized.keyword) {
+    normalized.keyword = normalized.search;
+  }
+
+  if (normalized.pageSize && normalized.size == null) {
+    normalized.size = normalized.pageSize;
+  }
+
+  delete normalized.search;
+  delete normalized.pageSize;
+
+  Object.keys(normalized).forEach((key) => {
+    if (
+      normalized[key] === "" ||
+      normalized[key] === null ||
+      normalized[key] === undefined
+    ) {
+      delete normalized[key];
+    }
+  });
+
+  return normalized;
+};
+
 const productService = {
-  getAll: (params) => axiosClient.get("/products", { params }),
+  getAll: (params) =>
+    axiosClient.get("/products", { params: normalizeQueryParams(params) }),
   get: (id) => axiosClient.get(`/products/${id}`),
   create: (productData, imageFile) => {
     const formData = new FormData();

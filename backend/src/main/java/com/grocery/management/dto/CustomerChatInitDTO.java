@@ -12,5 +12,7 @@ import java.util.List;
 public class CustomerChatInitDTO {
     private String conversationId;
     private boolean staffOnline;
+    private String assignedStaffDisplayName;
+    private boolean resolved;
     private List<ChatMessageDTO> messages;
 }

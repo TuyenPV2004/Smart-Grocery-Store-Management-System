@@ -260,7 +260,10 @@ const ProductListPage = () => {
   const productsPerPage = 10;
   const [products, setProducts] = useState([]);
   const [currentPage, setCurrentPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [totalProducts, setTotalProducts] = useState(0);
   const [filter, setFilter] = useState({ keyword: "", status: "" });
+  const [debouncedKeyword, setDebouncedKeyword] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [showHistoryModal, setShowHistoryModal] = useState(false);
@@ -284,8 +287,16 @@ const ProductListPage = () => {
   }, [location]);
 
   useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedKeyword(filter.keyword);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [filter.keyword]);
+
+  useEffect(() => {
     fetchProducts();
-  }, [filter]);
+  }, [currentPage, debouncedKeyword, filter.status]);
 
   useEffect(() => {
     setCurrentPage(0);
@@ -293,10 +304,22 @@ const ProductListPage = () => {
 
   const fetchProducts = async () => {
     try {
-      const res = await productService.getAll(filter);
-      const productsData = res.data;
+      const res = await productService.getAll({
+        keyword: debouncedKeyword,
+        status: filter.status,
+        page: currentPage,
+        size: productsPerPage,
+      });
+      const pageData =
+        res.data && Array.isArray(res.data.content)
+          ? res.data
+          : {
+              content: Array.isArray(res.data) ? res.data : [],
+              totalPages: Array.isArray(res.data) && res.data.length > 0 ? 1 : 0,
+              totalElements: Array.isArray(res.data) ? res.data.length : 0,
+            };
+      const productsData = pageData.content || [];
 
-      // Fetch price history for each product to calculate price change percentage
       const productsWithPriceChange = await Promise.all(
         productsData.map(async (product) => {
           try {
@@ -309,7 +332,6 @@ const ProductListPage = () => {
             let sellPriceChangePercent = null;
 
             if (priceHistory.length > 0) {
-              // Find latest IMPORT price change
               const latestImport = priceHistory.find(
                 (h) => h.priceType === "IMPORT",
               );
@@ -320,7 +342,6 @@ const ProductListPage = () => {
                   100;
               }
 
-              // Find latest SELL price change
               const latestSell = priceHistory.find(
                 (h) => h.priceType === "SELL",
               );
@@ -348,6 +369,8 @@ const ProductListPage = () => {
       );
 
       setProducts(productsWithPriceChange);
+      setTotalPages(pageData.totalPages || 0);
+      setTotalProducts(pageData.totalElements ?? productsData.length);
     } catch (error) {
       console.error("Lỗi tải sản phẩm", error);
     }
@@ -359,9 +382,8 @@ const ProductListPage = () => {
     return margin.toFixed(1);
   };
 
-  const pageCount = Math.ceil(products.length / productsPerPage);
-  const offset = currentPage * productsPerPage;
-  const currentProducts = products.slice(offset, offset + productsPerPage);
+  const pageCount = totalPages;
+  const currentProducts = products;
 
   const handlePageClick = (event) => {
     setCurrentPage(event.selected);
@@ -536,7 +558,7 @@ const ProductListPage = () => {
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-50">
-            {currentProducts.map((p) => {
+              {currentProducts.map((p) => {
               const margin = calculateMargin(p.importPrice, p.sellPrice);
               const isProfit = margin >= 0;
 
@@ -777,7 +799,7 @@ const ProductListPage = () => {
       <div className="max-w-[1400px] mx-auto mt-6 flex flex-col gap-4 md:flex-row md:justify-between md:items-center">
         <div className="flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-200 bg-white text-slate-700 font-medium shadow-sm">
           <span>Tổng sản phẩm:</span>
-          <span className="text-slate-900">{products.length}</span>
+          <span className="text-slate-900">{totalProducts}</span>
         </div>
 
         {pageCount > 1 && (

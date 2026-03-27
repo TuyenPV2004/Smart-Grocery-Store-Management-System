@@ -15,6 +15,10 @@ public class ChatConversationSummaryDTO {
     private String customerDisplayName;
     private String customerRole;
     private boolean customerOnline;
+    private String assignedStaffKey;
+    private String assignedStaffDisplayName;
+    private boolean resolved;
     private String lastMessage;
+    private String lastSenderRole;
     private LocalDateTime updatedAt;
 }

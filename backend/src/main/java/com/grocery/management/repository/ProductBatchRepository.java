@@ -14,6 +14,7 @@ import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Repository;
 import java.util.Optional;
 import java.util.List;
+import java.time.LocalDate;
 
 @Repository
 public interface ProductBatchRepository extends JpaRepository<ProductBatch, Long> {
@@ -54,6 +55,38 @@ public interface ProductBatchRepository extends JpaRepository<ProductBatch, Long
         @Override
         @NonNull
         Page<ProductBatch> findAll(@NonNull Pageable pageable);
+
+        @EntityGraph(attributePaths = { "inventoryNote", "product", "supplier" })
+        @Query(value = "SELECT b FROM ProductBatch b " +
+                        "LEFT JOIN b.product p " +
+                        "LEFT JOIN b.supplier s " +
+                        "WHERE (:search IS NULL OR LOWER(b.batchCode) LIKE LOWER(CONCAT('%', :search, '%')) " +
+                        "OR LOWER(COALESCE(p.sku, '')) LIKE LOWER(CONCAT('%', :search, '%')) " +
+                        "OR LOWER(COALESCE(p.name, '')) LIKE LOWER(CONCAT('%', :search, '%')) " +
+                        "OR LOWER(COALESCE(s.vietnameseName, '')) LIKE LOWER(CONCAT('%', :search, '%'))) " +
+                        "AND (:status IS NULL OR :status = 'ALL' " +
+                        "OR (:status = 'unknown' AND b.expiryDate IS NULL) " +
+                        "OR (:status = 'expired' AND b.expiryDate IS NOT NULL AND b.expiryDate < :today) " +
+                        "OR (:status = 'near-expiry' AND b.expiryDate IS NOT NULL AND b.expiryDate >= :today AND b.expiryDate <= :nearExpiryDate) " +
+                        "OR (:status = 'good' AND b.expiryDate IS NOT NULL AND b.expiryDate > :nearExpiryDate))",
+                        countQuery = "SELECT COUNT(b) FROM ProductBatch b " +
+                                        "LEFT JOIN b.product p " +
+                                        "LEFT JOIN b.supplier s " +
+                                        "WHERE (:search IS NULL OR LOWER(b.batchCode) LIKE LOWER(CONCAT('%', :search, '%')) " +
+                                        "OR LOWER(COALESCE(p.sku, '')) LIKE LOWER(CONCAT('%', :search, '%')) " +
+                                        "OR LOWER(COALESCE(p.name, '')) LIKE LOWER(CONCAT('%', :search, '%')) " +
+                                        "OR LOWER(COALESCE(s.vietnameseName, '')) LIKE LOWER(CONCAT('%', :search, '%'))) " +
+                                        "AND (:status IS NULL OR :status = 'ALL' " +
+                                        "OR (:status = 'unknown' AND b.expiryDate IS NULL) " +
+                                        "OR (:status = 'expired' AND b.expiryDate IS NOT NULL AND b.expiryDate < :today) " +
+                                        "OR (:status = 'near-expiry' AND b.expiryDate IS NOT NULL AND b.expiryDate >= :today AND b.expiryDate <= :nearExpiryDate) " +
+                                        "OR (:status = 'good' AND b.expiryDate IS NOT NULL AND b.expiryDate > :nearExpiryDate))")
+        Page<ProductBatch> searchBatches(
+                        @Param("search") String search,
+                        @Param("status") String status,
+                        @Param("today") LocalDate today,
+                        @Param("nearExpiryDate") LocalDate nearExpiryDate,
+                        Pageable pageable);
 
         List<ProductBatch> findByProductIdAndQuantityGreaterThanOrderByExpiryDateAsc(Long productId, int quantity);
 

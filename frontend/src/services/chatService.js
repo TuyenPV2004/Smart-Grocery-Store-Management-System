@@ -4,26 +4,44 @@ const HTTP_BASE_URL = "http://localhost:8080";
 
 const getSocketBaseUrl = () => HTTP_BASE_URL.replace(/^http/, "ws");
 
-const buildSocketUrl = () => {
-  const token = localStorage.getItem("token");
-  if (token) {
-    return `${getSocketBaseUrl()}/ws/chat?token=${encodeURIComponent(token)}`;
+const createSocketTicket = async () => {
+  const guestToken = localStorage.getItem("chat_guest_token");
+  const guestDisplayName = localStorage.getItem("chat_guest_display_name");
+
+  const response = await axiosClient.post("/chat/socket-ticket", {
+    guestToken,
+    guestDisplayName,
+  });
+
+  if (response.data?.guestToken) {
+    localStorage.setItem("chat_guest_token", response.data.guestToken);
   }
 
-  let guestId = localStorage.getItem("chat_guest_id");
-  if (!guestId) {
-    guestId = `guest_${Math.random().toString(36).slice(2, 10)}`;
-    localStorage.setItem("chat_guest_id", guestId);
+  if (response.data?.guestDisplayName) {
+    localStorage.setItem("chat_guest_display_name", response.data.guestDisplayName);
   }
 
-  return `${getSocketBaseUrl()}/ws/chat?guestId=${encodeURIComponent(guestId)}`;
+  return response.data;
 };
 
 const chatService = {
-  connect: () => new WebSocket(buildSocketUrl()),
-  getConversations: () => axiosClient.get("/chat/conversations"),
+  connect: async () => {
+    const ticketData = await createSocketTicket();
+    return new WebSocket(
+      `${getSocketBaseUrl()}/ws/chat?ticket=${encodeURIComponent(ticketData.ticket)}`,
+    );
+  },
+  getConversations: (params) => axiosClient.get("/chat/conversations", { params }),
   getConversationMessages: (conversationId) =>
     axiosClient.get(`/chat/conversations/${conversationId}/messages`),
+  claimConversation: (conversationId) =>
+    axiosClient.post(`/chat/conversations/${conversationId}/claim`),
+  releaseConversation: (conversationId) =>
+    axiosClient.post(`/chat/conversations/${conversationId}/release`),
+  resolveConversation: (conversationId) =>
+    axiosClient.post(`/chat/conversations/${conversationId}/resolve`),
+  reopenConversation: (conversationId) =>
+    axiosClient.post(`/chat/conversations/${conversationId}/reopen`),
   deleteConversation: (conversationId) =>
     axiosClient.delete(`/chat/conversations/${conversationId}`),
 };

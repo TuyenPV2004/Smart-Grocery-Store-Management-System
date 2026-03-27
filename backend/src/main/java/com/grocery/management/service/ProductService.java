@@ -18,6 +18,8 @@ import com.grocery.management.repository.PromotionRepository;
 import java.util.HashMap;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.lang.NonNull;
@@ -29,6 +31,7 @@ import java.io.InputStream;
 import java.math.BigDecimal;
 import java.nio.file.*;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
 
 import com.grocery.management.repository.ProductImageRepository;
@@ -94,6 +97,16 @@ public class ProductService {
         List<Product> products = productRepository.searchProducts(keyword, status, categoryId);
         enrichWithActivePromotions(products);
         return products;
+    }
+
+    public Page<Product> getProductsPage(String keyword, ProductStatus status, Long categoryId, int page, int size) {
+        Page<Product> productsPage = productRepository.searchProductsPage(
+                keyword,
+                status,
+                categoryId,
+                PageRequest.of(page, size));
+        enrichWithActivePromotions(productsPage.getContent());
+        return productsPage;
     }
 
     public Product getProductById(Long id) {

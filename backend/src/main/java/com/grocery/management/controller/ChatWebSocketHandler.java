@@ -44,13 +44,14 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
 
         if (identity.isStaff()) {
             staffSessionIds.add(session.getId());
-            sendEvent(session, "ADMIN_SNAPSHOT", new AdminChatSnapshotDTO(chatService.getConversationSummaries()));
+            sendEvent(session, "ADMIN_SNAPSHOT", new AdminChatSnapshotDTO(chatService.getConversationSummaries(null, "ALL", identity.userKey())));
             broadcastStaffStatus();
             return;
         }
 
         String conversationId = chatService.ensureConversation(identity.userKey(), identity.displayName(), identity.role());
         chatService.updateCustomerPresence(conversationId, true);
+        var summary = chatService.getConversationSummary(conversationId);
 
         sendEvent(
                 session,
@@ -58,10 +59,12 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
                 new CustomerChatInitDTO(
                         conversationId,
                         hasStaffOnline(),
+                        summary.getAssignedStaffDisplayName(),
+                        summary.isResolved(),
                         chatService.getConversationMessages(conversationId)
                 )
         );
-        broadcastAdminSnapshot();
+        notifyConversationChanged(conversationId);
     }
 
     @Override
@@ -70,7 +73,7 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
         ChatInboundMessageDTO inbound = objectMapper.readValue(message.getPayload(), ChatInboundMessageDTO.class);
 
         if ("TYPING".equalsIgnoreCase(inbound.getType())) {
-            handleTypingEvent(session, identity, inbound);
+            handleTypingEvent(identity, inbound);
             return;
         }
 
@@ -79,46 +82,48 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
         }
 
         String content = inbound.getContent().trim();
-        if (identity.isStaff()) {
-            if (inbound.getConversationId() == null || inbound.getConversationId().isBlank()
-                    || !chatService.conversationExists(inbound.getConversationId())) {
+
+        try {
+            if (identity.isStaff()) {
+                if (inbound.getConversationId() == null || inbound.getConversationId().isBlank()
+                        || !chatService.conversationExists(inbound.getConversationId())) {
+                    return;
+                }
+
+                var savedMessage = chatService.appendStaffMessage(
+                        inbound.getConversationId(),
+                        identity.userKey(),
+                        identity.displayName(),
+                        identity.role(),
+                        content
+                );
+
+                sendToConversationParticipants(inbound.getConversationId(), "MESSAGE", savedMessage);
+                notifyConversationChanged(inbound.getConversationId());
                 return;
             }
 
-            var savedMessage = chatService.appendStaffMessage(
-                    inbound.getConversationId(),
+            String conversationId = chatService.ensureConversation(identity.userKey(), identity.displayName(), identity.role());
+            var savedMessage = chatService.appendCustomerMessage(
+                    conversationId,
                     identity.userKey(),
                     identity.displayName(),
                     identity.role(),
                     content
             );
-
-            sendToConversationParticipants(inbound.getConversationId(), "MESSAGE", savedMessage);
-            broadcastAdminSnapshot();
-            return;
+            sendToConversationParticipants(conversationId, "MESSAGE", savedMessage);
+            notifyConversationChanged(conversationId);
+        } catch (RuntimeException exception) {
+            sendEvent(session, "ERROR", Map.of("message", exception.getMessage()));
         }
-
-        String conversationId = chatService.ensureConversation(identity.userKey(), identity.displayName(), identity.role());
-        var savedMessage = chatService.appendCustomerMessage(
-                conversationId,
-                identity.userKey(),
-                identity.displayName(),
-                identity.role(),
-                content
-        );
-        sendToConversationParticipants(conversationId, "MESSAGE", savedMessage);
-        broadcastAdminSnapshot();
     }
 
-    private void handleTypingEvent(
-            WebSocketSession session,
-            ClientIdentity identity,
-            ChatInboundMessageDTO inbound
-    ) throws IOException {
+    private void handleTypingEvent(ClientIdentity identity, ChatInboundMessageDTO inbound) throws IOException {
         String conversationId;
         if (identity.isStaff()) {
             if (inbound.getConversationId() == null || inbound.getConversationId().isBlank()
-                    || !chatService.conversationExists(inbound.getConversationId())) {
+                    || !chatService.conversationExists(inbound.getConversationId())
+                    || !chatService.canStaffReply(inbound.getConversationId(), identity.userKey(), identity.role())) {
                 return;
             }
             conversationId = inbound.getConversationId();
@@ -148,6 +153,21 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
         cleanupSession(session);
     }
 
+    public void notifyConversationChanged(String conversationId) {
+        try {
+            broadcastConversationState(conversationId);
+            broadcastAdminSnapshot();
+        } catch (IOException ignored) {
+        }
+    }
+
+    public void notifyConversationDeleted() {
+        try {
+            broadcastAdminSnapshot();
+        } catch (IOException ignored) {
+        }
+    }
+
     private void cleanupSession(WebSocketSession session) throws IOException {
         ClientIdentity identity = identities.remove(session.getId());
         sessions.remove(session.getId());
@@ -173,7 +193,7 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
         String conversationId = chatService.ensureConversation(identity.userKey(), identity.displayName(), identity.role());
         boolean online = sessionIdsByUserKey.containsKey(identity.userKey());
         chatService.updateCustomerPresence(conversationId, online);
-        broadcastAdminSnapshot();
+        notifyConversationChanged(conversationId);
     }
 
     private void sendToConversationParticipants(String conversationId, String type, Object payload) throws IOException {
@@ -220,13 +240,20 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
     }
 
     private void broadcastAdminSnapshot() throws IOException {
-        AdminChatSnapshotDTO snapshot = new AdminChatSnapshotDTO(chatService.getConversationSummaries());
+        AdminChatSnapshotDTO snapshot = new AdminChatSnapshotDTO(chatService.getConversationSummaries(null, "ALL", null));
         for (String sessionId : staffSessionIds) {
             WebSocketSession session = sessions.get(sessionId);
             if (session != null && session.isOpen()) {
                 sendEvent(session, "ADMIN_SNAPSHOT", snapshot);
             }
         }
+    }
+
+    private void broadcastConversationState(String conversationId) throws IOException {
+        if (!chatService.conversationExists(conversationId)) {
+            return;
+        }
+        sendToConversationParticipants(conversationId, "CONVERSATION_STATE", chatService.getConversationSummary(conversationId));
     }
 
     private void broadcastStaffStatus() throws IOException {
