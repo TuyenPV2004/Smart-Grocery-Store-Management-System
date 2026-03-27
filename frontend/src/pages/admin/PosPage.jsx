@@ -191,7 +191,7 @@ const PosPage = () => {
   };
 
   return (
-    <div className="admin-page-shell flex h-screen overflow-hidden">
+    <div className="admin-page-shell admin-page-shell--pos flex h-screen overflow-hidden">
       {/* CỘT TRÁI: DANH SÁCH SẢN PHẨM */}
       <div className="flex-1 flex flex-col p-4 pr-2 transition-all duration-300">
         <div className="bg-white p-4 rounded-xl shadow-sm mb-4 flex gap-3">

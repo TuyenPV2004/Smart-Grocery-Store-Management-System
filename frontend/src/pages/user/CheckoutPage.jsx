@@ -79,7 +79,7 @@ const CheckoutPage = () => {
 
   if (!user || cartItems.length === 0) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4">
+      <div className="app-page-bg min-h-screen flex items-center justify-center p-4">
         <div className="text-center">
           <Loader2 className="w-10 h-10 text-emerald-500 animate-spin mx-auto mb-4" />
           <p className="text-slate-500 font-medium">Đang điều hướng</p>
@@ -89,7 +89,7 @@ const CheckoutPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-emerald-50 via-slate-50 to-emerald-100 pt-6 pb-12 px-4 sm:px-6 font-poppins relative">
+    <div className="app-page-bg min-h-screen pt-6 pb-12 px-4 sm:px-6 font-poppins relative">
       <div className="max-w-4xl mx-auto">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
           <div className="md:col-span-7 space-y-6">

@@ -12,7 +12,7 @@ import {
 
 const PublicLayout = () => {
   return (
-    <div className="font-poppins text-slate-600 bg-[#F8FAFC]">
+    <div className="public-shell font-poppins text-slate-600">
       <Navbar />
 
       <main className="min-h-[calc(100vh-300px)]">

@@ -325,7 +325,7 @@ const HomePage = () => {
   }, []);
 
   return (
-    <div className="font-poppins min-h-screen bg-gradient-to-b from-emerald-50 via-slate-50 to-emerald-100">
+    <div className="font-poppins min-h-screen app-page-bg">
       {/* Hero Section */}
       <section className="relative bg-gradient-to-r from-green-600 to-emerald-800 text-white overflow-hidden rounded-b-[3rem] shadow-xl mb-12">
         <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1542838132-92c53300491e?q=80&w=2574&auto=format&fit=crop')] bg-cover bg-center opacity-20 mix-blend-overlay"></div>

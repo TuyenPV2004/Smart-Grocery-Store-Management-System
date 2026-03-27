@@ -556,7 +556,7 @@ const CustomerChatPage = () => {
   };
 
   return (
-    <div className="admin-page-shell min-h-screen p-6 font-poppins antialiased text-slate-600">
+    <div className="admin-page-shell admin-page-shell--chat min-h-screen p-6 font-poppins antialiased text-slate-600">
       <div className="mx-auto flex max-w-7xl gap-6">
         <div className="w-[360px] rounded-[2rem] border border-slate-100 bg-white/95 p-4 shadow-sm backdrop-blur-sm">
           <div className="mb-4">

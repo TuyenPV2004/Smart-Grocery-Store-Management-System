@@ -418,7 +418,7 @@ const CustomerProductPage = () => {
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-emerald-50 via-slate-50 to-emerald-100 py-8 px-4 font-poppins">
+    <div className="app-page-bg min-h-screen py-8 px-4 font-poppins">
       <div className="max-w-7xl mx-auto">
         <div className="flex flex-col md:flex-row gap-4 items-center justify-between mb-8">
           <h1 className="text-2xl font-semibold text-slate-800">Tất cả sản phẩm</h1>

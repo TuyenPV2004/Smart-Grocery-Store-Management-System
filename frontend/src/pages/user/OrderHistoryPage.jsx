@@ -124,7 +124,7 @@ const OrderHistoryPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-emerald-50 via-slate-50 to-emerald-100 pt-6 pb-10 px-4 sm:px-6">
+    <div className="app-page-bg min-h-screen pt-6 pb-10 px-4 sm:px-6">
       <div className="max-w-6xl mx-auto space-y-6">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3">

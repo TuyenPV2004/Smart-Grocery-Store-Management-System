@@ -16,11 +16,30 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     @Query(value = "SELECT SUM(o.total_amount) FROM orders o WHERE o.status = 'COMPLETED'", nativeQuery = true)
     java.math.BigDecimal sumTotalRevenue();
 
+    @Query(value = "SELECT COALESCE(SUM(o.total_amount), 0) FROM orders o WHERE o.status = 'COMPLETED' AND o.created_at >= :startDate", nativeQuery = true)
+    java.math.BigDecimal sumTotalRevenueSince(LocalDateTime startDate);
+
+    @Query(value = "SELECT COALESCE(SUM(o.total_amount), 0) FROM orders o WHERE o.status = 'COMPLETED' AND o.created_at >= :startDate AND o.created_at < :endDate", nativeQuery = true)
+    java.math.BigDecimal sumCompletedRevenueBetween(LocalDateTime startDate, LocalDateTime endDate);
+
     @Query(value = "SELECT COUNT(*) FROM orders o WHERE o.status = 'COMPLETED'", nativeQuery = true)
     long countCompletedOrders();
 
     @Query(value = "SELECT DATE_FORMAT(created_at, '%Y-%m-%d') as date, SUM(total_amount) as revenue FROM orders WHERE status = 'COMPLETED' AND created_at >= :startDate GROUP BY date ORDER BY date", nativeQuery = true)
     List<Object[]> findRevenueByDate(java.time.LocalDateTime startDate);
+
+    @Query(value = """
+            SELECT DATE_FORMAT(created_at, '%Y-%m-%d') as date,
+                   SUM(CASE WHEN status = 'COMPLETED' THEN 1 ELSE 0 END) as completed_count,
+                   SUM(CASE WHEN status = 'CANCELLED' THEN 1 ELSE 0 END) as cancelled_count,
+                   SUM(CASE WHEN status = 'COMPLETED' THEN total_amount ELSE 0 END) as revenue
+            FROM orders
+            WHERE created_at >= :startDate
+              AND status IN ('COMPLETED', 'CANCELLED')
+            GROUP BY date
+            ORDER BY date
+            """, nativeQuery = true)
+    List<Object[]> findRevenueAndOrderCountByDate(LocalDateTime startDate);
 
     @Query("""
             SELECT od.product.name, SUM(od.quantity), COALESCE(SUM(od.totalLine), 0)
@@ -44,6 +63,19 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     List<Object[]> findCategorySalesByDate(LocalDateTime startDate);
 
     List<Order> findTop5ByOrderByCreatedAtDesc();
+
+    List<Order> findTop5ByStatusOrderByCreatedAtDesc(String status);
+
+    long countByStatus(String status);
+
+    long countByStatusAndCreatedAtGreaterThanEqual(String status, LocalDateTime startDate);
+
+    long countByCreatedAtGreaterThanEqual(LocalDateTime startDate);
+
+    long countByPaymentMethodAndCreatedAtGreaterThanEqual(String paymentMethod, LocalDateTime startDate);
+
+    long countByPaymentMethodAndPaymentStatusAndCreatedAtGreaterThanEqual(String paymentMethod, String paymentStatus,
+            LocalDateTime startDate);
 
     List<Order> findByUserUsernameOrderByCreatedAtDesc(String username);
 

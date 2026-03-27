@@ -71,7 +71,7 @@ const VNPayReturnPage = () => {
   }, [clearCart, location.search]);
 
   return (
-    <div className="bg-gradient-to-b from-emerald-50 via-slate-50 to-emerald-100 flex flex-col items-center pt-8 p-4 font-poppins pb-24">
+    <div className="app-page-bg flex flex-col items-center pt-8 p-4 font-poppins pb-24">
       <div className="bg-white p-8 rounded-3xl shadow-xl border border-slate-100 max-w-md w-full text-center mt-2">
         {status === "processing" && (
           <div className="flex flex-col items-center justify-center py-8">

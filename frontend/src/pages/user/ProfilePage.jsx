@@ -117,7 +117,11 @@ const ProfilePage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-emerald-50 via-slate-50 to-emerald-100 py-12 px-4 sm:px-6 font-poppins">
+    <div className={`min-h-screen py-12 px-4 sm:px-6 font-poppins ${
+      user?.role === "ADMIN" || user?.role === "STAFF"
+        ? "admin-page-shell"
+        : "app-page-bg"
+    }`}>
       <div className="max-w-5xl mx-auto">
         {/* Header Section */}
         <div className="mb-10 border-l-4 border-green-600 pl-6">
@@ -301,7 +305,7 @@ const ProfilePage = () => {
                       type="submit"
                       className="bg-green-600 text-white px-8 py-3.5 rounded-2xl hover:bg-green-700 flex items-center shadow-lg shadow-green-100 font-medium tracking-wide text-sm active:scale-95 transition-all"
                     >
-                      <Save size={20} className="mr-2" /> Cập nhật ngay
+                      Cập nhật ngay
                     </button>
                   </div>
                 )}
@@ -325,7 +329,7 @@ const ProfilePage = () => {
                 </h3>
                 <button
                   onClick={() => setShowPasswordModal(false)}
-                  className="p-2 hover:bg-slate-100 rounded-full text-slate-500 transition-colors"
+                  className="text-slate-500 transition-colors"
                 >
                   <X size={20} />
                 </button>

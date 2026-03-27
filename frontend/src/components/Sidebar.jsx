@@ -335,7 +335,7 @@ const Sidebar = ({ isCollapsed, onToggle }) => {
         <div className="p-4 mt-auto border-t border-slate-50 space-y-2">
           <button
             onClick={() => navigate("/profile")}
-            title={isCollapsed ? "Xem hồ sơ" : ""}
+            title={isCollapsed ? (user?.role === "ADMIN" ? "Quản trị viên" : user?.role === "STAFF" ? "Nhân viên" : "Khách hàng") : ""}
             className={`w-full ${
               isCollapsed ? "justify-center" : "px-4"
             } py-3 rounded-2xl flex items-center gap-3 bg-slate-50 hover:bg-slate-100/50 transition-all`}
@@ -362,7 +362,9 @@ const Sidebar = ({ isCollapsed, onToggle }) => {
                 <p className="text-[13px] font-medium text-slate-800 truncate">
                   {user?.fullName || user?.username}
                 </p>
-                <p className="text-[11px] text-slate-400">Xem hồ sơ</p>
+                <p className="text-[11px] text-slate-400">
+                  {user?.role === "ADMIN" ? "Quản trị viên" : user?.role === "STAFF" ? "Nhân viên" : "Khách hàng"}
+                </p>
               </div>
             )}
           </button>
@@ -372,7 +374,7 @@ const Sidebar = ({ isCollapsed, onToggle }) => {
             title={isCollapsed ? "Đăng xuất" : ""}
             className={`flex items-center w-full ${
               isCollapsed ? "justify-center" : "px-4"
-            } py-3 text-rose-500 hover:bg-rose-50 rounded-2xl font-medium`}
+            } py-3 text-rose-500 rounded-2xl font-medium`}
           >
             <LogOut size={20} className={isCollapsed ? "" : "mr-3"} />
             {!isCollapsed && "Đăng xuất"}

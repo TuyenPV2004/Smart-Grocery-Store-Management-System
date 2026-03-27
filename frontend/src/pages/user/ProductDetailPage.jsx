@@ -197,7 +197,7 @@ const ProductDetailPage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-emerald-50 via-slate-50 to-emerald-100">
+      <div className="app-page-bg min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
       </div>
     );
@@ -205,7 +205,7 @@ const ProductDetailPage = () => {
 
   if (!product) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-emerald-50 via-slate-50 to-emerald-100 gap-4">
+      <div className="app-page-bg min-h-screen flex flex-col items-center justify-center gap-4">
         <h2 className="text-2xl font-medium text-slate-800">
           Không tìm thấy sản phẩm
         </h2>
@@ -220,7 +220,7 @@ const ProductDetailPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-emerald-50 via-slate-50 to-emerald-100 py-8 px-4 font-poppins">
+    <div className="app-page-bg min-h-screen py-8 px-4 font-poppins">
       <div className="max-w-7xl mx-auto">
         {/* Breadcrumb / Back Button */}
 

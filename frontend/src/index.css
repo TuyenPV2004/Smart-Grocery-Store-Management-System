@@ -26,12 +26,35 @@
   }
 
   :root {
-    --admin-bg-base: #f3f7f8;
-    --admin-tint-mint: rgba(16, 185, 129, 0.08);
-    --admin-tint-blue: rgba(14, 165, 233, 0.06);
+    --app-bg-solid: #cfd9df;
+    --app-page-gradient:
+      radial-gradient(
+        780px 520px at 12% 12%,
+        rgba(16, 185, 129, 0.14),
+        transparent 70%
+      ),
+      radial-gradient(
+        760px 520px at 88% 84%,
+        rgba(14, 165, 233, 0.11),
+        transparent 72%
+      ),
+      linear-gradient(180deg, #c5d5ca 0%, #d6dde4 46%, #c2d0c6 100%);
+    --public-shell-bg: #d1dbe2;
+    --admin-bg-base: #cbd6dd;
+    --admin-tint-mint: rgba(16, 185, 129, 0.14);
+    --admin-tint-blue: rgba(14, 165, 233, 0.11);
     --admin-cta-primary: #15803d;
     --admin-cta-primary-hover: #166534;
   }
+}
+
+.public-shell {
+  background-color: var(--public-shell-bg);
+}
+
+.app-page-bg {
+  background-color: var(--app-bg-solid);
+  background-image: var(--app-page-gradient);
 }
 
 .admin-shell {
@@ -56,11 +79,20 @@
       var(--admin-tint-blue),
       transparent 68%
     ),
-    linear-gradient(160deg, #f3f7f8 0%, #f7fbfc 52%, #f1f6fa 100%);
+    linear-gradient(160deg, #c7d3da 0%, #d5dee5 52%, #c3ced8 100%);
 }
 
 .admin-page-shell {
   background: transparent;
+  padding-top: 3rem;
+}
+
+.admin-page-shell--pos {
+  padding-top: 1rem;
+}
+
+.admin-page-shell--chat {
+  padding-top: 2rem;
 }
 
 .admin-dashboard-header {

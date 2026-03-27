@@ -53,6 +53,7 @@ public class SecurityConfig {
                         .authenticated()
                         .requestMatchers("/api/v1/orders/*/status", "/api/v1/orders/*/export", "/api/v1/orders")
                         .hasAnyAuthority("ADMIN", "STAFF")
+                        .requestMatchers("/api/v1/dashboard/**").hasAnyAuthority("ADMIN", "STAFF")
                         .requestMatchers("/api/v1/users/profile", "/api/v1/users/profile/**",
                                 "/api/v1/users/change-password")
                         .authenticated()

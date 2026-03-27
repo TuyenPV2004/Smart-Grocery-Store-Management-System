@@ -191,7 +191,7 @@ const CartPage = () => {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-emerald-50 via-slate-50 to-emerald-100 flex flex-col items-center justify-center p-4 font-poppins">
+      <div className="app-page-bg min-h-screen flex flex-col items-center justify-center p-4 font-poppins">
         <div className="w-24 h-24 bg-emerald-100 rounded-full flex items-center justify-center mb-6 text-emerald-500">
           <User size={48} />
         </div>
@@ -214,7 +214,7 @@ const CartPage = () => {
 
   if (cartItems.length === 0) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-emerald-50 via-slate-50 to-emerald-100 flex flex-col items-center justify-center p-4">
+      <div className="app-page-bg min-h-screen flex flex-col items-center justify-center p-4">
         <div className="w-24 h-24 bg-slate-100 rounded-full flex items-center justify-center mb-6 text-slate-300">
           <ShoppingBag size={48} />
         </div>
@@ -242,7 +242,7 @@ const CartPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-emerald-50 via-slate-50 to-emerald-100 pt-6 pb-12 px-4 sm:px-6 font-poppins relative">
+    <div className="app-page-bg min-h-screen pt-6 pb-12 px-4 sm:px-6 font-poppins relative">
       <div className="max-w-6xl mx-auto">
         <div className="flex items-center mb-8 gap-4">
           <h1 className="text-2xl font-medium text-slate-900">
