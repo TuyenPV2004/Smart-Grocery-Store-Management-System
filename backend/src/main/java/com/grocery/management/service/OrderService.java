@@ -47,7 +47,6 @@ public class OrderService {
     @Transactional
     public Order createOrder(OrderRequest request, String username) {
         User user = getUserByUsername(username);
-        boolean requiresConfirmation = Boolean.TRUE.equals(request.getPendingConfirmation());
         LocalDateTime now = LocalDateTime.now();
 
         Order order = new Order();
@@ -56,23 +55,15 @@ public class OrderService {
         order.setUser(user);
         order.setCustomerName(request.getCustomerName());
         order.setCustomerPhone(request.getCustomerPhone());
-        order.setPaymentMethod(request.getPaymentMethod());
+        order.setPaymentMethod("CHUYEN_KHOAN");
         order.setInventoryAllocated(false);
         order.setVoucherUsageCommitted(false);
         order.setPaymentTransactionNo(null);
         order.setPaymentFailureReason(null);
         order.setPaymentConfirmedAt(null);
-
-        if (requiresConfirmation) {
-            order.setStatus("PENDING");
-            order.setPaymentStatus("PENDING");
-            order.setPaymentExpiresAt(now.plusMinutes(15));
-        } else {
-            order.setStatus("COMPLETED");
-            order.setPaymentStatus("PAID");
-            order.setPaymentConfirmedAt(now);
-            order.setPaymentExpiresAt(null);
-        }
+        order.setStatus("PENDING");
+        order.setPaymentStatus("PENDING");
+        order.setPaymentExpiresAt(now.plusMinutes(15));
 
         List<OrderDetail> details = new ArrayList<>();
         BigDecimal totalAmount = BigDecimal.ZERO;
@@ -127,12 +118,7 @@ public class OrderService {
         order.setDiscount(discount);
         order.setFinalAmount(totalAmount.subtract(discount));
 
-        Order savedOrder = orderRepository.save(order);
-        if ("COMPLETED".equalsIgnoreCase(savedOrder.getStatus())) {
-            savedOrder = completePendingOrder(savedOrder, null, now);
-        }
-
-        return savedOrder;
+        return orderRepository.save(order);
     }
 
     @Transactional(readOnly = true)
@@ -481,8 +467,7 @@ public class OrderService {
         }
 
         return switch (method.toUpperCase()) {
-            case "CASH" -> "Tiền mặt";
-            case "TRANSFER", "CHUYEN_KHOAN" -> "Chuyển khoản";
+            case "CHUYEN_KHOAN" -> "Chuyển khoản";
             default -> method;
         };
     }

@@ -43,7 +43,6 @@ const CheckoutPage = () => {
       customerName: user.fullName || user.username || "Khách hàng",
       customerPhone: user.phone || "Đang cập nhật",
       paymentMethod: "CHUYEN_KHOAN",
-      pendingConfirmation: true,
       discount: cartDiscount,
       voucherCode: appliedVoucher ? appliedVoucher.code : "",
       items: cartItems.map((item) => ({

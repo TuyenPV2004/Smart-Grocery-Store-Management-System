@@ -21,7 +21,6 @@ import InventoryListPage from "./pages/admin/InventoryListPage";
 import BatchListPage from "./pages/admin/BatchListPage";
 import InventoryExportPage from "./pages/admin/InventoryExportPage";
 import StockManagementPage from "./pages/admin/StockManagementPage";
-import PosPage from "./pages/admin/PosPage";
 import OrderManagementPage from "./pages/admin/OrderManagementPage";
 import HomePage from "./pages/user/HomePage";
 import PublicLayout from "./components/PublicLayout";
@@ -76,7 +75,6 @@ function App() {
                 path="/inventory/stock"
                 element={<StockManagementPage />}
               />
-              <Route path="/pos" element={<PosPage />} />
               <Route path="/orders" element={<OrderManagementPage />} />
               <Route path="/support/chat" element={<CustomerChatPage />} />
             </Route>

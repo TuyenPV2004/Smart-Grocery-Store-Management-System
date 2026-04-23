@@ -79,9 +79,7 @@ const OrderManagementPage = () => {
 
   const getPaymentMethodLabel = (method) => {
     switch (method) {
-      case "CASH":
-        return "Tiền mặt";
-      case "TRANSFER":
+      case "CHUYEN_KHOAN":
         return "Chuyển khoản";
       default:
         return method;

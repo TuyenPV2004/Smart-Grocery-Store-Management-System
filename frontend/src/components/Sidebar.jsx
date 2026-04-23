@@ -2,7 +2,6 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import {
   LayoutDashboard,
-  ShoppingCart,
   Package,
   Users,
   LogOut,
@@ -81,13 +80,6 @@ const Sidebar = ({ isCollapsed, onToggle }) => {
       label: "Quản lý danh mục",
       icon: Layers,
       roles: ["ADMIN"],
-    },
-    {
-      id: "sales",
-      path: "/pos",
-      label: "Bán hàng",
-      icon: ShoppingCart,
-      roles: ["ADMIN", "STAFF"],
     },
     {
       id: "orders",
