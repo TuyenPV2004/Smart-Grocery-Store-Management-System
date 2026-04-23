@@ -18,7 +18,7 @@ import java.io.IOException;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/inventory")
+@RequestMapping("/api/inventory")
 public class InventoryController {
 
     @Autowired

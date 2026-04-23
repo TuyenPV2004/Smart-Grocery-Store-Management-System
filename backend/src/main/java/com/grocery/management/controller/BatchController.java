@@ -19,7 +19,7 @@ import java.util.Optional;
 import java.time.LocalDate;
 
 @RestController
-@RequestMapping("/api/v1/batches")
+@RequestMapping("/api/batches")
 public class BatchController {
 
     @Autowired

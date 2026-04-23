@@ -10,7 +10,7 @@ import org.springframework.lang.NonNull;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/suppliers")
+@RequestMapping("/api/suppliers")
 @RequiredArgsConstructor
 public class SupplierController {
     private final SupplierService supplierService;

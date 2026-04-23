@@ -9,7 +9,7 @@ import java.util.List;
 import com.grocery.management.entity.CategoryHistory;
 
 @RestController
-@RequestMapping("/api/v1/categories")
+@RequestMapping("/api/categories")
 @RequiredArgsConstructor
 public class CategoryController {
     private final CategoryService categoryService;

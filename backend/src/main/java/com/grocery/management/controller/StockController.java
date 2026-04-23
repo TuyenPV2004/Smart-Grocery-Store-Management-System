@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/stocks")
+@RequestMapping("/api/stocks")
 @CrossOrigin(origins = "*")
 public class StockController {
 
@@ -21,7 +21,7 @@ public class StockController {
 
     /**
      * Get stock summary for all products
-     * GET /api/v1/stocks/summary
+     * GET /api/stocks/summary
      */
     @GetMapping("/summary")
     public ResponseEntity<List<StockSummaryDTO>> getStockSummary(
@@ -36,7 +36,7 @@ public class StockController {
 
     /**
      * Get dashboard statistics
-     * GET /api/v1/stocks/dashboard
+     * GET /api/stocks/dashboard
      */
     @GetMapping("/dashboard")
     public ResponseEntity<StockDashboardStats> getDashboardStats() {
@@ -45,7 +45,7 @@ public class StockController {
 
     /**
      * Get batches with expiry status (FEFO ordered)
-     * GET /api/v1/stocks/batches/expiry
+     * GET /api/stocks/batches/expiry
      */
     @GetMapping("/batches/expiry")
     public ResponseEntity<List<BatchExpiryDTO>> getBatchesWithExpiry(
@@ -60,7 +60,7 @@ public class StockController {
 
     /**
      * Get stock card history for a product
-     * GET /api/v1/stocks/card/{productId}
+     * GET /api/stocks/card/{productId}
      */
     @GetMapping("/card/{productId}")
     public ResponseEntity<List<StockCardDTO>> getStockCard(@PathVariable Long productId) {
