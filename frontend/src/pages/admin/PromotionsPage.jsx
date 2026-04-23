@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import moment from "moment";
 import Swal from "sweetalert2";
+import { getImageUrl } from "../../utils/imageUrl";
 
 const PromotionsPage = () => {
   const [promotions, setPromotions] = useState([]);
@@ -493,7 +494,7 @@ const PromotionsPage = () => {
                               <td className="py-2.5 px-4 font-medium text-slate-700 flex items-center gap-2">
                                 {p.thumbnail && (
                                   <img
-                                    src={`http://localhost:8080/${p.thumbnail}`}
+                                    src={getImageUrl(p.thumbnail)}
                                     className="w-8 h-8 rounded-lg object-cover"
                                     alt=""
                                   />
@@ -673,7 +674,7 @@ const PromotionsPage = () => {
                             <td className="py-2.5 px-4 font-medium text-slate-700 flex items-center gap-2">
                               {p.thumbnail && (
                                 <img
-                                  src={`http://localhost:8080/${p.thumbnail}`}
+                                  src={getImageUrl(p.thumbnail)}
                                   className="w-8 h-8 rounded-lg object-cover"
                                   alt=""
                                 />

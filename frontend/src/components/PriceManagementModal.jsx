@@ -10,6 +10,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 import priceService from "../services/priceService";
+import { getImageUrl } from "../utils/imageUrl";
 
 const PriceManagementModal = ({ isOpen, onClose, product, onPriceUpdated }) => {
   const [newImportPrice, setNewImportPrice] = useState("");
@@ -142,7 +143,7 @@ const PriceManagementModal = ({ isOpen, onClose, product, onPriceUpdated }) => {
             <img
               src={
                 product?.thumbnail
-                  ? `http://localhost:8080/${product.thumbnail}`
+                  ? getImageUrl(product.thumbnail)
                   : "https://via.placeholder.com/80"
               }
               alt={product?.name}

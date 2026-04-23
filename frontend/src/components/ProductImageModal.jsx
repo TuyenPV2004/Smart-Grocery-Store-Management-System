@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { X, Upload, Trash2, Image as ImageIcon } from "lucide-react";
 import Swal from "sweetalert2";
 import productService from "../services/productService";
+import { getImageUrl } from "../utils/imageUrl";
 
 const ProductImageModal = ({ isOpen, onClose, product, onUpdate }) => {
   const [images, setImages] = useState([]);
@@ -238,7 +239,7 @@ const ProductImageModal = ({ isOpen, onClose, product, onUpdate }) => {
                         className="group relative aspect-square rounded-xl overflow-hidden border border-slate-200 bg-slate-50"
                       >
                         <img
-                          src={`http://localhost:8080/${image.imageUrl}`}
+                          src={getImageUrl(image.imageUrl)}
                           alt="Product"
                           className="w-full h-full object-cover"
                         />

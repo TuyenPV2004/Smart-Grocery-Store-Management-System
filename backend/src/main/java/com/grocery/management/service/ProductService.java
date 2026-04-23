@@ -15,7 +15,6 @@ import com.grocery.management.repository.ProductBatchRepository;
 import com.grocery.management.entity.Promotion;
 import com.grocery.management.entity.ProductImage;
 import com.grocery.management.repository.PromotionRepository;
-import java.util.HashMap;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -27,9 +26,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.math.BigDecimal;
-import java.nio.file.*;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
@@ -50,6 +47,7 @@ public class ProductService {
     private final InventoryNoteDetailRepository inventoryNoteDetailRepository;
     private final ProductBatchRepository productBatchRepository;
     private final PromotionRepository promotionRepository;
+    private final CloudinaryImageService cloudinaryImageService;
 
     /**
      * Map active promotion vao Product
@@ -148,9 +146,7 @@ public class ProductService {
             throw new RuntimeException("Mã vạch đã tồn tại: " + product.getBarcode());
         }
         if (imageFile != null && !imageFile.isEmpty()) {
-            String fileName = System.currentTimeMillis() + "_" + imageFile.getOriginalFilename();
-            saveImageFile(fileName, imageFile);
-            product.setThumbnail("product-images/" + fileName);
+            product.setThumbnail(cloudinaryImageService.uploadProductImage(imageFile));
         }
 
         if (product.getSupplier() != null && product.getSupplier().getId() != null) {
@@ -217,9 +213,7 @@ public class ProductService {
         product.setImportPrice(request.getImportPrice() != null ? request.getImportPrice() : BigDecimal.ZERO);
         product.setShelfLife(request.getShelfLife() != null ? request.getShelfLife() : 0);
         if (imageFile != null && !imageFile.isEmpty()) {
-            String fileName = System.currentTimeMillis() + "_" + imageFile.getOriginalFilename();
-            saveImageFile(fileName, imageFile);
-            product.setThumbnail("product-images/" + fileName);
+            product.setThumbnail(cloudinaryImageService.uploadProductImage(imageFile));
         } else {
             product.setThumbnail("product-images/default.png");
         }
@@ -263,24 +257,13 @@ public class ProductService {
         }
 
         if (imageFile != null && !imageFile.isEmpty()) {
-            String fileName = System.currentTimeMillis() + "_" + imageFile.getOriginalFilename();
-            saveImageFile(fileName, imageFile);
-            existing.setThumbnail("product-images/" + fileName);
+            cloudinaryImageService.deleteImageByUrl(existing.getThumbnail());
+            existing.setThumbnail(cloudinaryImageService.uploadProductImage(imageFile));
         }
 
         Product updatedProduct = productRepository.save(existing);
         saveHistory(updatedProduct, "CẬP NHẬT");
         return updatedProduct;
-    }
-
-    private void saveImageFile(String fileName, MultipartFile file) throws IOException {
-        Path uploadPath = Paths.get("product-images");
-        if (!Files.exists(uploadPath))
-            Files.createDirectories(uploadPath);
-        try (InputStream inputStream = file.getInputStream()) {
-            Path filePath = uploadPath.resolve(fileName);
-            Files.copy(inputStream, filePath, StandardCopyOption.REPLACE_EXISTING);
-        }
     }
 
     @Transactional
@@ -396,12 +379,9 @@ public class ProductService {
             throw new RuntimeException("Vui lòng chọn ảnh để tải lên");
         }
 
-        String fileName = System.currentTimeMillis() + "_" + imageFile.getOriginalFilename();
-        saveImageFile(fileName, imageFile);
-
         ProductImage productImage = new ProductImage();
         productImage.setProduct(product);
-        productImage.setImageUrl("product-images/" + fileName);
+        productImage.setImageUrl(cloudinaryImageService.uploadProductImage(imageFile));
 
         return productImageRepository.save(productImage);
     }
@@ -420,12 +400,6 @@ public class ProductService {
 
         productImageRepository.delete(productImage);
 
-        try {
-            String fileName = productImage.getImageUrl().replace("product-images/", "");
-            Path filePath = Paths.get("product-images").resolve(fileName);
-            Files.deleteIfExists(filePath);
-        } catch (IOException e) {
-            System.err.println("Không thể xóa file ảnh vật lý: " + e.getMessage());
-        }
+        cloudinaryImageService.deleteImageByUrl(productImage.getImageUrl());
     }
 }

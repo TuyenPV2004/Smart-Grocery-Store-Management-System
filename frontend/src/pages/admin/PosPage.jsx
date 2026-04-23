@@ -15,6 +15,7 @@ import {
 import Swal from "sweetalert2";
 import productService from "../../services/productService";
 import orderService from "../../services/orderService";
+import { getImageUrl } from "../../utils/imageUrl";
 
 const PosPage = () => {
   const [products, setProducts] = useState([]);
@@ -233,7 +234,7 @@ const PosPage = () => {
               <div className="h-40 bg-gray-100 rounded-md mb-2 flex items-center justify-center overflow-hidden">
                 {prod.thumbnail ? (
                   <img
-                    src={`http://localhost:8080/${prod.thumbnail}`}
+                    src={getImageUrl(prod.thumbnail)}
                     className="h-full w-full object-cover group-hover:scale-105 transition-transform"
                   />
                 ) : (
@@ -303,7 +304,7 @@ const PosPage = () => {
                 <div className="w-12 h-12 bg-gray-100 rounded-md overflow-hidden flex-shrink-0">
                   {item.thumbnail ? (
                     <img
-                      src={`http://localhost:8080/${item.thumbnail}`}
+                      src={getImageUrl(item.thumbnail)}
                       className="w-full h-full object-cover"
                     />
                   ) : (

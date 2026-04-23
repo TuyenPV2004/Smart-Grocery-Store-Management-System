@@ -8,6 +8,7 @@ import ProductForm from "../../components/ProductForm";
 import HistoryModal from "../../components/HistoryModal";
 import PriceManagementModal from "../../components/PriceManagementModal";
 import ProductImageModal from "../../components/ProductImageModal";
+import { getImageUrl } from "../../utils/imageUrl";
 import {
   Plus,
   Search,
@@ -573,7 +574,7 @@ const ProductListPage = () => {
                         className="h-10 w-10 rounded-lg object-cover border border-slate-200"
                         src={
                           p.thumbnail
-                            ? `http://localhost:8080/${p.thumbnail}`
+                            ? getImageUrl(p.thumbnail)
                             : "https://via.placeholder.com/40"
                         }
                         alt=""

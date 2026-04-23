@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { X, Upload, Image as ImageIcon, ChevronUp } from "lucide-react";
 import supplierService from "../services/supplierService";
 import categoryService from "../services/categoryService";
+import { getImageUrl } from "../utils/imageUrl";
 const productSchema = z.object({
   name: z.string().min(10, "Tên sản phẩm phải có ít nhất 10 ký tự"),
   brand: z.string().optional(),
@@ -21,7 +22,7 @@ const productSchema = z.object({
 const ProductForm = ({ existingProduct, onClose, onSuccess }) => {
   const [preview, setPreview] = useState(
     existingProduct?.thumbnail
-      ? `http://localhost:8080/${existingProduct.thumbnail}`
+      ? getImageUrl(existingProduct.thumbnail)
       : null,
   );
   const [imageFile, setImageFile] = useState(null);

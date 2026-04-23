@@ -15,6 +15,7 @@ import {
   X,
 } from "lucide-react";
 import Swal from "sweetalert2";
+import { getImageUrl } from "../../utils/imageUrl";
 
 const SupplierPage = () => {
   const [suppliers, setSuppliers] = useState([]);
@@ -110,11 +111,6 @@ const SupplierPage = () => {
     setIsEditing(false);
     setSelectedId(null);
     setFormData(initialForm);
-  };
-
-  const getProductImageUrl = (path) => {
-    if (!path) return "";
-    return path.startsWith("http") ? path : `http://localhost:8080/${path}`;
   };
 
   const handleViewProducts = async (supplier) => {
@@ -543,7 +539,7 @@ const SupplierPage = () => {
                     >
                       {product.thumbnail ? (
                         <img
-                          src={getProductImageUrl(product.thumbnail)}
+                          src={getImageUrl(product.thumbnail)}
                           alt={product.name}
                           className="w-14 h-14 rounded-lg object-cover border border-slate-200"
                         />

@@ -4,17 +4,12 @@ import { Link, useNavigate } from "react-router-dom";
 import { ShoppingCart, Heart, Eye } from "lucide-react";
 import { useCart } from "../../context/CartContext";
 import { useAuth } from "../../context/AuthContext";
+import { getImageUrl } from "../../utils/imageUrl";
 
 const ProductCard = ({ product }) => {
   const { addToCart } = useCart();
   const { user } = useAuth();
   const navigate = useNavigate();
-  const getImageUrl = (path) => {
-    if (!path) return "https://via.placeholder.com/300x300?text=No+Image";
-    if (path.startsWith("http")) return path;
-    return `http://localhost:8080/${path}`;
-  };
-
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat("vi-VN", {
       style: "currency",
@@ -89,7 +84,7 @@ const ProductCard = ({ product }) => {
       {/* Image Container */}
       <div className="relative aspect-square overflow-hidden bg-slate-50 group-hover:bg-slate-100 transition-colors">
         <img
-          src={getImageUrl(product.thumbnail)}
+          src={getImageUrl(product.thumbnail, "https://via.placeholder.com/300x300?text=No+Image")}
           alt={product.name}
           className={`w-full h-full object-cover transition-transform duration-500 group-hover:scale-110 ${
             isOutOfStock ? "opacity-50 grayscale" : ""

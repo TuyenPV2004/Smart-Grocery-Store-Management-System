@@ -254,7 +254,7 @@ const HomePage = () => {
     "https://www.avakids.com/me-va-be/cach-lam-kem-sua-chua-1508028",
     "https://www.bachhoaxanh.com/kinh-nghiem-hay/15-cach-lam-mi-tron-hao-hao-de-lam-sieu-ngon-tai-nha-1578703",
     "https://petal.vn/huong-dan-bao-quan-nuoc-uong-tai-gia-dinh-tot-nhat/",
-    "http://winmilk.com.vn/tin-tuc/4-mon-an-dinh-duong-de-lam-tu-sua-cho-ca-gia-dinh-4.html",
+    "https://dinhduongmevabe.com.vn/so-tay-cua-me/dinh-duong-va-suc-khoe-cho-me/580-bay-thuc-don-cho-me-sau-sinh-loi-sua-boi-bo-suc-khoe",
     "https://www.bachhoaxanh.com/kinh-nghiem-hay/cach-lua-chon-hai-san-tuoi-ngon-chat-luong-va-an-toan-1112991",
   ];
   const RELATED_POST_READ_MORE_URLS = [
@@ -264,7 +264,7 @@ const HomePage = () => {
     "https://www.avakids.com/me-va-be/cach-lam-kem-sua-chua-1508028",
     "https://www.bachhoaxanh.com/kinh-nghiem-hay/15-cach-lam-mi-tron-hao-hao-de-lam-sieu-ngon-tai-nha-1578703",
     "https://petal.vn/huong-dan-bao-quan-nuoc-uong-tai-gia-dinh-tot-nhat/",
-    "http://winmilk.com.vn/tin-tuc/4-mon-an-dinh-duong-de-lam-tu-sua-cho-ca-gia-dinh-4.html",
+    "https://dinhduongmevabe.com.vn/so-tay-cua-me/dinh-duong-va-suc-khoe-cho-me/580-bay-thuc-don-cho-me-sau-sinh-loi-sua-boi-bo-suc-khoe",
     "https://www.bachhoaxanh.com/kinh-nghiem-hay/cach-lua-chon-hai-san-tuoi-ngon-chat-luong-va-an-toan-1112991",
   ];
 
@@ -275,7 +275,7 @@ const HomePage = () => {
     "https://cdn.tgdd.vn//News/1508028//cach-lam-kem-sua-chua-dau-800x564.jpg",
     "https://cdnv2.tgdd.vn/bhx-static/bhx/News/Images/2025/06/07/1578703/image10_202506071739360428.jpg",
     "https://petal.vn/wp-content/uploads/2021/04/nuoc-tinh-khiet.jpg",
-    "http://winmilk.com.vn/upload/images/pexels-joshsorenson-990439.jpg",
+    "https://cdnv2.tgdd.vn/mwg-static/common/News/1571105/goi-y-thuc-don-7-ngay-cho-me-sau-sinh-loi-sua-du-2.jpg",
     "https://cdn.tgdd.vn/Files/2018/12/22/1139752/tuyet-chieu-chon-hai-san-tuoi-ngon-cho-chi-em-3_700x450.jpg",
   ];
 
@@ -558,7 +558,7 @@ const HomePage = () => {
                 Bài viết liên quan
               </h2>
               <p className="text-slate-500 font-medium">
-                8 bài viết gợi ý từ các nhóm sản phẩm bạn đang bán
+                Các bài viết gợi ý phù hợp với bạn
               </p>
             </div>
             <Link

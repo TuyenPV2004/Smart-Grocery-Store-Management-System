@@ -16,6 +16,7 @@ import productService from "../../services/productService";
 import { useCart } from "../../context/CartContext";
 import { useAuth } from "../../context/AuthContext";
 import ProductCard from "../../components/common/ProductCard";
+import { getImageUrl } from "../../utils/imageUrl";
 import ImageGallery from "react-image-gallery";
 import "react-image-gallery/styles/image-gallery.css";
 
@@ -101,7 +102,7 @@ const ProductDetailPage = () => {
         const currentProduct = productRes.data;
         setProduct(currentProduct);
         if (currentProduct.thumbnail) {
-          setMainImage(`http://localhost:8080/${currentProduct.thumbnail}`);
+          setMainImage(getImageUrl(currentProduct.thumbnail));
         }
 
         const productList = productsRes.data?.content || productsRes.data || [];
@@ -315,8 +316,8 @@ const ProductDetailPage = () => {
                         thumbnailClass: "h-20 w-20 object-cover",
                       },
                       ...(product.images || []).map((img) => ({
-                        original: `http://localhost:8080/${img.imageUrl}`,
-                        thumbnail: `http://localhost:8080/${img.imageUrl}`,
+                        original: getImageUrl(img.imageUrl),
+                        thumbnail: getImageUrl(img.imageUrl),
                         originalClass:
                           "aspect-square w-full object-cover rounded-t-[2rem]",
                         thumbnailClass: "h-20 w-20 object-cover",

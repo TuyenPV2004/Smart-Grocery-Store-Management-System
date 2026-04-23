@@ -26,6 +26,7 @@ import {
   Pencil,
   FileCheck2,
 } from "lucide-react";
+import { getImageUrl } from "../../utils/imageUrl";
 import Swal from "sweetalert2";
 import styled, { createGlobalStyle } from "styled-components";
 import productService from "../../services/productService";
@@ -786,7 +787,7 @@ const PreviewModal = ({ isOpen, onClose, onConfirm, data, grandTotal }) => {
                           <img
                             src={
                               d.productInfo?.thumbnail
-                                ? `http://localhost:8080/${d.productInfo.thumbnail}`
+                                ? getImageUrl(d.productInfo.thumbnail)
                                 : d.tempData?.previewUrl ||
                                   "https://via.placeholder.com/40"
                             }
@@ -1188,7 +1189,7 @@ const InventoryEntryPage = () => {
       shelfLife: product.shelfLife || 0,
       supplierId: product.supplier?.id || "",
       previewUrl: product.thumbnail
-        ? `http://localhost:8080/${product.thumbnail}`
+        ? getImageUrl(product.thumbnail)
         : null,
     };
     setEditingData(editData);
@@ -1625,7 +1626,7 @@ const InventoryEntryPage = () => {
                           <img
                             src={
                               row.productInfo
-                                ? `http://localhost:8080/${row.productInfo.thumbnail}`
+                                ? getImageUrl(row.productInfo.thumbnail)
                                 : row.tempData?.previewUrl ||
                                   "https://via.placeholder.com/40"
                             }

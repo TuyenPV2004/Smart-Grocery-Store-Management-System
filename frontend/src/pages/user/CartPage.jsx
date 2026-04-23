@@ -14,6 +14,7 @@ import { useCart } from "../../context/CartContext";
 import { useAuth } from "../../context/AuthContext";
 import orderService from "../../services/orderService";
 import voucherService from "../../services/voucherService";
+import { getImageUrl } from "../../utils/imageUrl";
 
 const CartPage = () => {
   const {
@@ -70,12 +71,6 @@ const CartPage = () => {
       style: "currency",
       currency: "VND",
     }).format(Number(amount || 0));
-
-  const getImageUrl = (path) => {
-    if (!path) return "https://via.placeholder.com/100x100?text=No+Image";
-    if (path.startsWith("http")) return path;
-    return `http://localhost:8080/${path}`;
-  };
 
   const formatVoucherDiscount = (voucher) => {
     if (!voucher) return "";
@@ -262,7 +257,7 @@ const CartPage = () => {
               >
                 <div className="w-24 h-24 bg-slate-50 rounded-xl flex-shrink-0 overflow-hidden border border-slate-100">
                   <img
-                    src={getImageUrl(item.product.thumbnail)}
+                    src={getImageUrl(item.product.thumbnail, "https://via.placeholder.com/100x100?text=No+Image")}
                     alt={item.product.name}
                     className="w-full h-full object-cover"
                   />

@@ -14,6 +14,7 @@ import {
   Search,
 } from "lucide-react";
 import Swal from "sweetalert2";
+import { getImageUrl } from "../../utils/imageUrl";
 
 const DetailModal = ({ isOpen, onClose, note }) => {
   if (!isOpen || !note) return null;
@@ -118,7 +119,7 @@ const DetailModal = ({ isOpen, onClose, note }) => {
                           <img
                             src={
                               d.product?.thumbnail
-                                ? `http://localhost:8080/${d.product.thumbnail}`
+                                ? getImageUrl(d.product.thumbnail)
                                 : "https://via.placeholder.com/40"
                             }
                             alt=""

@@ -19,6 +19,7 @@ import {
   Upload,
   ImageIcon,
 } from "lucide-react";
+import { getImageUrl } from "../../utils/imageUrl";
 import Swal from "sweetalert2";
 import productService from "../../services/productService";
 import inventoryService from "../../services/inventoryService";
@@ -787,7 +788,7 @@ const InventoryExportPage = () => {
       shelfLife: product.shelfLife || 0,
       supplierId: product.supplier?.id || "",
       previewUrl: product.thumbnail
-        ? `http://localhost:8080/${product.thumbnail}`
+        ? getImageUrl(product.thumbnail)
         : null,
     };
     setEditingData(editData);
@@ -1154,7 +1155,7 @@ const InventoryExportPage = () => {
                           <img
                             src={
                               row.thumbnail
-                                ? `http://localhost:8080/${row.thumbnail}`
+                                ? getImageUrl(row.thumbnail)
                                 : row.previewUrl ||
                                   "https://via.placeholder.com/40"
                             }
