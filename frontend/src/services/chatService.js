@@ -1,6 +1,6 @@
 import axiosClient from "./axiosClient";
 
-const HTTP_BASE_URL = "http://localhost:8080";
+const HTTP_BASE_URL = import.meta.env.VITE_GATEWAY_BASE_URL || "http://localhost:8088";
 
 const getSocketBaseUrl = () => HTTP_BASE_URL.replace(/^http/, "ws");
 

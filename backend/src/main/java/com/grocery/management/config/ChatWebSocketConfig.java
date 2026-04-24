@@ -18,7 +18,7 @@ public class ChatWebSocketConfig implements WebSocketConfigurer {
     private final ChatWebSocketHandler chatWebSocketHandler;
     private final ChatHandshakeInterceptor chatHandshakeInterceptor;
 
-    @Value("${app.cors.allowed-origins:http://localhost:5173,http://localhost:3000}")
+    @Value("${app.websocket.allowed-origins:http://localhost:5173,http://localhost:3000}")
     private String allowedOrigins;
 
     @Override

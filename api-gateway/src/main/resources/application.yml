@@ -1,0 +1,74 @@
+server:
+  port: ${SERVER_PORT:8088}
+
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      server:
+        webflux:
+          globalcors:
+            add-to-simple-url-handler-mapping: true
+            cors-configurations:
+              '[/**]':
+                allowed-origins:
+                  - "http://localhost:5173"
+                allowed-methods:
+                  - GET
+                  - POST
+                  - PUT
+                  - PATCH
+                  - DELETE
+                  - OPTIONS
+                allowed-headers: "*"
+                exposed-headers:
+                  - Authorization
+                  - X-Trace-Id
+                allow-credentials: true
+          routes:
+            - id: auth-service
+              uri: ${AUTH_SERVICE_URI:http://localhost:8080}
+              predicates:
+                - Path=/api/auth/**,/api/users/**
+            - id: catalog-service
+              uri: ${CATALOG_SERVICE_URI:http://localhost:8080}
+              predicates:
+                - Path=/api/products/**,/api/categories/**,/api/suppliers/**
+            - id: order-service
+              uri: ${ORDER_SERVICE_URI:http://localhost:8080}
+              predicates:
+                - Path=/api/orders/**,/api/payment/**
+            - id: notification-service
+              uri: ${NOTIFICATION_SERVICE_URI:http://localhost:8084}
+              predicates:
+                - Path=/api/notifications/**
+            - id: monolith-api
+              uri: ${MONOLITH_URI:http://localhost:8080}
+              predicates:
+                - Path=/api/**
+            - id: monolith-websocket
+              uri: ${MONOLITH_WS_URI:ws://localhost:8080}
+              predicates:
+                - Path=/ws/**
+            - id: monolith-product-images
+              uri: ${MONOLITH_URI:http://localhost:8080}
+              predicates:
+                - Path=/product-images/**
+            - id: monolith-user-photos
+              uri: ${MONOLITH_URI:http://localhost:8080}
+              predicates:
+                - Path=/user-photos/**
+            - id: monolith-openapi
+              uri: ${MONOLITH_URI:http://localhost:8080}
+              predicates:
+                - Path=/v3/api-docs/**,/swagger-ui/**,/swagger-ui.html
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,gateway
+  endpoint:
+    gateway:
+      access: read_only

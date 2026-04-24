@@ -1,4 +1,4 @@
-const BACKEND_URL = "http://localhost:8080/";
+const BACKEND_URL = import.meta.env.VITE_PUBLIC_BASE_URL || "http://localhost:8088/";
 
 export const getImageUrl = (path, placeholder = null) => {
   if (!path) return placeholder;

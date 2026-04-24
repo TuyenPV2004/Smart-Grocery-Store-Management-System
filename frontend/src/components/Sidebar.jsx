@@ -29,7 +29,7 @@ const Sidebar = ({ isCollapsed, onToggle }) => {
   );
   const [openFlyoutIndex, setOpenFlyoutIndex] = useState(null);
   const [flyoutTop, setFlyoutTop] = useState(0);
-  const BACKEND_URL = "http://localhost:8080/";
+  const BACKEND_URL = import.meta.env.VITE_PUBLIC_BASE_URL || "http://localhost:8088/";
   const avatarPath = user?.avatarUrl || user?.avatar_url || user?.avatar;
 
   const menuItems = [

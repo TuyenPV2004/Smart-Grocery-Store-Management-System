@@ -17,6 +17,9 @@ const LoginPage = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
 
+  const getRedirectPath = (role) =>
+    role === "ADMIN" || role === "STAFF" ? "/dashboard" : "/";
+
   const handleLogin = async (e) => {
     e.preventDefault();
     setIsLoading(true);
@@ -25,16 +28,19 @@ const LoginPage = () => {
     try {
       const res = await axiosClient.post("/auth/login", { username, password });
       const token = res.data.token;
+      if (!token) {
+        throw new Error("LOGIN_RESPONSE_MISSING_TOKEN");
+      }
       localStorage.setItem("token", token);
 
       try {
         const profileRes = await userService.getProfile();
         const fullUserData = { ...res.data, ...profileRes.data };
-        login(fullUserData, token);
+        login(fullUserData, token, getRedirectPath(fullUserData.role));
         toast.success("Đăng nhập thành công!");
       } catch (profileError) {
         console.error("Không tải được profile:", profileError);
-        login(res.data, token);
+        login(res.data, token, getRedirectPath(res.data.role));
         toast.success("Đăng nhập thành công!");
       }
     } catch (err) {
@@ -45,6 +51,8 @@ const LoginPage = () => {
         );
       } else if (err.response?.data) {
         setError(err.response.data);
+      } else if (err.message === "LOGIN_RESPONSE_MISSING_TOKEN") {
+        setError("Phan hoi dang nhap khong co token. Vui long kiem tra backend.");
       } else {
         setError("Đã có lỗi xảy ra. Vui lòng thử lại sau.");
       }
