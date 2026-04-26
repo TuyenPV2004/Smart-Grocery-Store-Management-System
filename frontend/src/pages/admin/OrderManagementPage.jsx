@@ -315,7 +315,7 @@ const OrderManagementPage = () => {
                       )}
                     </td>
                     <td className="whitespace-nowrap px-6 py-4 text-sm text-slate-900">
-                      {order.user?.fullName || "---"}
+                      {order.user?.fullName || order.username || (order.userId ? `#${order.userId}` : "---")}
                     </td>
                     <td className="whitespace-nowrap px-6 py-4">
                       <span className="text-sm text-slate-600">

@@ -1,6 +1,7 @@
 package com.grocery.management.service;
 
 import com.grocery.management.config.VNPayConfig;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -12,6 +13,7 @@ import java.time.LocalDateTime;
 import java.util.*;
 
 @Service
+@Slf4j
 public class VNPayService {
 
     @Autowired
@@ -110,7 +112,7 @@ public class VNPayService {
                 try {
                     hashData.append(URLEncoder.encode(fieldValue, StandardCharsets.US_ASCII.toString()));
                 } catch (UnsupportedEncodingException e) {
-                    e.printStackTrace();
+                    log.warn("Unable to encode VNPay return field {}", fieldName, e);
                 }
                 if (itr.hasNext()) {
                     hashData.append('&');

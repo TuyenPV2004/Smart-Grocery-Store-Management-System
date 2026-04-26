@@ -1,0 +1,18 @@
+package com.grocery.management.config;
+
+import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.info.Info;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+@Configuration
+public class OpenApiConfig {
+
+    @Bean
+    public OpenAPI notificationServiceOpenAPI() {
+        return new OpenAPI().info(new Info()
+                .title("Grocery Notification Service API")
+                .version("phase-4")
+                .description("Notification consumer and inspection API"));
+    }
+}

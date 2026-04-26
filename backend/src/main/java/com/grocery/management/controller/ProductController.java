@@ -7,6 +7,7 @@ import com.grocery.management.service.ProductService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -20,6 +21,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/products")
 @RequiredArgsConstructor
+@Slf4j
 public class ProductController {
     private final ProductService productService;
 
@@ -74,7 +76,7 @@ public class ProductController {
             Product product = mapper.readValue(productJson, Product.class);
             return ResponseEntity.ok(productService.updateProduct(id, product, image));
         } catch (Exception e) {
-            e.printStackTrace();
+            log.warn("Failed to update product id={}", id, e);
             return ResponseEntity.badRequest().body("Lỗi xử lý dữ liệu: " + e.getMessage());
         }
     }

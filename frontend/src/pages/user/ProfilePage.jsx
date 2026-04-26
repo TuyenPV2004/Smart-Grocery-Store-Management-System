@@ -22,7 +22,7 @@ const ProfilePage = () => {
   const { updateUser } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
 
-  const BACKEND_URL = "http://localhost:8080/";
+  const BACKEND_URL = import.meta.env.VITE_PUBLIC_BASE_URL || "http://localhost:8088/";
   const avatarPath = user?.avatarUrl || user?.avatar_url || user?.avatar;
 
   const [formData, setFormData] = useState({

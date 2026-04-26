@@ -1,0 +1,41 @@
+server:
+  port: ${SERVER_PORT:8085}
+
+spring:
+  application:
+    name: inventory-service
+  datasource:
+    url: ${INVENTORY_DB_URL:jdbc:mysql://localhost:3312/grocery_inventory_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true}
+    username: ${INVENTORY_DB_USERNAME:root}
+    password: ${INVENTORY_DB_PASSWORD:123456}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USERNAME:guest}
+    password: ${RABBITMQ_PASSWORD:guest}
+
+jwt:
+  secret: ${JWT_SECRET:grocery_secret_key_grocery_secret_key_grocery_secret_key}
+
+services:
+  catalog:
+    url: ${CATALOG_SERVICE_URL:http://localhost:8082}
+
+app:
+  messaging:
+    inventory:
+      exchange: ${INVENTORY_EXCHANGE:inventory.exchange}
+      stock-changed-routing-key: ${INVENTORY_STOCK_CHANGED_ROUTING_KEY:inventory.stock.changed}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info

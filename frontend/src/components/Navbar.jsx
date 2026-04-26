@@ -17,7 +17,7 @@ import productService from "../services/productService";
 const Navbar = () => {
   const { user, isAuthenticated, logout } = useAuth();
   const { cartCount, addToCart, getProductPrice } = useCart();
-  const BACKEND_URL = "http://localhost:8080/";
+  const BACKEND_URL = import.meta.env.VITE_PUBLIC_BASE_URL || "http://localhost:8088/";
   const [isOpen, setIsOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);

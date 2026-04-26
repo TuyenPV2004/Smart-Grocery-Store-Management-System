@@ -6,7 +6,13 @@ const AuthContext = createContext(null);
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(() => {
     const storedUser = localStorage.getItem("user");
-    return storedUser ? JSON.parse(storedUser) : null;
+    try {
+      return storedUser ? JSON.parse(storedUser) : null;
+    } catch {
+      localStorage.removeItem("user");
+      localStorage.removeItem("token");
+      return null;
+    }
   });
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
     const token = localStorage.getItem("token");
@@ -19,12 +25,18 @@ export const AuthProvider = ({ children }) => {
     // Optional: could keep sync logic here if needed, but not required since useState initializes it
   }, []);
 
-  const login = (userData, token) => {
-    localStorage.setItem("user", JSON.stringify(userData));
+  const login = (userData, token, redirectTo = "/") => {
+    const normalizedUser = {
+      ...userData,
+      fullName: userData?.fullName || userData?.fullname || userData?.name || "",
+      role: userData?.role || "CUSTOMER",
+    };
+
+    localStorage.setItem("user", JSON.stringify(normalizedUser));
     localStorage.setItem("token", token);
-    setUser(userData);
+    setUser(normalizedUser);
     setIsAuthenticated(true);
-    navigate("/");
+    navigate(redirectTo, { replace: true });
   };
   const updateUser = (newUserData) => {
     setUser(newUserData);
