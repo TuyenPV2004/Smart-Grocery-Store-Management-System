@@ -121,6 +121,55 @@ services:
       retries: 5
       start_period: 30s
 
+  keycloak-db:
+    image: postgres:16
+    container_name: grocery_keycloak_db
+    environment:
+      POSTGRES_DB: keycloak
+      POSTGRES_USER: keycloak
+      POSTGRES_PASSWORD: "${KEYCLOAK_DB_PASSWORD}"
+    ports:
+      - "5433:5432"
+    volumes:
+      - keycloak_db_data:/var/lib/postgresql/data
+    networks:
+      - grocery_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U keycloak -d keycloak"]
+      timeout: 20s
+      retries: 5
+      start_period: 20s
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.6.1
+    container_name: grocery_keycloak
+    command:
+      - start
+      - --http-port=8080
+      - --http-enabled=true
+      - --hostname=http://localhost:8090
+      - --hostname-strict=false
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: "${KEYCLOAK_ADMIN}"
+      KC_BOOTSTRAP_ADMIN_PASSWORD: "${KEYCLOAK_ADMIN_PASSWORD}"
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://keycloak-db:5432/keycloak
+      KC_DB_USERNAME: keycloak
+      KC_DB_PASSWORD: "${KEYCLOAK_DB_PASSWORD}"
+      KC_HEALTH_ENABLED: "true"
+    ports:
+      - "8090:8080"
+    depends_on:
+      keycloak-db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "timeout 5 bash -c '</dev/tcp/127.0.0.1/9000'"]
+      timeout: 10s
+      retries: 10
+      start_period: 60s
+    networks:
+      - grocery_network
+
   backend:
     build:
       context: ../backend
@@ -132,8 +181,8 @@ services:
       - SPRING_DATASOURCE_URL=jdbc:mysql://db:3306/grocery_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
       - SPRING_DATASOURCE_USERNAME=${DB_USERNAME}
       - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
-      - JWT_SECRET=${JWT_SECRET}
-      - JWT_EXPIRATION=${JWT_EXPIRATION}
+      - KEYCLOAK_ISSUER_URI=${KEYCLOAK_PUBLIC_ISSUER_URI}
+      - KEYCLOAK_JWK_SET_URI=${KEYCLOAK_JWK_SET_URI}
       - MAIL_HOST=${MAIL_HOST}
       - MAIL_PORT=${MAIL_PORT}
       - MAIL_USERNAME=${MAIL_USERNAME}
@@ -165,8 +214,8 @@ services:
       - AUTH_DB_URL=jdbc:mysql://auth-db:3306/grocery_auth_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
       - AUTH_DB_USERNAME=${DB_USERNAME}
       - AUTH_DB_PASSWORD=${DB_PASSWORD}
-      - JWT_SECRET=${JWT_SECRET}
-      - JWT_EXPIRATION=${JWT_EXPIRATION}
+      - KEYCLOAK_ISSUER_URI=${KEYCLOAK_PUBLIC_ISSUER_URI}
+      - KEYCLOAK_JWK_SET_URI=${KEYCLOAK_JWK_SET_URI}
       - MAIL_HOST=${MAIL_HOST}
       - MAIL_PORT=${MAIL_PORT}
       - MAIL_USERNAME=${MAIL_USERNAME}
@@ -191,7 +240,8 @@ services:
       - CATALOG_DB_URL=jdbc:mysql://catalog-db:3306/grocery_catalog_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
       - CATALOG_DB_USERNAME=${DB_USERNAME}
       - CATALOG_DB_PASSWORD=${DB_PASSWORD}
-      - JWT_SECRET=${JWT_SECRET}
+      - KEYCLOAK_ISSUER_URI=${KEYCLOAK_PUBLIC_ISSUER_URI}
+      - KEYCLOAK_JWK_SET_URI=${KEYCLOAK_JWK_SET_URI}
       - CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME}
       - CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY}
       - CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET}
@@ -212,8 +262,8 @@ services:
       - ORDER_DB_URL=jdbc:mysql://order-db:3306/grocery_order_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
       - ORDER_DB_USERNAME=${DB_USERNAME}
       - ORDER_DB_PASSWORD=${DB_PASSWORD}
-      - JWT_SECRET=${JWT_SECRET}
-      - JWT_EXPIRATION=${JWT_EXPIRATION}
+      - KEYCLOAK_ISSUER_URI=${KEYCLOAK_PUBLIC_ISSUER_URI}
+      - KEYCLOAK_JWK_SET_URI=${KEYCLOAK_JWK_SET_URI}
       - AUTH_SERVICE_URL=http://auth-service:8081
       - CATALOG_SERVICE_URL=http://catalog-service:8082
       - INVENTORY_SERVICE_URL=http://inventory-service:8085
@@ -247,7 +297,8 @@ services:
       - NOTIFICATION_DB_URL=jdbc:mysql://notification-db:3306/grocery_notification_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
       - NOTIFICATION_DB_USERNAME=${DB_USERNAME}
       - NOTIFICATION_DB_PASSWORD=${DB_PASSWORD}
-      - JWT_SECRET=${JWT_SECRET}
+      - KEYCLOAK_ISSUER_URI=${KEYCLOAK_PUBLIC_ISSUER_URI}
+      - KEYCLOAK_JWK_SET_URI=${KEYCLOAK_JWK_SET_URI}
       - RABBITMQ_HOST=rabbitmq
       - RABBITMQ_PORT=5672
       - RABBITMQ_USERNAME=guest
@@ -271,7 +322,8 @@ services:
       - INVENTORY_DB_URL=jdbc:mysql://inventory-db:3306/grocery_inventory_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
       - INVENTORY_DB_USERNAME=${DB_USERNAME}
       - INVENTORY_DB_PASSWORD=${DB_PASSWORD}
-      - JWT_SECRET=${JWT_SECRET}
+      - KEYCLOAK_ISSUER_URI=${KEYCLOAK_PUBLIC_ISSUER_URI}
+      - KEYCLOAK_JWK_SET_URI=${KEYCLOAK_JWK_SET_URI}
       - CATALOG_SERVICE_URL=http://catalog-service:8082
       - AUTH_SERVICE_URL=http://auth-service:8081
       - RABBITMQ_HOST=rabbitmq
@@ -303,6 +355,8 @@ services:
       - INVENTORY_SERVICE_URI=http://inventory-service:8085
       - MONOLITH_URI=http://backend:8080
       - MONOLITH_WS_URI=ws://backend:8080
+      - KEYCLOAK_ISSUER_URI=${KEYCLOAK_PUBLIC_ISSUER_URI}
+      - KEYCLOAK_JWK_SET_URI=${KEYCLOAK_JWK_SET_URI}
     depends_on:
       - backend
       - auth-service
@@ -317,6 +371,13 @@ services:
     build:
       context: ../frontend
       dockerfile: ../docker/frontend.Dockerfile
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL}
+        VITE_GATEWAY_BASE_URL: ${VITE_GATEWAY_BASE_URL}
+        VITE_PUBLIC_BASE_URL: ${VITE_PUBLIC_BASE_URL}
+        VITE_KEYCLOAK_URL: ${VITE_KEYCLOAK_URL}
+        VITE_KEYCLOAK_REALM: ${VITE_KEYCLOAK_REALM}
+        VITE_KEYCLOAK_CLIENT_ID: ${VITE_KEYCLOAK_CLIENT_ID}
     container_name: grocery_frontend
     ports:
       - "80:80"
@@ -336,3 +397,4 @@ volumes:
   order_db_data:
   notification_db_data:
   inventory_db_data:
+  keycloak_db_data:

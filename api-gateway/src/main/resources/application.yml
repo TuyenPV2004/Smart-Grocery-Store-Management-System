@@ -4,6 +4,12 @@ server:
 spring:
   application:
     name: api-gateway
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8090/realms/grocery}
+          jwk-set-uri: ${KEYCLOAK_JWK_SET_URI:http://localhost:8090/realms/grocery/protocol/openid-connect/certs}
   cloud:
     gateway:
       server:
