@@ -34,6 +34,7 @@ public class SecurityConfig {
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/products/*").permitAll()
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/categories/**").permitAll()
                         .requestMatchers("/api/payment/vnpay_return", "/api/payment/vnpay_ipn").permitAll()
+                        .requestMatchers("/api/vouchers/validate", "/api/vouchers/*/commit-usage").permitAll()
                         .requestMatchers("/api/chat/socket-ticket").permitAll()
                         .requestMatchers("/api/chat/conversations/**", "/api/chat/conversations")
                         .hasAnyAuthority("ADMIN", "STAFF")

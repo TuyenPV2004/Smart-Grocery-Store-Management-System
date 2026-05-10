@@ -47,10 +47,26 @@ spring:
               uri: ${NOTIFICATION_SERVICE_URI:http://localhost:8084}
               predicates:
                 - Path=/api/notifications/**
-            - id: monolith-api
+            - id: monolith-vouchers
               uri: ${MONOLITH_URI:http://localhost:8080}
               predicates:
-                - Path=/api/**
+                - Path=/api/vouchers/**
+            - id: monolith-promotions
+              uri: ${MONOLITH_URI:http://localhost:8080}
+              predicates:
+                - Path=/api/promotions/**
+            - id: monolith-dashboard
+              uri: ${MONOLITH_URI:http://localhost:8080}
+              predicates:
+                - Path=/api/dashboard/**
+            - id: monolith-bank-accounts
+              uri: ${MONOLITH_URI:http://localhost:8080}
+              predicates:
+                - Path=/api/bank-accounts/**
+            - id: monolith-chat-api
+              uri: ${MONOLITH_URI:http://localhost:8080}
+              predicates:
+                - Path=/api/chat/**
             - id: monolith-websocket
               uri: ${MONOLITH_WS_URI:ws://localhost:8080}
               predicates:

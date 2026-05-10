@@ -1,9 +1,11 @@
 package com.grocery.management.service;
 
 import com.grocery.management.dto.AuthenticatedUserProfile;
+import com.grocery.management.dto.InventoryReservationRequest;
 import com.grocery.management.dto.OrderCreatedEvent;
 import com.grocery.management.dto.OrderRequest;
 import com.grocery.management.dto.ProductSnapshotResponse;
+import com.grocery.management.dto.VoucherValidationResponse;
 import com.grocery.management.entity.Order;
 import com.grocery.management.entity.OrderDetail;
 import com.grocery.management.repository.OrderRepository;
@@ -37,6 +39,8 @@ public class OrderService {
 
     private final OrderRepository orderRepository;
     private final CatalogClient catalogClient;
+    private final InventoryClient inventoryClient;
+    private final VoucherClient voucherClient;
     private final OrderEventPublisher orderEventPublisher;
 
     @Transactional
@@ -44,7 +48,7 @@ public class OrderService {
         LocalDateTime now = LocalDateTime.now();
 
         Order order = new Order();
-        order.setCode("ORD" + now.format(DateTimeFormatter.ofPattern("yyMMddHHmmss")));
+        order.setCode("ORD" + now.format(DateTimeFormatter.ofPattern("yyMMddHHmmssSSS")));
         order.setCreatedAt(now);
         order.setUserId(currentUser.getId());
         order.setUsername(currentUser.getUsername());
@@ -59,7 +63,13 @@ public class OrderService {
 
         List<OrderDetail> details = new ArrayList<>();
         BigDecimal totalAmount = BigDecimal.ZERO;
+        if (request.getItems() == null || request.getItems().isEmpty()) {
+            throw new RuntimeException("Don hang phai co it nhat mot san pham");
+        }
         for (OrderRequest.OrderItem item : request.getItems()) {
+            if (item.getProductId() == null || item.getQuantity() <= 0) {
+                throw new RuntimeException("Thong tin san pham trong don hang khong hop le");
+            }
             ProductSnapshotResponse product = catalogClient.getProductSnapshot(item.getProductId());
             BigDecimal unitPrice = product.getSellPrice() != null ? product.getSellPrice() : item.getPrice();
             if (unitPrice == null) {
@@ -83,15 +93,25 @@ public class OrderService {
 
         order.setDetails(details);
         order.setTotalAmount(totalAmount);
-        BigDecimal discount = request.getDiscount() != null ? request.getDiscount() : BigDecimal.ZERO;
-        if (discount.compareTo(totalAmount) > 0) {
-            discount = totalAmount;
-        }
+        BigDecimal discount = calculateVoucherDiscount(request.getVoucherCode(), totalAmount);
         order.setDiscount(discount);
-        order.setVoucherCode(request.getVoucherCode());
+        order.setVoucherCode(normalizeVoucherCode(request.getVoucherCode()));
         order.setFinalAmount(totalAmount.subtract(discount));
 
-        Order savedOrder = orderRepository.save(order);
+        InventoryReservationRequest reservationRequest = new InventoryReservationRequest(
+                order.getCode(),
+                details.stream()
+                        .map(detail -> new InventoryReservationRequest.Item(detail.getProductId(), detail.getQuantity()))
+                        .toList());
+
+        inventoryClient.reserve(order.getCode(), reservationRequest);
+        Order savedOrder;
+        try {
+            savedOrder = orderRepository.save(order);
+        } catch (RuntimeException ex) {
+            inventoryClient.release(order.getCode());
+            throw ex;
+        }
         orderEventPublisher.publishOrderCreated(new OrderCreatedEvent(
                 savedOrder.getId(),
                 savedOrder.getCode(),
@@ -160,7 +180,10 @@ public class OrderService {
         order.setPaymentStatus("CANCELLED");
         order.setPaymentFailureReason("Don hang da bi huy");
         order.setPaymentExpiresAt(null);
-        return orderRepository.save(order);
+        releaseInventoryIfNeeded(order);
+        Order savedOrder = orderRepository.save(order);
+        orderEventPublisher.publishOrderCancelled(savedOrder.getId(), savedOrder.getCode());
+        return savedOrder;
     }
 
     @Transactional
@@ -174,6 +197,8 @@ public class OrderService {
             throw new RuntimeException("Chi co the cap nhat don hang dang cho xu ly");
         }
         if ("COMPLETED".equals(normalizedStatus)) {
+            commitInventoryIfNeeded(order);
+            commitVoucherUsageIfNeeded(order);
             order.setStatus("COMPLETED");
             order.setPaymentStatus("PAID");
             order.setPaymentConfirmedAt(LocalDateTime.now());
@@ -183,8 +208,15 @@ public class OrderService {
             order.setPaymentStatus("CANCELLED");
             order.setPaymentFailureReason("Don hang da bi huy");
             order.setPaymentExpiresAt(null);
+            releaseInventoryIfNeeded(order);
         }
-        return orderRepository.save(order);
+        Order savedOrder = orderRepository.save(order);
+        if ("COMPLETED".equals(normalizedStatus)) {
+            orderEventPublisher.publishOrderPaid(savedOrder.getId(), savedOrder.getCode());
+        } else {
+            orderEventPublisher.publishOrderCancelled(savedOrder.getId(), savedOrder.getCode());
+        }
+        return savedOrder;
     }
 
     @Transactional(readOnly = true)
@@ -210,13 +242,17 @@ public class OrderService {
         if ("PAID".equalsIgnoreCase(order.getPaymentStatus())) {
             return order;
         }
+        commitInventoryIfNeeded(order);
+        commitVoucherUsageIfNeeded(order);
         order.setStatus("COMPLETED");
         order.setPaymentStatus("PAID");
         order.setPaymentFailureReason(null);
         order.setPaymentTransactionNo(transactionNo);
         order.setPaymentConfirmedAt(paidAt != null ? paidAt : LocalDateTime.now());
         order.setPaymentExpiresAt(null);
-        return orderRepository.save(order);
+        Order savedOrder = orderRepository.save(order);
+        orderEventPublisher.publishOrderPaid(savedOrder.getId(), savedOrder.getCode());
+        return savedOrder;
     }
 
     @Transactional
@@ -229,7 +265,10 @@ public class OrderService {
         order.setPaymentStatus(paymentStatus);
         order.setPaymentFailureReason(failureReason);
         order.setPaymentExpiresAt(null);
-        return orderRepository.save(order);
+        releaseInventoryIfNeeded(order);
+        Order savedOrder = orderRepository.save(order);
+        orderEventPublisher.publishOrderCancelled(savedOrder.getId(), savedOrder.getCode());
+        return savedOrder;
     }
 
     @Transactional
@@ -244,7 +283,9 @@ public class OrderService {
             order.setPaymentStatus("EXPIRED");
             order.setPaymentFailureReason("Qua han thanh toan");
             order.setPaymentExpiresAt(null);
-            orderRepository.save(order);
+            releaseInventoryIfNeeded(order);
+            Order savedOrder = orderRepository.save(order);
+            orderEventPublisher.publishOrderCancelled(savedOrder.getId(), savedOrder.getCode());
             updated++;
         }
         return updated;
@@ -335,6 +376,55 @@ public class OrderService {
         AuthenticatedUserProfile fallback = new AuthenticatedUserProfile();
         fallback.setUsername(authentication != null ? authentication.getName() : null);
         return fallback;
+    }
+
+    private BigDecimal calculateVoucherDiscount(String voucherCode, BigDecimal totalAmount) {
+        String normalizedCode = normalizeVoucherCode(voucherCode);
+        if (normalizedCode == null) {
+            return BigDecimal.ZERO;
+        }
+        VoucherValidationResponse voucher = voucherClient.validate(normalizedCode);
+        if (voucher.getMinOrderValue() != null && totalAmount.compareTo(voucher.getMinOrderValue()) < 0) {
+            throw new RuntimeException("Don hang chua dat gia tri toi thieu de dung voucher: " + voucher.getMinOrderValue());
+        }
+        BigDecimal discountValue = voucher.getDiscountValue() != null ? voucher.getDiscountValue() : BigDecimal.ZERO;
+        BigDecimal discount;
+        if ("PERCENTAGE".equalsIgnoreCase(voucher.getDiscountType())) {
+            discount = totalAmount.multiply(discountValue).divide(BigDecimal.valueOf(100));
+            if (voucher.getMaxDiscountAmount() != null && discount.compareTo(voucher.getMaxDiscountAmount()) > 0) {
+                discount = voucher.getMaxDiscountAmount();
+            }
+        } else {
+            discount = discountValue;
+        }
+        return discount.compareTo(totalAmount) > 0 ? totalAmount : discount;
+    }
+
+    private void commitInventoryIfNeeded(Order order) {
+        if (order.isInventoryAllocated()) {
+            return;
+        }
+        inventoryClient.commit(order.getCode());
+        order.setInventoryAllocated(true);
+    }
+
+    private void releaseInventoryIfNeeded(Order order) {
+        if (order.isInventoryAllocated()) {
+            return;
+        }
+        inventoryClient.release(order.getCode());
+    }
+
+    private void commitVoucherUsageIfNeeded(Order order) {
+        if (order.isVoucherUsageCommitted() || order.getVoucherCode() == null || order.getVoucherCode().isBlank()) {
+            return;
+        }
+        voucherClient.commitUsage(order.getVoucherCode(), order.getCode());
+        order.setVoucherUsageCommitted(true);
+    }
+
+    private String normalizeVoucherCode(String voucherCode) {
+        return voucherCode != null && !voucherCode.isBlank() ? voucherCode.trim() : null;
     }
 
     private String safeString(String value) {

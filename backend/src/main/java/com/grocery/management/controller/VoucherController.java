@@ -32,6 +32,16 @@ public class VoucherController {
         }
     }
 
+    @PostMapping("/{code}/commit-usage")
+    public ResponseEntity<?> commitUsage(@PathVariable String code, @RequestParam(required = false) String orderCode) {
+        try {
+            voucherService.incrementUsage(voucherService.getVoucherByCode(code).getId());
+            return ResponseEntity.ok("Committed voucher usage for order " + (orderCode != null ? orderCode : ""));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
     @PostMapping
     public ResponseEntity<?> createVoucher(@RequestBody Voucher voucher) {
         try {

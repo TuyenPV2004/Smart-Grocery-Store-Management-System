@@ -19,10 +19,30 @@ public class OrderEventPublisher {
     @Value("${app.messaging.order.created.routing-key}")
     private String orderCreatedRoutingKey;
 
+    @Value("${app.messaging.order.paid.routing-key}")
+    private String orderPaidRoutingKey;
+
+    @Value("${app.messaging.order.cancelled.routing-key}")
+    private String orderCancelledRoutingKey;
+
     public void publishOrderCreated(OrderCreatedEvent event) {
         rabbitTemplate.convertAndSend(
                 exchangeName,
                 orderCreatedRoutingKey,
                 EventEnvelope.of("OrderCreated", String.valueOf(event.getOrderId()), event));
+    }
+
+    public void publishOrderPaid(Long orderId, String orderCode) {
+        rabbitTemplate.convertAndSend(
+                exchangeName,
+                orderPaidRoutingKey,
+                EventEnvelope.of("OrderPaid", String.valueOf(orderId), orderCode));
+    }
+
+    public void publishOrderCancelled(Long orderId, String orderCode) {
+        rabbitTemplate.convertAndSend(
+                exchangeName,
+                orderCancelledRoutingKey,
+                EventEnvelope.of("OrderCancelled", String.valueOf(orderId), orderCode));
     }
 }

@@ -191,6 +191,7 @@ services:
       - CATALOG_DB_URL=jdbc:mysql://catalog-db:3306/grocery_catalog_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
       - CATALOG_DB_USERNAME=${DB_USERNAME}
       - CATALOG_DB_PASSWORD=${DB_PASSWORD}
+      - JWT_SECRET=${JWT_SECRET}
       - CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME}
       - CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY}
       - CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET}
@@ -215,6 +216,8 @@ services:
       - JWT_EXPIRATION=${JWT_EXPIRATION}
       - AUTH_SERVICE_URL=http://auth-service:8081
       - CATALOG_SERVICE_URL=http://catalog-service:8082
+      - INVENTORY_SERVICE_URL=http://inventory-service:8085
+      - VOUCHER_SERVICE_URL=http://backend:8080
       - RABBITMQ_HOST=rabbitmq
       - RABBITMQ_PORT=5672
       - RABBITMQ_USERNAME=guest
@@ -228,6 +231,8 @@ services:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
+      inventory-service:
+        condition: service_started
     networks:
       - grocery_network
 
@@ -242,6 +247,7 @@ services:
       - NOTIFICATION_DB_URL=jdbc:mysql://notification-db:3306/grocery_notification_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
       - NOTIFICATION_DB_USERNAME=${DB_USERNAME}
       - NOTIFICATION_DB_PASSWORD=${DB_PASSWORD}
+      - JWT_SECRET=${JWT_SECRET}
       - RABBITMQ_HOST=rabbitmq
       - RABBITMQ_PORT=5672
       - RABBITMQ_USERNAME=guest
