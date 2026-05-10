@@ -13,7 +13,6 @@ import {
   FiTruck,
 } from "react-icons/fi";
 import productService from "../../services/productService";
-import categoryService from "../../services/categoryService";
 import ProductCard from "../../components/common/ProductCard";
 
 const HERO_FEATURES = [
@@ -106,24 +105,8 @@ const RELATED_POST_URLS = [
   "https://www.avakids.com/me-va-be/cach-lam-kem-sua-chua-1508028",
 ];
 
-const normalizeCategoryName = (name = "") =>
-  name
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase();
-
-const getCategoryPreset = (name, index) => {
-  const normalizedName = normalizeCategoryName(name);
-  return (
-    CATEGORY_PRESETS.find((item) =>
-      item.match.some((keyword) => normalizedName.includes(keyword)),
-    ) || CATEGORY_PRESETS[index % CATEGORY_PRESETS.length]
-  );
-};
-
 const HomePage = () => {
   const [products, setProducts] = useState([]);
-  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const popularCategories = CATEGORY_PRESETS.map((preset) => ({
@@ -152,12 +135,8 @@ const HomePage = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [productsRes, categoriesRes] = await Promise.all([
-          productService.getAll({ pageSize: 8 }),
-          categoryService.getTree(),
-        ]);
+        const productsRes = await productService.getAll({ pageSize: 8 });
         setProducts(productsRes.data?.content || productsRes.data || []);
-        setCategories(categoriesRes.data || []);
       } catch (error) {
         console.error("Error fetching home data:", error);
       } finally {
@@ -213,7 +192,7 @@ const HomePage = () => {
             <div className="absolute inset-0 bg-gradient-to-r from-slate-950/70 via-slate-950/18 to-emerald-950/30" />
             <div className="relative z-10 flex h-full min-h-[620px] flex-col justify-between p-6 sm:p-8 lg:p-10 xl:p-12">
               <div className="max-w-xl pt-4 text-white">
-                <p className="mb-5 inline-flex rounded-full bg-white/15 px-4 py-2 text-sm font-semimedium backdrop-blur-md">
+                <p className="mb-5 inline-flex rounded-full bg-white/15 px-4 py-2 text-sm font-semibold backdrop-blur-md">
                   Grocery Store Fresh Market
                 </p>
                 <h1 className="text-4xl font-medium leading-tight tracking-tight sm:text-5xl xl:text-6xl">
@@ -264,7 +243,7 @@ const HomePage = () => {
                 <div>
                   <div className="flex items-start justify-between gap-4">
                     <div>
-                      <p className="text-sm font-semimedium text-white/78">
+                      <p className="text-sm font-semibold text-white/78">
                         Đánh giá khách hàng
                       </p>
                       <div className="mt-3 flex gap-1 text-amber-300">
@@ -309,7 +288,7 @@ const HomePage = () => {
                         <FiArrowRight size={17} />
                       </button>
                     </div>
-                    <span className="text-xs font-semimedium text-white/70">
+                    <span className="text-xs font-semibold text-white/70">
                       1 / 4
                     </span>
                   </div>
@@ -370,9 +349,9 @@ const HomePage = () => {
               </div>
               <Link
                 to="/products"
-                className="shrink-0 text-green-600 font-semimedium hover:text-green-700 flex items-center gap-1.5 group"
+                className="shrink-0 text-green-600 font-semibold hover:text-green-700 flex items-center gap-1.5 group"
               >
-                Veiw All
+                View All
                 <FiArrowRight
                   size={18}
                   className="transition-transform duration-300 group-hover:translate-x-1"
@@ -539,7 +518,7 @@ const HomePage = () => {
             </div>
             <Link
               to="/products"
-              className="shrink-0 text-green-600 font-semimedium hover:text-green-700 flex items-center gap-1.5 group"
+              className="shrink-0 text-green-600 font-semibold hover:text-green-700 flex items-center gap-1.5 group"
             >
               Xem sản phẩm
               <FiArrowRight
@@ -566,7 +545,7 @@ const HomePage = () => {
                 </a>
 
                 <div className="p-5 flex min-h-[230px] flex-col">
-                  <span className="w-fit rounded-md bg-emerald-50 text-emerald-700 px-1 py-0.5 text-[11px] font-semimedium leading-none mb-3">
+                  <span className="w-fit rounded-md bg-emerald-50 text-emerald-700 px-1 py-0.5 text-[11px] font-semibold leading-none mb-3">
                     {post.badge}
                   </span>
 
@@ -582,7 +561,7 @@ const HomePage = () => {
                     href={post.link}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="mt-auto text-green-600 font-semimedium text-sm hover:text-green-700 flex items-center gap-1"
+                    className="mt-auto text-green-600 font-semibold text-sm hover:text-green-700 flex items-center gap-1"
                   >
                     Đọc thêm
                   </a>

@@ -2,8 +2,8 @@ import { toast } from "react-toastify";
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ShoppingCart, Heart, Eye } from "lucide-react";
-import { useCart } from "../../context/CartContext";
-import { useAuth } from "../../context/AuthContext";
+import { useCart } from "../../context/useCart";
+import { useAuth } from "../../context/useAuth";
 import { getImageUrl } from "../../utils/imageUrl";
 
 const ProductCard = ({ product }) => {

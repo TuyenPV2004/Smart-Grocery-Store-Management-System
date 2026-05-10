@@ -1,6 +1,5 @@
 import { toast } from "react-toastify";
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import inventoryService from "../../services/inventoryService";
 import {
   FileSpreadsheet,
@@ -187,7 +186,6 @@ const DetailModal = ({ isOpen, onClose, note }) => {
 };
 
 const InventoryListPage = () => {
-  const navigate = useNavigate();
   const [notes, setNotes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");

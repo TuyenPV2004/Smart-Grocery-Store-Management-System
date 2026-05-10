@@ -20,7 +20,7 @@ const ProductImageModal = ({ isOpen, onClose, product, onUpdate }) => {
     try {
       const res = await productService.get(product.id);
       setImages(res.data.images || []);
-    } catch (error) {
+    } catch {
       Swal.fire({
         icon: "error",
         title: "Lỗi",
@@ -102,7 +102,7 @@ const ProductImageModal = ({ isOpen, onClose, product, onUpdate }) => {
       });
       fetchImages();
       if (onUpdate) onUpdate();
-    } catch (error) {
+    } catch {
       Swal.fire({
         icon: "error",
         title: "Lỗi",

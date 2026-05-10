@@ -59,7 +59,7 @@ const OrderHistoryPage = () => {
     try {
       const res = await orderService.getMyOrders();
       setOrders(Array.isArray(res.data) ? res.data : []);
-    } catch (error) {
+    } catch {
       toast.error("Không thể tải lịch sử đơn hàng");
       setOrders([]);
     } finally {

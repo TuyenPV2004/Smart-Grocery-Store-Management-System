@@ -1,5 +1,5 @@
 import { toast } from "react-toastify";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import userService from "../../services/userService";
 import {
   Edit,
@@ -13,7 +13,6 @@ import Swal from "sweetalert2";
 
 const UserListPage = () => {
   const [users, setUsers] = useState([]);
-  const [filteredUsers, setFilteredUsers] = useState([]);
   const [search, setSearch] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [formData, setFormData] = useState({
@@ -29,29 +28,40 @@ const UserListPage = () => {
   const [selectedUserForRole, setSelectedUserForRole] = useState(null);
   const [newRole, setNewRole] = useState("");
 
-  useEffect(() => {
-    fetchUsers();
-  }, []);
-
-  useEffect(() => {
+  const filteredUsers = useMemo(() => {
     const lowerSearch = search.toLowerCase();
-    setFilteredUsers(
-      users.filter(
-        (u) =>
-          u.fullName.toLowerCase().includes(lowerSearch) ||
-          u.email.toLowerCase().includes(lowerSearch),
-      ),
+    return users.filter(
+      (u) =>
+        u.fullName.toLowerCase().includes(lowerSearch) ||
+        u.email.toLowerCase().includes(lowerSearch),
     );
   }, [search, users]);
 
-  const fetchUsers = async () => {
+  async function fetchUsers() {
     try {
       const res = await userService.getAllUsers();
       setUsers(res.data);
     } catch (error) {
       console.error("Lỗi tải danh sách:", error);
     }
-  };
+  }
+
+  useEffect(() => {
+    let isMounted = true;
+
+    userService
+      .getAllUsers()
+      .then((res) => {
+        if (isMounted) setUsers(res.data);
+      })
+      .catch((error) => {
+        console.error("Lá»—i táº£i danh sÃ¡ch:", error);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -96,7 +106,7 @@ const UserListPage = () => {
       try {
         await userService.deleteUser(id);
         fetchUsers();
-      } catch (error) {
+      } catch {
         toast.error("Không thể xóa người dùng này.");
       }
     }
@@ -145,7 +155,7 @@ const UserListPage = () => {
       try {
         await userService.updateStatus(user.id, newStatus);
         fetchUsers();
-      } catch (error) {
+      } catch {
         toast.error("Lỗi cập nhật trạng thái");
       }
     }

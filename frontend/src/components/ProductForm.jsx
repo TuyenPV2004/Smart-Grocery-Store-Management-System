@@ -27,7 +27,6 @@ const ProductForm = ({ existingProduct, onClose, onSuccess }) => {
   );
   const [imageFile, setImageFile] = useState(null);
   const [suppliers, setSuppliers] = useState([]);
-  const [categories, setCategories] = useState([]);
   const [availableLabels, setAvailableLabels] = useState([]);
   const [selectedLabelIds, setSelectedLabelIds] = useState([]);
   const [isSupplierDropdownOpen, setIsSupplierDropdownOpen] = useState(false);
@@ -94,14 +93,11 @@ const ProductForm = ({ existingProduct, onClose, onSuccess }) => {
     };
   }, []);
 
-  // Initialize selected labels from existing product
   useEffect(() => {
     if (existingProduct && existingProduct.labels) {
       setSelectedLabelIds(existingProduct.labels.map((l) => l.id));
     }
   }, [existingProduct]);
-
-  // Xóa phần này vì chúng ta sẽ lấy tất cả nhãn ngay từ đầu
 
   useEffect(() => {
     const fetchData = async () => {
@@ -131,9 +127,6 @@ const ProductForm = ({ existingProduct, onClose, onSuccess }) => {
           }
         });
 
-        setCategories(subCategories);
-
-        // All categories can serve as Labels
         const labelsFromCategories = subCategories.map((cat) => ({
           id: cat.id,
           name: cat.name,

@@ -71,7 +71,7 @@ const ForgotPasswordPage = () => {
       await userService.forgotPassword(email);
       setCountdown(60);
       toast.info("Đã gửi lại mã OTP mới.");
-    } catch (error) {
+    } catch {
       toast.error("Gửi lại mã thất bại.");
     } finally {
       setLoading(false);

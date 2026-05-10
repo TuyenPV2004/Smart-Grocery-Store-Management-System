@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { CircleCheck, Loader2, XCircle } from "lucide-react";
-import { useCart } from "../../context/CartContext";
+import { useCart } from "../../context/useCart";
 import paymentService from "../../services/paymentService";
 
 const VNPayReturnPage = () => {

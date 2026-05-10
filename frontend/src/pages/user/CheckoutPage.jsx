@@ -2,8 +2,8 @@ import React, { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Loader2, QrCode } from "lucide-react";
 import { toast } from "react-toastify";
-import { useCart } from "../../context/CartContext";
-import { useAuth } from "../../context/AuthContext";
+import { useCart } from "../../context/useCart";
+import { useAuth } from "../../context/useAuth";
 import orderService from "../../services/orderService";
 import paymentService from "../../services/paymentService";
 

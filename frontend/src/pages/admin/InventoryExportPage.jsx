@@ -262,7 +262,8 @@ const QuickProductModal = ({
   });
 
   useEffect(() => {
-    if (initialData) {
+    const timer = setTimeout(() => {
+      if (initialData) {
       let currentSupId =
         initialData.supplier?.id || initialData.supplierId || "";
 
@@ -279,8 +280,8 @@ const QuickProductModal = ({
         shelfLife: initialData.shelfLife || "",
         supplierId: currentSupId,
       });
-    } else {
-      setFormData({
+      } else {
+        setFormData({
         name: "",
         sku: "",
         barcode: "",
@@ -292,8 +293,11 @@ const QuickProductModal = ({
         unit: "Thùng",
         imageFile: null,
         previewUrl: null,
-      });
-    }
+        });
+      }
+    }, 0);
+
+    return () => clearTimeout(timer);
   }, [initialData, isOpen, suppliers]);
 
   const handleFileChange = (e) => {
@@ -725,14 +729,14 @@ const InventoryExportPage = () => {
     return () => clearInterval(timer);
   }, []);
 
-  const fetchSuppliers = async () => {
+  async function fetchSuppliers() {
     try {
       const res = await supplierService.getAll();
       setSuppliers(res.data);
     } catch (err) {
       console.error(err);
     }
-  };
+  }
 
   // Staff validation
   const handleStaffIdChange = async (e) => {
@@ -744,7 +748,7 @@ const InventoryExportPage = () => {
         const user = response.data || response;
         setHeader((prev) => ({ ...prev, staffName: user.fullName }));
         setIsValidStaff(true);
-      } catch (err) {
+      } catch {
         setIsValidStaff(false);
         setHeader((prev) => ({ ...prev, staffName: "" }));
       }

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { MessageCircle, SendHorizonal, X } from "lucide-react";
 import { toast } from "react-toastify";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../context/useAuth";
 import chatService from "../services/chatService";
 
 const formatMessageTime = (value) => {
@@ -125,7 +125,7 @@ const ChatWidget = () => {
         socket.onerror = () => {
           socket.close();
         };
-      } catch (error) {
+      } catch {
         if (!isMounted) return;
         setIsConnected(false);
         reconnectRef.current = window.setTimeout(() => {
@@ -134,12 +134,6 @@ const ChatWidget = () => {
       }
     };
 
-    setMessages([]);
-    setConversationId(null);
-    setIsStaffOnline(false);
-    setIsStaffTyping(false);
-    setAssignedStaffDisplayName("");
-    setIsResolved(false);
     connect();
 
     return () => {

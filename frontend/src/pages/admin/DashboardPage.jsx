@@ -89,7 +89,7 @@ const metricTone = {
   },
 };
 
-const MetricCard = ({ title, value, note, icon: Icon, tone }) => (
+const MetricCard = ({ title, value, note, icon, tone }) => (
   <div
     className={`bg-white p-5 rounded-[2rem] border ${metricTone[tone].border} shadow-sm`}
   >
@@ -100,7 +100,7 @@ const MetricCard = ({ title, value, note, icon: Icon, tone }) => (
         <p className="mt-4 text-2xl font-medium text-slate-900">{value}</p>
       </div>
       <div className={`rounded-2xl p-3 ${metricTone[tone].accent}`}>
-        <Icon size={22} />
+        {React.createElement(icon, { size: 22 })}
       </div>
     </div>
   </div>

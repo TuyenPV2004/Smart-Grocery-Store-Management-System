@@ -1,6 +1,6 @@
 import { toast } from "react-toastify";
-import { useEffect, useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useCallback, useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
 import ReactPaginate from "react-paginate";
 import productService from "../../services/productService";
 import priceService from "../../services/priceService";
@@ -95,12 +95,6 @@ const ProductCheckModal = ({
   const handleAddNew = () => {
     onProductNotFound();
     handleClose();
-  };
-
-  const handleCheckAgain = () => {
-    setSearchTerm("");
-    setSearchResult(null);
-    setHasSearched(false);
   };
 
   const handleClose = () => {
@@ -256,7 +250,6 @@ const ProductCheckModal = ({
 };
 
 const ProductListPage = () => {
-  const navigate = useNavigate();
   const location = useLocation();
   const productsPerPage = 10;
   const [products, setProducts] = useState([]);
@@ -265,7 +258,9 @@ const ProductListPage = () => {
   const [totalProducts, setTotalProducts] = useState(0);
   const [filter, setFilter] = useState({ keyword: "", status: "" });
   const [debouncedKeyword, setDebouncedKeyword] = useState("");
-  const [showModal, setShowModal] = useState(false);
+  const [showModal, setShowModal] = useState(() =>
+    Boolean(location.state?.openAddForm),
+  );
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [historyData, setHistoryData] = useState([]);
@@ -277,12 +272,8 @@ const ProductListPage = () => {
   const [showImageModal, setShowImageModal] = useState(false);
   const [selectedProductForImage, setSelectedProductForImage] = useState(null);
 
-  // Auto-open add form if navigated from inventory entry
   useEffect(() => {
     if (location.state?.openAddForm) {
-      setShowModal(true);
-      setSelectedProduct(null);
-      // Clear the state to prevent re-opening on refresh
       window.history.replaceState({}, document.title);
     }
   }, [location]);
@@ -295,15 +286,7 @@ const ProductListPage = () => {
     return () => clearTimeout(timer);
   }, [filter.keyword]);
 
-  useEffect(() => {
-    fetchProducts();
-  }, [currentPage, debouncedKeyword, filter.status]);
-
-  useEffect(() => {
-    setCurrentPage(0);
-  }, [filter.keyword, filter.status]);
-
-  const fetchProducts = async () => {
+  const fetchProducts = useCallback(async () => {
     try {
       const res = await productService.getAll({
         keyword: debouncedKeyword,
@@ -359,7 +342,7 @@ const ProductListPage = () => {
               importPriceChangePercent,
               sellPriceChangePercent,
             };
-          } catch (error) {
+          } catch {
             return {
               ...product,
               importPriceChangePercent: null,
@@ -375,13 +358,12 @@ const ProductListPage = () => {
     } catch (error) {
       console.error("Lỗi tải sản phẩm", error);
     }
-  };
+  }, [currentPage, debouncedKeyword, filter.status]);
 
-  const calculateMargin = (importPrice, sellPrice) => {
-    if (!importPrice || importPrice === 0) return 0;
-    const margin = ((sellPrice - importPrice) / importPrice) * 100;
-    return margin.toFixed(1);
-  };
+  useEffect(() => {
+    const timer = setTimeout(fetchProducts, 0);
+    return () => clearTimeout(timer);
+  }, [fetchProducts]);
 
   const pageCount = totalPages;
   const currentProducts = products;
@@ -389,12 +371,6 @@ const ProductListPage = () => {
   const handlePageClick = (event) => {
     setCurrentPage(event.selected);
   };
-
-  useEffect(() => {
-    if (pageCount > 0 && currentPage > pageCount - 1) {
-      setCurrentPage(pageCount - 1);
-    }
-  }, [pageCount, currentPage]);
 
   const handleDeleteClick = (product) => {
     setProductToDelete(product);
@@ -451,7 +427,7 @@ const ProductListPage = () => {
       const res = await productService.getHistory(productId);
       setHistoryData(res.data);
       setShowHistoryModal(true);
-    } catch (error) {
+    } catch {
       console.error("Lỗi tải lịch sử");
     }
   };
@@ -506,12 +482,18 @@ const ProductListPage = () => {
             type="text"
             placeholder="Tìm theo tên sản phẩm, mã SKU, Barcode"
             className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:bg-white transition-all font-medium"
-            onChange={(e) => setFilter({ ...filter, keyword: e.target.value })}
+            onChange={(e) => {
+              setFilter({ ...filter, keyword: e.target.value });
+              setCurrentPage(0);
+            }}
           />
         </div>
         <select
           className="order-3 border border-slate-200 rounded-xl px-4 py-2 focus:outline-none font-medium text-slate-600 bg-white cursor-pointer"
-          onChange={(e) => setFilter({ ...filter, status: e.target.value })}
+          onChange={(e) => {
+            setFilter({ ...filter, status: e.target.value });
+            setCurrentPage(0);
+          }}
         >
           <option value="">Tất cả trạng thái</option>
           <option value="ACTIVE">Đang kinh doanh</option>
@@ -560,9 +542,6 @@ const ProductListPage = () => {
           </thead>
           <tbody className="divide-y divide-slate-50">
               {currentProducts.map((p) => {
-              const margin = calculateMargin(p.importPrice, p.sellPrice);
-              const isProfit = margin >= 0;
-
               return (
                 <tr
                   key={p.id}
@@ -812,7 +791,7 @@ const ProductListPage = () => {
             marginPagesDisplayed={1}
             pageCount={pageCount}
             previousLabel="<"
-            forcePage={currentPage}
+            forcePage={Math.min(currentPage, pageCount - 1)}
             renderOnZeroPageCount={null}
             containerClassName="flex items-center gap-1"
             pageClassName=""

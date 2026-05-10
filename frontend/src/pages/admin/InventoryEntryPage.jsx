@@ -28,7 +28,6 @@ import {
 } from "lucide-react";
 import { getImageUrl } from "../../utils/imageUrl";
 import Swal from "sweetalert2";
-import styled, { createGlobalStyle } from "styled-components";
 import productService from "../../services/productService";
 import userService from "../../services/userService";
 import supplierService from "../../services/supplierService";
@@ -56,6 +55,13 @@ const GlobalStyles = () => (
     }
   `}</style>
 );
+
+const createImportCode = () => {
+  const now = new Date();
+  const localDate = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
+  const dateString = localDate.toISOString().slice(2, 10).replace(/-/g, "");
+  return "IMP" + dateString + "-" + Math.floor(Math.random() * 1000);
+};
 
 // Product Check Modal Component
 const ProductCheckModal = ({
@@ -281,7 +287,8 @@ const QuickProductModal = ({
   });
 
   useEffect(() => {
-    if (initialData) {
+    const timer = setTimeout(() => {
+      if (initialData) {
       let currentSupId =
         initialData.supplier?.id || initialData.supplierId || "";
 
@@ -299,8 +306,8 @@ const QuickProductModal = ({
         shelfLife: initialData.shelfLife || "",
         supplierId: currentSupId,
       });
-    } else {
-      setFormData({
+      } else {
+        setFormData({
         name: "",
         sku: "",
         barcode: "",
@@ -312,8 +319,11 @@ const QuickProductModal = ({
         unit: "Thùng",
         imageFile: null,
         previewUrl: null,
-      });
-    }
+        });
+      }
+    }, 0);
+
+    return () => clearTimeout(timer);
   }, [initialData, isOpen, suppliers]);
 
   const handleFileChange = (e) => {
@@ -864,8 +874,8 @@ const PreviewModal = ({ isOpen, onClose, onConfirm, data, grandTotal }) => {
 
 const InventoryEntryPage = () => {
   const navigate = useNavigate();
-  const [header, setHeader] = useState({
-    code: "",
+  const [header, setHeader] = useState(() => ({
+    code: createImportCode(),
     importDate: new Date(Date.now() - new Date().getTimezoneOffset() * 60000)
       .toISOString()
       .slice(0, 16),
@@ -873,9 +883,9 @@ const InventoryEntryPage = () => {
     staffName: "",
     note: "",
     supplierId: "",
-  });
+  }));
 
-  const [details, setDetails] = useState([
+  const [details, setDetails] = useState(() => [
     {
       id: Date.now(),
       sku: "",
@@ -900,24 +910,11 @@ const InventoryEntryPage = () => {
   const [suppliers, setSuppliers] = useState([]);
   const [isModalOpen, setModalOpen] = useState(false);
   const [isCheckModalOpen, setCheckModalOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [searchResult, setSearchResult] = useState(null);
-  const [isSearching, setIsSearching] = useState(false);
   const [isPreviewOpen, setPreviewOpen] = useState(false);
   const [currentRowIndex, setCurrentRowIndex] = useState(null);
   const [isValidStaff, setIsValidStaff] = useState(null);
   const [editingData, setEditingData] = useState(null);
   const [checkSku, setCheckSku] = useState("");
-
-  useEffect(() => {
-    const now = new Date();
-    const localDate = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
-    const dateString = localDate.toISOString().slice(2, 10).replace(/-/g, "");
-    const randomCode =
-      "IMP" + dateString + "-" + Math.floor(Math.random() * 1000);
-    setHeader((prev) => ({ ...prev, code: randomCode }));
-    fetchSuppliers();
-  }, []);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -932,14 +929,22 @@ const InventoryEntryPage = () => {
     return () => clearInterval(timer);
   }, []);
 
-  const fetchSuppliers = async () => {
-    try {
-      const res = await supplierService.getAll();
-      setSuppliers(res.data);
-    } catch (err) {
-      console.error(err);
-    }
-  };
+  useEffect(() => {
+    let isMounted = true;
+
+    supplierService
+      .getAll()
+      .then((res) => {
+        if (isMounted) setSuppliers(res.data);
+      })
+      .catch((err) => {
+        console.error(err);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const handleStaffIdChange = async (e) => {
     const code = e.target.value;
@@ -950,7 +955,7 @@ const InventoryEntryPage = () => {
         const user = response.data || response;
         setHeader((prev) => ({ ...prev, staffName: user.fullName }));
         setIsValidStaff(true);
-      } catch (err) {
+      } catch {
         setIsValidStaff(false);
         setHeader((prev) => ({ ...prev, staffName: "" }));
       }
@@ -1097,7 +1102,7 @@ const InventoryEntryPage = () => {
     return true;
   };
   const handleDateInput = (index, value) => {
-    let cleaned = value.replace(/[^\d\/]/g, "");
+    let cleaned = value.replace(/[^\d/]/g, "");
     const prevValue = details[index].manufacturingDate || "";
     if (cleaned.length < prevValue.length) {
       if (prevValue.endsWith("/") && !cleaned.endsWith("/")) {
@@ -1286,7 +1291,7 @@ const InventoryEntryPage = () => {
     }
   };
 
-  const handleSaveRowToDb = async (index) => {
+  const HANDLE_SAVE_ROW_TO_DB = async (index) => {
     const row = details[index];
     if (row.isSaved) return;
 
@@ -1335,7 +1340,7 @@ const InventoryEntryPage = () => {
     }
   };
 
-  const handleExport = async (noteId, noteCode) => {
+  const HANDLE_EXPORT = async (noteId, noteCode) => {
     try {
       const response = await inventoryService.exportExcel(noteId);
       const url = window.URL.createObjectURL(new Blob([response.data]));
@@ -1470,7 +1475,7 @@ const InventoryEntryPage = () => {
     };
 
     try {
-      const res = await inventoryService.createImportNote(requestData);
+      await inventoryService.createImportNote(requestData);
       toast.success("Lưu phiếu thành công!");
       setPreviewOpen(false);
       navigate("/inventory/list");

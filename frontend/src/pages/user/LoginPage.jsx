@@ -1,7 +1,7 @@
 import { useState } from "react";
 import axiosClient from "../../services/axiosClient";
 import { Link, useNavigate } from "react-router-dom";
-import { useAuth } from "../../context/AuthContext";
+import { useAuth } from "../../context/useAuth";
 import userService from "../../services/userService";
 import { User, Lock, Store, Loader2, Check } from "lucide-react";
 import HomePage from "./HomePage";

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { useSearchParams, useNavigate } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import { Search, Filter, X, ChevronDown, ChevronRight } from "lucide-react";
 import ProductCard from "../../components/common/ProductCard";
 import productService from "../../services/productService";
@@ -33,7 +33,6 @@ const getEffectivePrice = (product) => {
 
 const CustomerProductPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const navigate = useNavigate();
 
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -185,20 +184,6 @@ const CustomerProductPage = () => {
 
   const handleToggleParent = (parentId) => {
     setOpenParentId((prev) => (prev === parentId ? null : parentId));
-  };
-
-  const handleSearch = (e) => {
-    e.preventDefault();
-    const formData = new FormData(e.target);
-    const query = formData.get("search");
-    const newParams = new URLSearchParams(searchParams);
-
-    if (query) {
-      newParams.set("search", query);
-    } else {
-      newParams.delete("search");
-    }
-    setSearchParams(newParams);
   };
 
   const handlePriceRangeSelect = (index) => {

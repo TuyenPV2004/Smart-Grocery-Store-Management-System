@@ -127,7 +127,7 @@ const SupplierPage = () => {
         (product) => product?.supplier?.id === supplier.id,
       );
       setSupplierProducts(productsOfSupplier);
-    } catch (error) {
+    } catch {
       toast.error("Không thể tải danh sách sản phẩm của nhà cung cấp");
       setShowProductsModal(false);
     } finally {

@@ -1,7 +1,7 @@
 import { toast } from 'react-toastify';
 import { useState, useEffect } from "react";
 import userService from "../../services/userService";
-import { useAuth } from "../../context/AuthContext";
+import { useAuth } from "../../context/useAuth";
 import {
   User,
   Mail,
@@ -40,25 +40,25 @@ const ProfilePage = () => {
   });
 
   useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const res = await userService.getProfile();
+        setUser(res.data);
+        updateUser(res.data);
+
+        setFormData({
+          fullName: res.data.fullName || "",
+          email: res.data.email || "",
+          phone: res.data.phone || "",
+          address: res.data.address || "",
+        });
+      } catch (error) {
+        console.error("Lỗi tải profile:", error);
+      }
+    };
+
     fetchProfile();
-  }, []);
-
-  const fetchProfile = async () => {
-    try {
-      const res = await userService.getProfile();
-      setUser(res.data);
-      updateUser(res.data); // ĐỒNG BỘ: Cập nhật Navbar ngay khi tải trang
-
-      setFormData({
-        fullName: res.data.fullName || "",
-        email: res.data.email || "",
-        phone: res.data.phone || "",
-        address: res.data.address || "",
-      });
-    } catch (error) {
-      console.error("Lỗi tải profile:", error);
-    }
-  };
+  }, [updateUser]);
 
   const handleFileChange = async (e) => {
     const file = e.target.files[0];
@@ -68,14 +68,13 @@ const ProfilePage = () => {
       try {
         const res = await userService.uploadAvatar(formData);
 
-        // Cập nhật state local
         const updatedUser = { ...user, avatarUrl: res.data };
         setUser(updatedUser);
 
-        updateUser(updatedUser); // ĐỒNG BỘ: Cập nhật Navbar ngay khi đổi Avatar
+        updateUser(updatedUser);
 
         toast.success("Cập nhật ảnh đại diện thành công!");
-      } catch (error) {
+      } catch {
         toast.error("Lỗi upload ảnh.");
       }
     }
@@ -87,11 +86,11 @@ const ProfilePage = () => {
       const res = await userService.updateProfile(formData);
       setUser(res.data);
 
-      updateUser(res.data); // ĐỒNG BỘ: Cập nhật Navbar ngay khi sửa thông tin
+      updateUser(res.data);
 
       setIsEditing(false);
       toast.success("Cập nhật thành công!");
-    } catch (error) {
+    } catch {
       toast.error("Lỗi cập nhật profile.");
     }
   };

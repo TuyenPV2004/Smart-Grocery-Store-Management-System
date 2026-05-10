@@ -179,7 +179,7 @@ const OrderManagementPage = () => {
       link.click();
       link.remove();
       window.URL.revokeObjectURL(url);
-    } catch (error) {
+    } catch {
       toast.error("Không thể xuất Excel cho đơn hàng này.");
     }
   };

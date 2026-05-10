@@ -10,8 +10,8 @@ import {
   User,
   X,
 } from "lucide-react";
-import { useCart } from "../../context/CartContext";
-import { useAuth } from "../../context/AuthContext";
+import { useCart } from "../../context/useCart";
+import { useAuth } from "../../context/useAuth";
 import orderService from "../../services/orderService";
 import voucherService from "../../services/voucherService";
 import { getImageUrl } from "../../utils/imageUrl";
@@ -58,7 +58,7 @@ const CartPage = () => {
         ) {
           localStorage.removeItem("pendingVnpayOrderCode");
         }
-      } catch (error) {
+      } catch {
         localStorage.removeItem("pendingVnpayOrderCode");
       }
     };
@@ -154,7 +154,7 @@ const CartPage = () => {
     try {
       const res = await voucherService.getActive();
       setAvailableVouchers(Array.isArray(res.data) ? res.data : []);
-    } catch (error) {
+    } catch {
       toast.error("Không thể tải danh sách voucher");
       setAvailableVouchers([]);
     } finally {

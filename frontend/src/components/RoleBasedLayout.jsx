@@ -1,4 +1,4 @@
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../context/useAuth";
 import MainLayout from "./MainLayout";
 import PublicLayout from "./PublicLayout";
 

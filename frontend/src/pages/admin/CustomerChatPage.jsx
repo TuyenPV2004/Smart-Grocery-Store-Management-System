@@ -11,7 +11,7 @@ import {
   UserCheck,
 } from "lucide-react";
 import { toast } from "react-toastify";
-import { useAuth } from "../../context/AuthContext";
+import { useAuth } from "../../context/useAuth";
 import chatService from "../../services/chatService";
 
 const mergeMessages = (prev, next) => {
@@ -238,7 +238,7 @@ const CustomerChatPage = () => {
       const nextConversations = Array.isArray(res.data) ? res.data : [];
       setConversations(nextConversations);
       syncSelection(nextConversations);
-    } catch (error) {
+    } catch {
       toast.error("Không thể tải danh sách cuộc trò chuyện");
     }
   };
@@ -325,7 +325,7 @@ const CustomerChatPage = () => {
         socket.onerror = () => {
           socket.close();
         };
-      } catch (error) {
+      } catch {
         if (!isMounted) return;
         reconnectRef.current = window.setTimeout(() => {
           connect();
@@ -363,7 +363,7 @@ const CustomerChatPage = () => {
             Array.isArray(res.data) ? res.data : [],
           ),
         }));
-      } catch (error) {
+      } catch {
         toast.error("Không thể tải tin nhắn");
       } finally {
         setLoadingMessages(false);
@@ -550,7 +550,7 @@ const CustomerChatPage = () => {
       setDraft("");
       typingSentRef.current = false;
       toast.success("Đã xóa cuộc trò chuyện");
-    } catch (error) {
+    } catch {
       toast.error("Không thể xóa cuộc trò chuyện");
     }
   };

@@ -13,8 +13,8 @@ import {
   RotateCw,
 } from "lucide-react";
 import productService from "../../services/productService";
-import { useCart } from "../../context/CartContext";
-import { useAuth } from "../../context/AuthContext";
+import { useCart } from "../../context/useCart";
+import { useAuth } from "../../context/useAuth";
 import ProductCard from "../../components/common/ProductCard";
 import { getImageUrl } from "../../utils/imageUrl";
 import ImageGallery from "react-image-gallery";
