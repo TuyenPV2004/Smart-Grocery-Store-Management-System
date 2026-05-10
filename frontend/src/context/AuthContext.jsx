@@ -22,7 +22,13 @@ export const AuthProvider = ({ children }) => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Optional: could keep sync logic here if needed, but not required since useState initializes it
+    const handleAuthExpired = () => {
+      setUser(null);
+      setIsAuthenticated(false);
+    };
+
+    window.addEventListener("auth:expired", handleAuthExpired);
+    return () => window.removeEventListener("auth:expired", handleAuthExpired);
   }, []);
 
   const login = (userData, token, redirectTo = "/") => {

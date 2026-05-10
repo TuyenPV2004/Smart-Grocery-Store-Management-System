@@ -1,14 +1,8 @@
 import React from "react";
 import { Outlet } from "react-router-dom";
 import Navbar from "./Navbar";
-import {
-  Facebook,
-  Twitter,
-  Instagram,
-  Mail,
-  Phone,
-  MapPin,
-} from "lucide-react";
+import { FaFacebookF, FaTwitter, FaInstagram } from "react-icons/fa";
+import { FiMail, FiPhone, FiMapPin } from "react-icons/fi";
 
 const PublicLayout = () => {
   return (
@@ -20,28 +14,28 @@ const PublicLayout = () => {
       </main>
 
       {/* Footer */}
-      <footer className="bg-white border-t border-slate-100 pt-8 pb-4">
+      <footer className="bg-[#10521d] text-white border-t border-transparent pt-8 pb-4">
         <div className="max-w-7xl mx-auto px-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
             <div>
               <div className="flex items-center gap-2 mb-4">
-                <div className="w-8 h-8 bg-green-600 rounded-lg flex items-center justify-center text-white font-bold">
+                <div className="w-8 h-8 bg-white/10 rounded-lg flex items-center justify-center text-white font-bold">
                   G
                 </div>
-                <span className="text-xl font-bold text-green-800">
+                <span className="text-xl font-bold text-white">
                   Grocery Store
                 </span>
               </div>
-              <p className="text-slate-500 mb-4">
+              <p className="text-white/90 mb-4">
                 Mang đến những sản phẩm tươi ngon nhất cho gia đình bạn mỗi
                 ngày.
               </p>
               <div className="flex gap-4">
-                {[Facebook, Twitter, Instagram].map((Icon, idx) => (
+                {[FaFacebookF, FaTwitter, FaInstagram].map((Icon, idx) => (
                   <a
                     key={idx}
                     href="#"
-                    className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 hover:bg-green-50 hover:text-green-600 transition-colors"
+                    className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-white/90 hover:bg-white/20 hover:text-white transition-colors"
                   >
                     <Icon size={18} />
                   </a>
@@ -50,13 +44,13 @@ const PublicLayout = () => {
             </div>
 
             <div>
-              <h3 className="font-bold text-slate-900 mb-4">Liên kết nhanh</h3>
+              <h3 className="font-bold text-white mb-4">Liên kết nhanh</h3>
               <ul className="space-y-2">
                 {["Về chúng tôi", "Sản phẩm", "Blog", "Liên hệ"].map((item) => (
                   <li key={item}>
                     <a
                       href="#"
-                      className="text-slate-500 hover:text-green-600 transition-colors"
+                      className="text-white/90 hover:text-emerald-200 transition-colors"
                     >
                       {item}
                     </a>
@@ -66,9 +60,7 @@ const PublicLayout = () => {
             </div>
 
             <div>
-              <h3 className="font-bold text-slate-900 mb-4">
-                Hỗ trợ khách hàng
-              </h3>
+              <h3 className="font-bold text-white mb-4">Hỗ trợ khách hàng</h3>
               <ul className="space-y-2">
                 {[
                   "Trung tâm trợ giúp",
@@ -79,7 +71,7 @@ const PublicLayout = () => {
                   <li key={item}>
                     <a
                       href="#"
-                      className="text-slate-500 hover:text-green-600 transition-colors"
+                      className="text-white/90 hover:text-emerald-200 transition-colors"
                     >
                       {item}
                     </a>
@@ -89,47 +81,25 @@ const PublicLayout = () => {
             </div>
 
             <div>
-              <h3 className="font-bold text-slate-900 mb-4">Liên hệ</h3>
+              <h3 className="font-bold text-white mb-4">Liên hệ</h3>
               <ul className="space-y-2">
                 <li className="flex items-start gap-3">
-                  <MapPin size={20} className="text-green-600 shrink-0" />
-                  <span className="text-slate-500">
-                    Trần Phú, Hà Đông, Hà Nội
-                  </span>
+                  <FiMapPin size={20} className="text-white shrink-0" />
+                  <span className="text-white/90">Trần Phú, Hà Đông, Hà Nội</span>
                 </li>
                 <li className="flex items-center gap-3">
-                  <Phone size={20} className="text-green-600 shrink-0" />
-                  <span className="text-slate-500">1900 1234</span>
+                  <FiPhone size={20} className="text-white shrink-0" />
+                  <span className="text-white/90">1900 1234</span>
                 </li>
                 <li className="flex items-center gap-3">
-                  <Mail size={20} className="text-green-600 shrink-0" />
-                  <span className="text-slate-500">support@grocery.com</span>
+                  <FiMail size={20} className="text-white shrink-0" />
+                  <span className="text-white/90">support@grocery.com</span>
                 </li>
               </ul>
             </div>
           </div>
-
-          <div className="border-t border-slate-100 pt-4 flex flex-col md:flex-row justify-between items-center gap-4">
-            <p className="text-sm text-slate-500">
-              © 2026 Grocery Store. All rights reserved.
-            </p>
-            <div className="flex gap-6">
-              <img
-                src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSEv2OVDSh2Tsc_LefB1f5sFFOy3BUx6eOk_w&s"
-                className="h-4 opacity-50 gray-scale"
-                alt="Visa"
-              />
-              <img
-                src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg"
-                className="h-4 opacity-50 gray-scale"
-                alt="Mastercard"
-              />
-              <img
-                src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQKgYNSZSsp_IoaexKIiIPj2MOClxCVkxRpgg&s"
-                className="h-4 opacity-50 gray-scale"
-                alt="Momo"
-              />
-            </div>
+          <div className="border-t border-white/10 pt-4 flex items-center justify-center gap-4">
+            <p className="w-full text-center text-sm text-white/80">© 2026 Grocery Store. All rights reserved.</p>
           </div>
         </div>
       </footer>

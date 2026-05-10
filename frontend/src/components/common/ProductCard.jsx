@@ -82,7 +82,7 @@ const ProductCard = ({ product }) => {
       )}
 
       {/* Image Container */}
-      <div className="relative aspect-square overflow-hidden bg-slate-50 group-hover:bg-slate-100 transition-colors">
+      <div className="relative aspect-[5/4] overflow-hidden bg-slate-50 group-hover:bg-slate-100 transition-colors">
         <img
           src={getImageUrl(product.thumbnail, "https://via.placeholder.com/300x300?text=No+Image")}
           alt={product.name}
@@ -110,15 +110,15 @@ const ProductCard = ({ product }) => {
       </div>
 
       {/* Content */}
-      <div className="p-4 flex flex-col flex-1">
+      <div className="p-3.5 flex flex-col flex-1">
         <h3
-          className="text-[15px] font-medium text-slate-800 line-clamp-2 mb-2 group-hover:text-green-600 transition-colors min-h-[44px]"
+          className="text-[15px] font-medium text-slate-800 line-clamp-2 mb-1.5 group-hover:text-green-600 transition-colors min-h-[36px]"
           title={product.name}
         >
           {product.name}
         </h3>
 
-        <div className="mt-auto pt-3 flex items-end justify-between border-t border-slate-50">
+        <div className="mt-auto pt-2.5 flex items-end justify-between border-t border-slate-50">
           <div>
             <p className="text-lg font-medium text-green-600">
               {formatCurrency(discountedPrice)}

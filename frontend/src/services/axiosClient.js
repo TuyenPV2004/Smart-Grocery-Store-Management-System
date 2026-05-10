@@ -13,4 +13,21 @@ axiosClient.interceptors.request.use((config) => {
     return config;
 });
 
+axiosClient.interceptors.response.use(
+    (response) => response,
+    (error) => {
+        if (error.response?.status === 401 && localStorage.getItem('token')) {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            window.dispatchEvent(new Event('auth:expired'));
+
+            if (window.location.pathname !== '/login') {
+                window.location.assign('/login');
+            }
+        }
+
+        return Promise.reject(error);
+    }
+);
+
 export default axiosClient;
