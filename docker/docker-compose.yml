@@ -188,14 +188,43 @@ services:
     networks:
       - grocery_network
 
+  discovery-server:
+    build:
+      context: ../discovery-server
+      dockerfile: ../docker/discovery-server.Dockerfile
+    container_name: grocery_discovery_server
+    ports:
+      - "8761:8761"
+    networks:
+      - grocery_network
+
+  config-server:
+    build:
+      context: ../config-server
+      dockerfile: ../docker/config-server.Dockerfile
+    container_name: grocery_config_server
+    ports:
+      - "8888:8888"
+    environment:
+      - CONFIG_SERVER_PROFILE=native
+      - CONFIG_REPO_URI=file:/config-repo
+    volumes:
+      - ../config-repo:/config-repo:ro
+    depends_on:
+      - discovery-server
+    networks:
+      - grocery_network
+
   auth-service:
     build:
       context: ../auth-service
       dockerfile: ../docker/auth-service.Dockerfile
     container_name: grocery_auth_service
-    ports:
-      - "8081:8081"
+    expose:
+      - "8081"
     environment:
+      - CONFIG_SERVER_URL=http://config-server:8888
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-server:8761/eureka
       - AUTH_DB_URL=jdbc:mysql://auth-db:3306/grocery_auth_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
       - AUTH_DB_USERNAME=${DB_USERNAME}
       - AUTH_DB_PASSWORD=${DB_PASSWORD}
@@ -209,6 +238,10 @@ services:
       - CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY}
       - CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET}
     depends_on:
+      config-server:
+        condition: service_started
+      discovery-server:
+        condition: service_started
       auth-db:
         condition: service_healthy
     networks:
@@ -219,9 +252,11 @@ services:
       context: ../catalog-service
       dockerfile: ../docker/catalog-service.Dockerfile
     container_name: grocery_catalog_service
-    ports:
-      - "8082:8082"
+    expose:
+      - "8082"
     environment:
+      - CONFIG_SERVER_URL=http://config-server:8888
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-server:8761/eureka
       - CATALOG_DB_URL=jdbc:mysql://catalog-db:3306/grocery_catalog_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
       - CATALOG_DB_USERNAME=${DB_USERNAME}
       - CATALOG_DB_PASSWORD=${DB_PASSWORD}
@@ -231,6 +266,10 @@ services:
       - CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY}
       - CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET}
     depends_on:
+      config-server:
+        condition: service_started
+      discovery-server:
+        condition: service_started
       catalog-db:
         condition: service_healthy
     networks:
@@ -241,18 +280,20 @@ services:
       context: ../order-service
       dockerfile: ../docker/order-service.Dockerfile
     container_name: grocery_order_service
-    ports:
-      - "8083:8083"
+    expose:
+      - "8083"
     environment:
+      - CONFIG_SERVER_URL=http://config-server:8888
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-server:8761/eureka
       - ORDER_DB_URL=jdbc:mysql://order-db:3306/grocery_order_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
       - ORDER_DB_USERNAME=${DB_USERNAME}
       - ORDER_DB_PASSWORD=${DB_PASSWORD}
       - KEYCLOAK_ISSUER_URI=${KEYCLOAK_PUBLIC_ISSUER_URI}
       - KEYCLOAK_JWK_SET_URI=${KEYCLOAK_JWK_SET_URI}
-      - AUTH_SERVICE_URL=http://auth-service:8081
-      - CATALOG_SERVICE_URL=http://catalog-service:8082
-      - INVENTORY_SERVICE_URL=http://inventory-service:8085
-      - VOUCHER_SERVICE_URL=http://promotion-service:8086
+      - AUTH_SERVICE_URL=http://auth-service
+      - CATALOG_SERVICE_URL=http://catalog-service
+      - INVENTORY_SERVICE_URL=http://inventory-service
+      - VOUCHER_SERVICE_URL=http://promotion-service
       - RABBITMQ_HOST=rabbitmq
       - RABBITMQ_PORT=5672
       - RABBITMQ_USERNAME=guest
@@ -262,6 +303,10 @@ services:
       - VNPAY_URL=${VNPAY_URL}
       - VNPAY_RETURN_URL=${VNPAY_RETURN_URL}
     depends_on:
+      config-server:
+        condition: service_started
+      discovery-server:
+        condition: service_started
       order-db:
         condition: service_healthy
       rabbitmq:
@@ -278,9 +323,11 @@ services:
       context: ../notification-service
       dockerfile: ../docker/notification-service.Dockerfile
     container_name: grocery_notification_service
-    ports:
-      - "8084:8084"
+    expose:
+      - "8084"
     environment:
+      - CONFIG_SERVER_URL=http://config-server:8888
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-server:8761/eureka
       - NOTIFICATION_DB_URL=jdbc:mysql://notification-db:3306/grocery_notification_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
       - NOTIFICATION_DB_USERNAME=${DB_USERNAME}
       - NOTIFICATION_DB_PASSWORD=${DB_PASSWORD}
@@ -291,6 +338,10 @@ services:
       - RABBITMQ_USERNAME=guest
       - RABBITMQ_PASSWORD=guest
     depends_on:
+      config-server:
+        condition: service_started
+      discovery-server:
+        condition: service_started
       notification-db:
         condition: service_healthy
       rabbitmq:
@@ -303,21 +354,27 @@ services:
       context: ../inventory-service
       dockerfile: ../docker/inventory-service.Dockerfile
     container_name: grocery_inventory_service
-    ports:
-      - "8085:8085"
+    expose:
+      - "8085"
     environment:
+      - CONFIG_SERVER_URL=http://config-server:8888
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-server:8761/eureka
       - INVENTORY_DB_URL=jdbc:mysql://inventory-db:3306/grocery_inventory_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
       - INVENTORY_DB_USERNAME=${DB_USERNAME}
       - INVENTORY_DB_PASSWORD=${DB_PASSWORD}
       - KEYCLOAK_ISSUER_URI=${KEYCLOAK_PUBLIC_ISSUER_URI}
       - KEYCLOAK_JWK_SET_URI=${KEYCLOAK_JWK_SET_URI}
-      - CATALOG_SERVICE_URL=http://catalog-service:8082
-      - AUTH_SERVICE_URL=http://auth-service:8081
+      - CATALOG_SERVICE_URL=http://catalog-service
+      - AUTH_SERVICE_URL=http://auth-service
       - RABBITMQ_HOST=rabbitmq
       - RABBITMQ_PORT=5672
       - RABBITMQ_USERNAME=guest
       - RABBITMQ_PASSWORD=guest
     depends_on:
+      config-server:
+        condition: service_started
+      discovery-server:
+        condition: service_started
       inventory-db:
         condition: service_healthy
       catalog-service:
@@ -332,16 +389,22 @@ services:
       context: ../promotion-service
       dockerfile: ../docker/promotion-service.Dockerfile
     container_name: grocery_promotion_service
-    ports:
-      - "8086:8086"
+    expose:
+      - "8086"
     environment:
+      - CONFIG_SERVER_URL=http://config-server:8888
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-server:8761/eureka
       - PROMOTION_DB_URL=jdbc:mysql://promotion-db:3306/grocery_promotion_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
       - PROMOTION_DB_USERNAME=${DB_USERNAME}
       - PROMOTION_DB_PASSWORD=${DB_PASSWORD}
       - KEYCLOAK_ISSUER_URI=${KEYCLOAK_PUBLIC_ISSUER_URI}
       - KEYCLOAK_JWK_SET_URI=${KEYCLOAK_JWK_SET_URI}
-      - CATALOG_SERVICE_URL=http://catalog-service:8082
+      - CATALOG_SERVICE_URL=http://catalog-service
     depends_on:
+      config-server:
+        condition: service_started
+      discovery-server:
+        condition: service_started
       promotion-db:
         condition: service_healthy
       catalog-service:
@@ -354,9 +417,11 @@ services:
       context: ../chat-service
       dockerfile: ../docker/chat-service.Dockerfile
     container_name: grocery_chat_service
-    ports:
-      - "8087:8087"
+    expose:
+      - "8087"
     environment:
+      - CONFIG_SERVER_URL=http://config-server:8888
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-server:8761/eureka
       - CHAT_DB_URL=jdbc:mysql://chat-db:3306/grocery_chat_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
       - CHAT_DB_USERNAME=${DB_USERNAME}
       - CHAT_DB_PASSWORD=${DB_PASSWORD}
@@ -364,6 +429,10 @@ services:
       - KEYCLOAK_JWK_SET_URI=${KEYCLOAK_JWK_SET_URI}
       - WEBSOCKET_ALLOWED_ORIGINS=http://localhost:5173,http://localhost:3000
     depends_on:
+      config-server:
+        condition: service_started
+      discovery-server:
+        condition: service_started
       chat-db:
         condition: service_healthy
     networks:
@@ -377,24 +446,29 @@ services:
     ports:
       - "8088:8088"
     environment:
-      - AUTH_SERVICE_URI=http://auth-service:8081
-      - CATALOG_SERVICE_URI=http://catalog-service:8082
-      - ORDER_SERVICE_URI=http://order-service:8083
-      - NOTIFICATION_SERVICE_URI=http://notification-service:8084
-      - INVENTORY_SERVICE_URI=http://inventory-service:8085
-      - PROMOTION_SERVICE_URI=http://promotion-service:8086
-      - CHAT_SERVICE_URI=http://chat-service:8087
-      - CHAT_WS_URI=ws://chat-service:8087
+      - CONFIG_SERVER_URL=http://config-server:8888
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-server:8761/eureka
       - KEYCLOAK_ISSUER_URI=${KEYCLOAK_PUBLIC_ISSUER_URI}
       - KEYCLOAK_JWK_SET_URI=${KEYCLOAK_JWK_SET_URI}
     depends_on:
-      - auth-service
-      - catalog-service
-      - order-service
-      - notification-service
-      - inventory-service
-      - promotion-service
-      - chat-service
+      config-server:
+        condition: service_started
+      discovery-server:
+        condition: service_started
+      auth-service:
+        condition: service_started
+      catalog-service:
+        condition: service_started
+      order-service:
+        condition: service_started
+      notification-service:
+        condition: service_started
+      inventory-service:
+        condition: service_started
+      promotion-service:
+        condition: service_started
+      chat-service:
+        condition: service_started
     networks:
       - grocery_network
 

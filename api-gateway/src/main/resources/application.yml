@@ -4,6 +4,8 @@ server:
 spring:
   application:
     name: api-gateway
+  config:
+    import: optional:configserver:${CONFIG_SERVER_URL:http://localhost:8888}
   security:
     oauth2:
       resourceserver:
@@ -34,41 +36,48 @@ spring:
                 allow-credentials: true
           routes:
             - id: auth-service
-              uri: ${AUTH_SERVICE_URI:http://localhost:8080}
+              uri: lb://auth-service
               predicates:
                 - Path=/api/auth/**,/api/users/**
             - id: catalog-service
-              uri: ${CATALOG_SERVICE_URI:http://localhost:8080}
+              uri: lb://catalog-service
               predicates:
                 - Path=/api/products/**,/api/categories/**,/api/suppliers/**
             - id: order-service
-              uri: ${ORDER_SERVICE_URI:http://localhost:8080}
+              uri: lb://order-service
               predicates:
                 - Path=/api/orders/**,/api/payment/**,/api/dashboard/**,/api/bank-accounts/**
             - id: inventory-service
-              uri: ${INVENTORY_SERVICE_URI:http://localhost:8085}
+              uri: lb://inventory-service
               predicates:
                 - Path=/api/inventory/**,/api/batches/**,/api/stocks/**
             - id: notification-service
-              uri: ${NOTIFICATION_SERVICE_URI:http://localhost:8084}
+              uri: lb://notification-service
               predicates:
                 - Path=/api/notifications/**
             - id: promotion-service-vouchers
-              uri: ${PROMOTION_SERVICE_URI:http://localhost:8086}
+              uri: lb://promotion-service
               predicates:
                 - Path=/api/vouchers/**
             - id: promotion-service-promotions
-              uri: ${PROMOTION_SERVICE_URI:http://localhost:8086}
+              uri: lb://promotion-service
               predicates:
                 - Path=/api/promotions/**
             - id: chat-service-api
-              uri: ${CHAT_SERVICE_URI:http://localhost:8087}
+              uri: lb://chat-service
               predicates:
                 - Path=/api/chat/**
             - id: chat-service-websocket
-              uri: ${CHAT_WS_URI:ws://localhost:8087}
+              uri: lb:ws://chat-service
               predicates:
                 - Path=/ws/**
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE:http://localhost:8761/eureka}
+  instance:
+    prefer-ip-address: true
 
 management:
   endpoints:

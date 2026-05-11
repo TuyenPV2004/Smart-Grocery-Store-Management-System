@@ -8,7 +8,10 @@ import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.stereotype.Component;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.io.IOException;
 
@@ -28,17 +31,37 @@ public class BearerTokenForwardingInterceptor implements ClientHttpRequestInterc
     }
 
     private String currentBearerToken() {
+        String requestToken = currentRequestBearerToken();
+        if (requestToken != null) {
+            return requestToken;
+        }
+
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null) {
             return null;
         }
+        if (authentication instanceof JwtAuthenticationToken jwtAuthenticationToken) {
+            return jwtAuthenticationToken.getToken().getTokenValue();
+        }
         Object credentials = authentication.getCredentials();
-        if (credentials instanceof String token && !token.isBlank()) {
+        if (credentials instanceof String token && !token.isBlank() && !"[PROTECTED]".equals(token)) {
             return token;
         }
         if (credentials instanceof Jwt jwt) {
             return jwt.getTokenValue();
         }
         return null;
+    }
+
+    private String currentRequestBearerToken() {
+        if (!(RequestContextHolder.getRequestAttributes() instanceof ServletRequestAttributes attributes)) {
+            return null;
+        }
+        String authorization = attributes.getRequest().getHeader(HttpHeaders.AUTHORIZATION);
+        if (authorization == null || !authorization.regionMatches(true, 0, "Bearer ", 0, 7)) {
+            return null;
+        }
+        String token = authorization.substring(7).trim();
+        return token.isEmpty() ? null : token;
     }
 }

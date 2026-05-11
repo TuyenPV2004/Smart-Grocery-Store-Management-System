@@ -11,6 +11,8 @@
     <name>smart-grocery-store-management-system</name>
 
     <modules>
+        <module>discovery-server</module>
+        <module>config-server</module>
         <module>api-gateway</module>
         <module>auth-service</module>
         <module>catalog-service</module>
