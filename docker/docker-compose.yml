@@ -107,6 +107,42 @@ services:
       retries: 5
       start_period: 30s
 
+  promotion-db:
+    image: mysql:8.0
+    container_name: grocery_promotion_db
+    environment:
+      MYSQL_ROOT_PASSWORD: "${DB_PASSWORD}"
+      MYSQL_DATABASE: "grocery_promotion_db"
+    ports:
+      - "3313:3306"
+    volumes:
+      - promotion_db_data:/var/lib/mysql
+    networks:
+      - grocery_network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 5
+      start_period: 30s
+
+  chat-db:
+    image: mysql:8.0
+    container_name: grocery_chat_db
+    environment:
+      MYSQL_ROOT_PASSWORD: "${DB_PASSWORD}"
+      MYSQL_DATABASE: "grocery_chat_db"
+    ports:
+      - "3314:3306"
+    volumes:
+      - chat_db_data:/var/lib/mysql
+    networks:
+      - grocery_network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 5
+      start_period: 30s
+
   rabbitmq:
     image: rabbitmq:4-management
     container_name: grocery_rabbitmq
@@ -195,7 +231,6 @@ services:
       - CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY}
       - CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET}
     volumes:
-      - ../backend/product-images:/app/product-images
       - ../backend/user-photos:/app/user-photos
     depends_on:
       db:
@@ -267,7 +302,7 @@ services:
       - AUTH_SERVICE_URL=http://auth-service:8081
       - CATALOG_SERVICE_URL=http://catalog-service:8082
       - INVENTORY_SERVICE_URL=http://inventory-service:8085
-      - VOUCHER_SERVICE_URL=http://backend:8080
+      - VOUCHER_SERVICE_URL=http://promotion-service:8086
       - RABBITMQ_HOST=rabbitmq
       - RABBITMQ_PORT=5672
       - RABBITMQ_USERNAME=guest
@@ -282,6 +317,8 @@ services:
       rabbitmq:
         condition: service_healthy
       inventory-service:
+        condition: service_started
+      promotion-service:
         condition: service_started
     networks:
       - grocery_network
@@ -340,6 +377,48 @@ services:
     networks:
       - grocery_network
 
+  promotion-service:
+    build:
+      context: ../promotion-service
+      dockerfile: ../docker/promotion-service.Dockerfile
+    container_name: grocery_promotion_service
+    ports:
+      - "8086:8086"
+    environment:
+      - PROMOTION_DB_URL=jdbc:mysql://promotion-db:3306/grocery_promotion_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      - PROMOTION_DB_USERNAME=${DB_USERNAME}
+      - PROMOTION_DB_PASSWORD=${DB_PASSWORD}
+      - KEYCLOAK_ISSUER_URI=${KEYCLOAK_PUBLIC_ISSUER_URI}
+      - KEYCLOAK_JWK_SET_URI=${KEYCLOAK_JWK_SET_URI}
+      - CATALOG_SERVICE_URL=http://catalog-service:8082
+    depends_on:
+      promotion-db:
+        condition: service_healthy
+      catalog-service:
+        condition: service_started
+    networks:
+      - grocery_network
+
+  chat-service:
+    build:
+      context: ../chat-service
+      dockerfile: ../docker/chat-service.Dockerfile
+    container_name: grocery_chat_service
+    ports:
+      - "8087:8087"
+    environment:
+      - CHAT_DB_URL=jdbc:mysql://chat-db:3306/grocery_chat_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      - CHAT_DB_USERNAME=${DB_USERNAME}
+      - CHAT_DB_PASSWORD=${DB_PASSWORD}
+      - KEYCLOAK_ISSUER_URI=${KEYCLOAK_PUBLIC_ISSUER_URI}
+      - KEYCLOAK_JWK_SET_URI=${KEYCLOAK_JWK_SET_URI}
+      - WEBSOCKET_ALLOWED_ORIGINS=http://localhost:5173,http://localhost:3000
+    depends_on:
+      chat-db:
+        condition: service_healthy
+    networks:
+      - grocery_network
+
   api-gateway:
     build:
       context: ../api-gateway
@@ -353,6 +432,9 @@ services:
       - ORDER_SERVICE_URI=http://order-service:8083
       - NOTIFICATION_SERVICE_URI=http://notification-service:8084
       - INVENTORY_SERVICE_URI=http://inventory-service:8085
+      - PROMOTION_SERVICE_URI=http://promotion-service:8086
+      - CHAT_SERVICE_URI=http://chat-service:8087
+      - CHAT_WS_URI=ws://chat-service:8087
       - MONOLITH_URI=http://backend:8080
       - MONOLITH_WS_URI=ws://backend:8080
       - KEYCLOAK_ISSUER_URI=${KEYCLOAK_PUBLIC_ISSUER_URI}
@@ -364,6 +446,8 @@ services:
       - order-service
       - notification-service
       - inventory-service
+      - promotion-service
+      - chat-service
     networks:
       - grocery_network
 
@@ -397,4 +481,6 @@ volumes:
   order_db_data:
   notification_db_data:
   inventory_db_data:
+  promotion_db_data:
+  chat_db_data:
   keycloak_db_data:

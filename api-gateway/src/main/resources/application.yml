@@ -53,12 +53,12 @@ spring:
               uri: ${NOTIFICATION_SERVICE_URI:http://localhost:8084}
               predicates:
                 - Path=/api/notifications/**
-            - id: monolith-vouchers
-              uri: ${MONOLITH_URI:http://localhost:8080}
+            - id: promotion-service-vouchers
+              uri: ${PROMOTION_SERVICE_URI:http://localhost:8086}
               predicates:
                 - Path=/api/vouchers/**
-            - id: monolith-promotions
-              uri: ${MONOLITH_URI:http://localhost:8080}
+            - id: promotion-service-promotions
+              uri: ${PROMOTION_SERVICE_URI:http://localhost:8086}
               predicates:
                 - Path=/api/promotions/**
             - id: monolith-dashboard
@@ -69,18 +69,14 @@ spring:
               uri: ${MONOLITH_URI:http://localhost:8080}
               predicates:
                 - Path=/api/bank-accounts/**
-            - id: monolith-chat-api
-              uri: ${MONOLITH_URI:http://localhost:8080}
+            - id: chat-service-api
+              uri: ${CHAT_SERVICE_URI:http://localhost:8087}
               predicates:
                 - Path=/api/chat/**
-            - id: monolith-websocket
-              uri: ${MONOLITH_WS_URI:ws://localhost:8080}
+            - id: chat-service-websocket
+              uri: ${CHAT_WS_URI:ws://localhost:8087}
               predicates:
                 - Path=/ws/**
-            - id: monolith-product-images
-              uri: ${MONOLITH_URI:http://localhost:8080}
-              predicates:
-                - Path=/product-images/**
             - id: monolith-user-photos
               uri: ${MONOLITH_URI:http://localhost:8080}
               predicates:
