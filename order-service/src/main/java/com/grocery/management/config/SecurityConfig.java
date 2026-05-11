@@ -42,6 +42,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/orders").authenticated()
                         .requestMatchers("/api/orders/my-orders", "/api/orders/code/**", "/api/orders/*/cancel").authenticated()
                         .requestMatchers("/api/payment/create_payment/**").authenticated()
+                        .requestMatchers("/api/dashboard/**", "/api/bank-accounts/**").hasAnyAuthority("ADMIN", "STAFF")
                         .requestMatchers("/api/orders", "/api/orders/*/status", "/api/orders/*/export").hasAnyAuthority("ADMIN", "STAFF")
                         .anyRequest().authenticated())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

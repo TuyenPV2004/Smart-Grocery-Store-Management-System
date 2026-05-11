@@ -41,7 +41,7 @@ public class SecurityConfig {
                 .authorizeExchange(exchange -> exchange
                         .pathMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .pathMatchers("/actuator/**", "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
-                        .pathMatchers("/user-photos/**", "/ws/**").permitAll()
+                        .pathMatchers("/ws/**").permitAll()
                         .pathMatchers("/api/auth/**").permitAll()
                         .pathMatchers(HttpMethod.GET, "/api/products/**", "/api/categories/**", "/api/suppliers/**").permitAll()
                         .pathMatchers("/api/payment/vnpay_return", "/api/payment/vnpay_ipn").permitAll()

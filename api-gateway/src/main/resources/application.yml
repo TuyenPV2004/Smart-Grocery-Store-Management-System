@@ -44,7 +44,7 @@ spring:
             - id: order-service
               uri: ${ORDER_SERVICE_URI:http://localhost:8080}
               predicates:
-                - Path=/api/orders/**,/api/payment/**
+                - Path=/api/orders/**,/api/payment/**,/api/dashboard/**,/api/bank-accounts/**
             - id: inventory-service
               uri: ${INVENTORY_SERVICE_URI:http://localhost:8085}
               predicates:
@@ -61,14 +61,6 @@ spring:
               uri: ${PROMOTION_SERVICE_URI:http://localhost:8086}
               predicates:
                 - Path=/api/promotions/**
-            - id: monolith-dashboard
-              uri: ${MONOLITH_URI:http://localhost:8080}
-              predicates:
-                - Path=/api/dashboard/**
-            - id: monolith-bank-accounts
-              uri: ${MONOLITH_URI:http://localhost:8080}
-              predicates:
-                - Path=/api/bank-accounts/**
             - id: chat-service-api
               uri: ${CHAT_SERVICE_URI:http://localhost:8087}
               predicates:
@@ -77,14 +69,6 @@ spring:
               uri: ${CHAT_WS_URI:ws://localhost:8087}
               predicates:
                 - Path=/ws/**
-            - id: monolith-user-photos
-              uri: ${MONOLITH_URI:http://localhost:8080}
-              predicates:
-                - Path=/user-photos/**
-            - id: monolith-openapi
-              uri: ${MONOLITH_URI:http://localhost:8080}
-              predicates:
-                - Path=/v3/api-docs/**,/swagger-ui/**,/swagger-ui.html
 
 management:
   endpoints:

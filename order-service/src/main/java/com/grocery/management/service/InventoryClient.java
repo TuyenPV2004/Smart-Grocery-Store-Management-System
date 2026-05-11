@@ -1,12 +1,17 @@
 package com.grocery.management.service;
 
 import com.grocery.management.dto.InventoryReservationRequest;
+import com.grocery.management.dto.BatchExpiryDTO;
+import com.grocery.management.dto.StockSummaryDTO;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -32,6 +37,26 @@ public class InventoryClient {
 
     public void release(String orderCode) {
         exchange(orderCode, "release");
+    }
+
+    public List<StockSummaryDTO> getStockSummary() {
+        ResponseEntity<List<StockSummaryDTO>> response = restTemplate.exchange(
+                inventoryServiceBaseUrl + "/api/stocks/summary",
+                HttpMethod.GET,
+                null,
+                new ParameterizedTypeReference<>() {
+                });
+        return response.getBody() != null ? response.getBody() : List.of();
+    }
+
+    public List<BatchExpiryDTO> getBatchesWithExpiryStatus() {
+        ResponseEntity<List<BatchExpiryDTO>> response = restTemplate.exchange(
+                inventoryServiceBaseUrl + "/api/stocks/batches/expiry",
+                HttpMethod.GET,
+                null,
+                new ParameterizedTypeReference<>() {
+                });
+        return response.getBody() != null ? response.getBody() : List.of();
     }
 
     private void exchange(String orderCode, String action) {
