@@ -17,7 +17,7 @@ axiosClient.interceptors.request.use(async (config) => {
 axiosClient.interceptors.response.use(
     (response) => response,
     (error) => {
-        if (error.response?.status === 401 && keycloak.authenticated) {
+        if (error.response?.status === 401 && !keycloak.authenticated) {
             localStorage.removeItem('token');
             localStorage.removeItem('user');
             window.dispatchEvent(new Event('auth:expired'));

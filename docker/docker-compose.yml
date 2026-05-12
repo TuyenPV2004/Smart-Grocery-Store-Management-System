@@ -1,122 +1,14 @@
 services:
-  auth-db:
+  mysql:
     image: mysql:8.0
-    container_name: grocery_auth_db
+    container_name: grocery_mysql
     environment:
       MYSQL_ROOT_PASSWORD: "${DB_PASSWORD}"
-      MYSQL_DATABASE: "grocery_auth_db"
     ports:
-      - "3308:3306"
+      - "3306:3306"
     volumes:
-      - auth_db_data:/var/lib/mysql
-    networks:
-      - grocery_network
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-      timeout: 20s
-      retries: 5
-      start_period: 30s
-
-  catalog-db:
-    image: mysql:8.0
-    container_name: grocery_catalog_db
-    environment:
-      MYSQL_ROOT_PASSWORD: "${DB_PASSWORD}"
-      MYSQL_DATABASE: "grocery_catalog_db"
-    ports:
-      - "3309:3306"
-    volumes:
-      - catalog_db_data:/var/lib/mysql
-    networks:
-      - grocery_network
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-      timeout: 20s
-      retries: 5
-      start_period: 30s
-
-  order-db:
-    image: mysql:8.0
-    container_name: grocery_order_db
-    environment:
-      MYSQL_ROOT_PASSWORD: "${DB_PASSWORD}"
-      MYSQL_DATABASE: "grocery_order_db"
-    ports:
-      - "3310:3306"
-    volumes:
-      - order_db_data:/var/lib/mysql
-    networks:
-      - grocery_network
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-      timeout: 20s
-      retries: 5
-      start_period: 30s
-
-  notification-db:
-    image: mysql:8.0
-    container_name: grocery_notification_db
-    environment:
-      MYSQL_ROOT_PASSWORD: "${DB_PASSWORD}"
-      MYSQL_DATABASE: "grocery_notification_db"
-    ports:
-      - "3311:3306"
-    volumes:
-      - notification_db_data:/var/lib/mysql
-    networks:
-      - grocery_network
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-      timeout: 20s
-      retries: 5
-      start_period: 30s
-
-  inventory-db:
-    image: mysql:8.0
-    container_name: grocery_inventory_db
-    environment:
-      MYSQL_ROOT_PASSWORD: "${DB_PASSWORD}"
-      MYSQL_DATABASE: "grocery_inventory_db"
-    ports:
-      - "3312:3306"
-    volumes:
-      - inventory_db_data:/var/lib/mysql
-    networks:
-      - grocery_network
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-      timeout: 20s
-      retries: 5
-      start_period: 30s
-
-  promotion-db:
-    image: mysql:8.0
-    container_name: grocery_promotion_db
-    environment:
-      MYSQL_ROOT_PASSWORD: "${DB_PASSWORD}"
-      MYSQL_DATABASE: "grocery_promotion_db"
-    ports:
-      - "3313:3306"
-    volumes:
-      - promotion_db_data:/var/lib/mysql
-    networks:
-      - grocery_network
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-      timeout: 20s
-      retries: 5
-      start_period: 30s
-
-  chat-db:
-    image: mysql:8.0
-    container_name: grocery_chat_db
-    environment:
-      MYSQL_ROOT_PASSWORD: "${DB_PASSWORD}"
-      MYSQL_DATABASE: "grocery_chat_db"
-    ports:
-      - "3314:3306"
-    volumes:
-      - chat_db_data:/var/lib/mysql
+      - mysql_data:/var/lib/mysql
+      - ../database/init-scripts/init-dbs.sql:/docker-entrypoint-initdb.d/01-init-databases.sql:ro
     networks:
       - grocery_network
     healthcheck:
@@ -190,8 +82,8 @@ services:
 
   discovery-server:
     build:
-      context: ../discovery-server
-      dockerfile: ../docker/discovery-server.Dockerfile
+      context: ../infrastructure/discovery-server
+      dockerfile: Dockerfile
     container_name: grocery_discovery_server
     ports:
       - "8761:8761"
@@ -200,8 +92,8 @@ services:
 
   config-server:
     build:
-      context: ../config-server
-      dockerfile: ../docker/config-server.Dockerfile
+      context: ../infrastructure/config-server
+      dockerfile: Dockerfile
     container_name: grocery_config_server
     ports:
       - "8888:8888"
@@ -209,7 +101,7 @@ services:
       - CONFIG_SERVER_PROFILE=native
       - CONFIG_REPO_URI=file:/config-repo
     volumes:
-      - ../config-repo:/config-repo:ro
+      - ../infrastructure/config-repo:/config-repo:ro
     depends_on:
       - discovery-server
     networks:
@@ -217,15 +109,15 @@ services:
 
   auth-service:
     build:
-      context: ../auth-service
-      dockerfile: ../docker/auth-service.Dockerfile
+      context: ../services/auth-service
+      dockerfile: Dockerfile
     container_name: grocery_auth_service
     expose:
       - "8081"
     environment:
       - CONFIG_SERVER_URL=http://config-server:8888
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-server:8761/eureka
-      - AUTH_DB_URL=jdbc:mysql://auth-db:3306/grocery_auth_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      - AUTH_DB_URL=jdbc:mysql://mysql:3306/grocery_auth_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
       - AUTH_DB_USERNAME=${DB_USERNAME}
       - AUTH_DB_PASSWORD=${DB_PASSWORD}
       - KEYCLOAK_ISSUER_URI=${KEYCLOAK_PUBLIC_ISSUER_URI}
@@ -242,22 +134,22 @@ services:
         condition: service_started
       discovery-server:
         condition: service_started
-      auth-db:
+      mysql:
         condition: service_healthy
     networks:
       - grocery_network
 
   catalog-service:
     build:
-      context: ../catalog-service
-      dockerfile: ../docker/catalog-service.Dockerfile
+      context: ../services/catalog-service
+      dockerfile: Dockerfile
     container_name: grocery_catalog_service
     expose:
       - "8082"
     environment:
       - CONFIG_SERVER_URL=http://config-server:8888
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-server:8761/eureka
-      - CATALOG_DB_URL=jdbc:mysql://catalog-db:3306/grocery_catalog_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      - CATALOG_DB_URL=jdbc:mysql://mysql:3306/grocery_catalog_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
       - CATALOG_DB_USERNAME=${DB_USERNAME}
       - CATALOG_DB_PASSWORD=${DB_PASSWORD}
       - KEYCLOAK_ISSUER_URI=${KEYCLOAK_PUBLIC_ISSUER_URI}
@@ -270,22 +162,22 @@ services:
         condition: service_started
       discovery-server:
         condition: service_started
-      catalog-db:
+      mysql:
         condition: service_healthy
     networks:
       - grocery_network
 
   order-service:
     build:
-      context: ../order-service
-      dockerfile: ../docker/order-service.Dockerfile
+      context: ../services/order-service
+      dockerfile: Dockerfile
     container_name: grocery_order_service
     expose:
       - "8083"
     environment:
       - CONFIG_SERVER_URL=http://config-server:8888
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-server:8761/eureka
-      - ORDER_DB_URL=jdbc:mysql://order-db:3306/grocery_order_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      - ORDER_DB_URL=jdbc:mysql://mysql:3306/grocery_order_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
       - ORDER_DB_USERNAME=${DB_USERNAME}
       - ORDER_DB_PASSWORD=${DB_PASSWORD}
       - KEYCLOAK_ISSUER_URI=${KEYCLOAK_PUBLIC_ISSUER_URI}
@@ -307,7 +199,7 @@ services:
         condition: service_started
       discovery-server:
         condition: service_started
-      order-db:
+      mysql:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
@@ -320,15 +212,15 @@ services:
 
   notification-service:
     build:
-      context: ../notification-service
-      dockerfile: ../docker/notification-service.Dockerfile
+      context: ../services/notification-service
+      dockerfile: Dockerfile
     container_name: grocery_notification_service
     expose:
       - "8084"
     environment:
       - CONFIG_SERVER_URL=http://config-server:8888
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-server:8761/eureka
-      - NOTIFICATION_DB_URL=jdbc:mysql://notification-db:3306/grocery_notification_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      - NOTIFICATION_DB_URL=jdbc:mysql://mysql:3306/grocery_notification_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
       - NOTIFICATION_DB_USERNAME=${DB_USERNAME}
       - NOTIFICATION_DB_PASSWORD=${DB_PASSWORD}
       - KEYCLOAK_ISSUER_URI=${KEYCLOAK_PUBLIC_ISSUER_URI}
@@ -342,7 +234,7 @@ services:
         condition: service_started
       discovery-server:
         condition: service_started
-      notification-db:
+      mysql:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
@@ -351,15 +243,15 @@ services:
 
   inventory-service:
     build:
-      context: ../inventory-service
-      dockerfile: ../docker/inventory-service.Dockerfile
+      context: ../services/inventory-service
+      dockerfile: Dockerfile
     container_name: grocery_inventory_service
     expose:
       - "8085"
     environment:
       - CONFIG_SERVER_URL=http://config-server:8888
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-server:8761/eureka
-      - INVENTORY_DB_URL=jdbc:mysql://inventory-db:3306/grocery_inventory_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      - INVENTORY_DB_URL=jdbc:mysql://mysql:3306/grocery_inventory_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
       - INVENTORY_DB_USERNAME=${DB_USERNAME}
       - INVENTORY_DB_PASSWORD=${DB_PASSWORD}
       - KEYCLOAK_ISSUER_URI=${KEYCLOAK_PUBLIC_ISSUER_URI}
@@ -375,7 +267,7 @@ services:
         condition: service_started
       discovery-server:
         condition: service_started
-      inventory-db:
+      mysql:
         condition: service_healthy
       catalog-service:
         condition: service_started
@@ -386,15 +278,15 @@ services:
 
   promotion-service:
     build:
-      context: ../promotion-service
-      dockerfile: ../docker/promotion-service.Dockerfile
+      context: ../services/promotion-service
+      dockerfile: Dockerfile
     container_name: grocery_promotion_service
     expose:
       - "8086"
     environment:
       - CONFIG_SERVER_URL=http://config-server:8888
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-server:8761/eureka
-      - PROMOTION_DB_URL=jdbc:mysql://promotion-db:3306/grocery_promotion_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      - PROMOTION_DB_URL=jdbc:mysql://mysql:3306/grocery_promotion_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
       - PROMOTION_DB_USERNAME=${DB_USERNAME}
       - PROMOTION_DB_PASSWORD=${DB_PASSWORD}
       - KEYCLOAK_ISSUER_URI=${KEYCLOAK_PUBLIC_ISSUER_URI}
@@ -405,7 +297,7 @@ services:
         condition: service_started
       discovery-server:
         condition: service_started
-      promotion-db:
+      mysql:
         condition: service_healthy
       catalog-service:
         condition: service_started
@@ -414,15 +306,15 @@ services:
 
   chat-service:
     build:
-      context: ../chat-service
-      dockerfile: ../docker/chat-service.Dockerfile
+      context: ../services/chat-service
+      dockerfile: Dockerfile
     container_name: grocery_chat_service
     expose:
       - "8087"
     environment:
       - CONFIG_SERVER_URL=http://config-server:8888
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-server:8761/eureka
-      - CHAT_DB_URL=jdbc:mysql://chat-db:3306/grocery_chat_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      - CHAT_DB_URL=jdbc:mysql://mysql:3306/grocery_chat_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
       - CHAT_DB_USERNAME=${DB_USERNAME}
       - CHAT_DB_PASSWORD=${DB_PASSWORD}
       - KEYCLOAK_ISSUER_URI=${KEYCLOAK_PUBLIC_ISSUER_URI}
@@ -433,15 +325,15 @@ services:
         condition: service_started
       discovery-server:
         condition: service_started
-      chat-db:
+      mysql:
         condition: service_healthy
     networks:
       - grocery_network
 
   api-gateway:
     build:
-      context: ../api-gateway
-      dockerfile: ../docker/api-gateway.Dockerfile
+      context: ../infrastructure/api-gateway
+      dockerfile: Dockerfile
     container_name: grocery_api_gateway
     ports:
       - "8088:8088"
@@ -475,7 +367,7 @@ services:
   frontend:
     build:
       context: ../frontend
-      dockerfile: ../docker/frontend.Dockerfile
+      dockerfile: Dockerfile
       args:
         VITE_API_BASE_URL: ${VITE_API_BASE_URL}
         VITE_GATEWAY_BASE_URL: ${VITE_GATEWAY_BASE_URL}
@@ -496,11 +388,5 @@ networks:
     driver: bridge
 
 volumes:
-  auth_db_data:
-  catalog_db_data:
-  order_db_data:
-  notification_db_data:
-  inventory_db_data:
-  promotion_db_data:
-  chat_db_data:
+  mysql_data:
   keycloak_db_data:
