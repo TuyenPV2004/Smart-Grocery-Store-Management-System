@@ -6,6 +6,10 @@ import com.grocery.management.dto.StockReservationResponse;
 import com.grocery.management.entity.ProductBatch;
 import com.grocery.management.entity.StockReservation;
 import com.grocery.management.entity.StockReservationItem;
+import com.grocery.management.exception.InvalidInventoryRequestException;
+import com.grocery.management.exception.ProductBatchNotFoundException;
+import com.grocery.management.exception.ReservationNotFoundException;
+import com.grocery.management.exception.StockNotEnoughException;
 import com.grocery.management.repository.ProductBatchRepository;
 import com.grocery.management.repository.StockReservationRepository;
 import lombok.RequiredArgsConstructor;
@@ -28,12 +32,16 @@ public class StockReservationService {
     private final ProductBatchRepository productBatchRepository;
     private final StockReservationRepository reservationRepository;
     private final StockEventPublisher stockEventPublisher;
+    private final RedisDistributedLockService redisLockService;
 
     @Transactional
     public StockReservationResponse reserve(StockReservationRequest request) {
         if (request.getOrderCode() == null || request.getOrderCode().isBlank()) {
-            throw new RuntimeException("Ma don hang khong duoc de trong");
+            throw new InvalidInventoryRequestException("Ma don hang khong duoc de trong");
         }
+        List<RedisDistributedLockService.LockLease> leases = redisLockService.lockAll(reserveLockKeys(request));
+        redisLockService.releaseAfterTransaction(leases);
+
         return reservationRepository.findByOrderCode(request.getOrderCode())
                 .map(this::toResponse)
                 .orElseGet(() -> createReservation(request));
@@ -41,12 +49,15 @@ public class StockReservationService {
 
     @Transactional
     public StockReservationResponse commit(String orderCode) {
+        List<RedisDistributedLockService.LockLease> leases = redisLockService.lockAll(List.of(orderLockKey(orderCode)));
+        redisLockService.releaseAfterTransaction(leases);
+
         StockReservation reservation = getReservation(orderCode);
         if (COMMITTED.equals(reservation.getStatus())) {
             return toResponse(reservation);
         }
         if (RELEASED.equals(reservation.getStatus())) {
-            throw new RuntimeException("Ton kho da duoc hoan cho don hang: " + orderCode);
+            throw new InvalidInventoryRequestException("Ton kho da duoc hoan cho don hang: " + orderCode);
         }
         reservation.setStatus(COMMITTED);
         reservation.setCommittedAt(LocalDateTime.now());
@@ -55,13 +66,19 @@ public class StockReservationService {
 
     @Transactional
     public StockReservationResponse release(String orderCode) {
+        List<RedisDistributedLockService.LockLease> orderLeases = redisLockService.lockAll(List.of(orderLockKey(orderCode)));
+        redisLockService.releaseAfterTransaction(orderLeases);
+
         StockReservation reservation = getReservation(orderCode);
+        List<RedisDistributedLockService.LockLease> productLeases = redisLockService.lockAll(productLockKeys(reservation));
+        redisLockService.releaseAfterTransaction(productLeases);
+
         if (RELEASED.equals(reservation.getStatus()) || COMMITTED.equals(reservation.getStatus())) {
             return toResponse(reservation);
         }
         for (StockReservationItem item : reservation.getItems()) {
             ProductBatch batch = productBatchRepository.findById(item.getBatchId())
-                    .orElseThrow(() -> new RuntimeException("Khong tim thay lo hang da reserve: " + item.getBatchCode()));
+                    .orElseThrow(() -> new ProductBatchNotFoundException("Khong tim thay lo hang da reserve: " + item.getBatchCode()));
             batch.setQuantity(safeQuantity(batch.getQuantity()) + safeQuantity(item.getQuantity()));
             productBatchRepository.save(batch);
             publishStockChanged(batch, item.getQuantity(), reservation, "RESERVATION_RELEASED");
@@ -81,7 +98,7 @@ public class StockReservationService {
         for (StockReservationRequest.Item item : request.getItems() != null ? request.getItems() : List.<StockReservationRequest.Item>of()) {
             int requestedQuantity = safeQuantity(item.getQuantity());
             if (item.getProductId() == null || requestedQuantity <= 0) {
-                throw new RuntimeException("Thong tin san pham reserve khong hop le");
+                throw new InvalidInventoryRequestException("Thong tin san pham reserve khong hop le");
             }
             int remaining = requestedQuantity;
             List<ProductBatch> batches = productBatchRepository
@@ -107,9 +124,8 @@ public class StockReservationService {
                 remaining -= taken;
             }
             if (remaining > 0) {
-                rollbackAllocatedItems(reservationItems);
                 int availableQuantity = requestedQuantity - remaining;
-                throw new RuntimeException("San pham " + item.getProductId() + " khong du ton kho. Ton kha dung: " + availableQuantity);
+                throw new StockNotEnoughException("San pham " + item.getProductId() + " khong du ton kho. Ton kha dung: " + availableQuantity);
             }
         }
         reservation.setItems(reservationItems);
@@ -120,18 +136,37 @@ public class StockReservationService {
         return toResponse(savedReservation);
     }
 
-    private void rollbackAllocatedItems(List<StockReservationItem> reservationItems) {
-        for (StockReservationItem reservationItem : reservationItems) {
-            ProductBatch batch = productBatchRepository.findById(reservationItem.getBatchId())
-                    .orElseThrow(() -> new RuntimeException("Khong tim thay lo hang da cap phat"));
-            batch.setQuantity(safeQuantity(batch.getQuantity()) + safeQuantity(reservationItem.getQuantity()));
-            productBatchRepository.save(batch);
-        }
-    }
-
     private StockReservation getReservation(String orderCode) {
         return reservationRepository.findByOrderCode(orderCode)
-                .orElseThrow(() -> new RuntimeException("Khong tim thay reservation cho don hang: " + orderCode));
+                .orElseThrow(() -> new ReservationNotFoundException("Khong tim thay reservation cho don hang: " + orderCode));
+    }
+
+    private List<String> reserveLockKeys(StockReservationRequest request) {
+        List<String> keys = new ArrayList<>();
+        keys.add(orderLockKey(request.getOrderCode()));
+        for (StockReservationRequest.Item item : request.getItems() != null ? request.getItems() : List.<StockReservationRequest.Item>of()) {
+            if (item.getProductId() != null) {
+                keys.add(productLockKey(item.getProductId()));
+            }
+        }
+        return keys;
+    }
+
+    private List<String> productLockKeys(StockReservation reservation) {
+        return reservation.getItems() == null ? List.of()
+                : reservation.getItems().stream()
+                        .map(StockReservationItem::getProductId)
+                        .filter(productId -> productId != null)
+                        .map(this::productLockKey)
+                        .toList();
+    }
+
+    private String orderLockKey(String orderCode) {
+        return "stock-reservation:order:" + orderCode;
+    }
+
+    private String productLockKey(Long productId) {
+        return "stock:product:" + productId;
     }
 
     private StockReservationResponse toResponse(StockReservation reservation) {

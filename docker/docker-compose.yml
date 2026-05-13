@@ -31,6 +31,22 @@ services:
       retries: 5
       start_period: 30s
 
+  redis:
+    image: redis:7.4-alpine
+    container_name: grocery_redis
+    ports:
+      - "6379:6379"
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis_data:/data
+    networks:
+      - grocery_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      timeout: 10s
+      retries: 5
+      start_period: 10s
+
   keycloak-db:
     image: postgres:16
     container_name: grocery_keycloak_db
@@ -185,6 +201,7 @@ services:
       - AUTH_SERVICE_URL=http://auth-service
       - CATALOG_SERVICE_URL=http://catalog-service
       - INVENTORY_SERVICE_URL=http://inventory-service
+      - INVENTORY_INTERNAL_SERVICE_TOKEN=${INVENTORY_INTERNAL_SERVICE_TOKEN:-dev-internal-inventory-token}
       - VOUCHER_SERVICE_URL=http://promotion-service
       - RABBITMQ_HOST=rabbitmq
       - RABBITMQ_PORT=5672
@@ -262,6 +279,16 @@ services:
       - RABBITMQ_PORT=5672
       - RABBITMQ_USERNAME=guest
       - RABBITMQ_PASSWORD=guest
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - "REDIS_LOCK_KEY_PREFIX=grocery:inventory:lock:"
+      - REDIS_LOCK_WAIT_TIMEOUT=5s
+      - REDIS_LOCK_RETRY_INTERVAL=50ms
+      - REDIS_LOCK_LEASE_TIME=30s
+      - INVENTORY_INTERNAL_SERVICE_TOKEN=${INVENTORY_INTERNAL_SERVICE_TOKEN:-dev-internal-inventory-token}
+      - INVENTORY_FLYWAY_LOCATIONS=filesystem:/app/migration
+    volumes:
+      - ../database/migration:/app/migration:ro
     depends_on:
       config-server:
         condition: service_started
@@ -272,6 +299,8 @@ services:
       catalog-service:
         condition: service_started
       rabbitmq:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     networks:
       - grocery_network
@@ -390,3 +419,4 @@ networks:
 volumes:
   mysql_data:
   keycloak_db_data:
+  redis_data:

@@ -2,7 +2,6 @@
 *.env
 *.md
 *.lst
-*.sql
 /target
 **/target/
 *.log

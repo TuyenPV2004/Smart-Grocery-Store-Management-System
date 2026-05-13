@@ -47,7 +47,7 @@ public class InventoryController {
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteNote(@PathVariable long id) {
         inventoryService.deleteNote(id);
-        return ResponseEntity.ok("Xoa phieu thanh cong");
+        return ResponseEntity.ok("Huy phieu thanh cong");
     }
 
     @GetMapping("/{id}/export")

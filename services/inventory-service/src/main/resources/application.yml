@@ -12,16 +12,29 @@ spring:
     password: ${INVENTORY_DB_PASSWORD:123456}
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: ${INVENTORY_HIBERNATE_DDL_AUTO:validate}
     show-sql: false
     properties:
       hibernate:
         format_sql: true
+  flyway:
+    enabled: true
+    baseline-on-migrate: ${INVENTORY_FLYWAY_BASELINE_ON_MIGRATE:true}
+    baseline-version: 1
+    locations: ${INVENTORY_FLYWAY_LOCATIONS:filesystem:../../database/migration}
   rabbitmq:
     host: ${RABBITMQ_HOST:localhost}
     port: ${RABBITMQ_PORT:5672}
     username: ${RABBITMQ_USERNAME:guest}
     password: ${RABBITMQ_PASSWORD:guest}
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      timeout: ${REDIS_TIMEOUT:2s}
+      repositories:
+        enabled: false
   security:
     oauth2:
       resourceserver:
@@ -41,10 +54,25 @@ eureka:
     prefer-ip-address: true
 
 app:
+  security:
+    internal-service-token: ${INVENTORY_INTERNAL_SERVICE_TOKEN:dev-internal-inventory-token}
+  locking:
+    redis:
+      key-prefix: ${REDIS_LOCK_KEY_PREFIX:grocery:inventory:lock:}
+      wait-timeout: ${REDIS_LOCK_WAIT_TIMEOUT:5s}
+      retry-interval: ${REDIS_LOCK_RETRY_INTERVAL:50ms}
+      lease-time: ${REDIS_LOCK_LEASE_TIME:30s}
   messaging:
     inventory:
       exchange: ${INVENTORY_EXCHANGE:inventory.exchange}
       stock-changed-routing-key: ${INVENTORY_STOCK_CHANGED_ROUTING_KEY:inventory.stock.changed}
+  outbox:
+    publisher:
+      enabled: ${INVENTORY_OUTBOX_PUBLISHER_ENABLED:true}
+      fixed-delay: ${INVENTORY_OUTBOX_PUBLISHER_FIXED_DELAY:5s}
+      batch-size: ${INVENTORY_OUTBOX_PUBLISHER_BATCH_SIZE:50}
+      max-retries: ${INVENTORY_OUTBOX_PUBLISHER_MAX_RETRIES:10}
+      processing-timeout: ${INVENTORY_OUTBOX_PROCESSING_TIMEOUT:2m}
 
 management:
   endpoints:

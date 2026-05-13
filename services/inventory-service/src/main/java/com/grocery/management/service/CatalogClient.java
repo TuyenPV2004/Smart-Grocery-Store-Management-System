@@ -2,6 +2,7 @@ package com.grocery.management.service;
 
 import com.grocery.management.dto.ProductSnapshot;
 import com.grocery.management.dto.SupplierSnapshot;
+import com.grocery.management.exception.CatalogReferenceException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
@@ -32,7 +33,7 @@ public class CatalogClient {
                 },
                 sku).getBody();
         if (products == null || products.isEmpty()) {
-            throw new RuntimeException("SKU not found: " + sku);
+            throw new CatalogReferenceException("SKU not found: " + sku);
         }
         return products.stream()
                 .filter(product -> sku.equalsIgnoreCase(product.getSku()))
@@ -48,11 +49,11 @@ public class CatalogClient {
                 new ParameterizedTypeReference<List<SupplierSnapshot>>() {
                 }).getBody();
         if (suppliers == null) {
-            throw new RuntimeException("Khong lay duoc danh sach nha cung cap");
+            throw new CatalogReferenceException("Khong lay duoc danh sach nha cung cap");
         }
         return suppliers.stream()
                 .filter(supplier -> supplierId.equals(supplier.getId()))
                 .findFirst()
-                .orElseThrow(() -> new RuntimeException("Khong tim thay nha cung cap voi ID: " + supplierId));
+                .orElseThrow(() -> new CatalogReferenceException("Khong tim thay nha cung cap voi ID: " + supplierId));
     }
 }

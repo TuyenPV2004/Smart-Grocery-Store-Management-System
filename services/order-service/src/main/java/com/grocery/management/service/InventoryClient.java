@@ -6,6 +6,8 @@ import com.grocery.management.dto.StockSummaryDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -21,10 +23,14 @@ public class InventoryClient {
     @Value("${inventory.service.base-url}")
     private String inventoryServiceBaseUrl;
 
+    @Value("${inventory.service.internal-token}")
+    private String internalServiceToken;
+
     public void reserve(String orderCode, InventoryReservationRequest request) {
-        ResponseEntity<String> response = restTemplate.postForEntity(
+        ResponseEntity<String> response = restTemplate.exchange(
                 inventoryServiceBaseUrl + "/api/inventory/reservations",
-                request,
+                HttpMethod.POST,
+                new HttpEntity<>(request, internalHeaders()),
                 String.class);
         if (!response.getStatusCode().is2xxSuccessful()) {
             throw new RuntimeException("Khong the reserve ton kho cho don hang: " + orderCode);
@@ -63,10 +69,16 @@ public class InventoryClient {
         ResponseEntity<String> response = restTemplate.exchange(
                 inventoryServiceBaseUrl + "/api/inventory/reservations/" + orderCode + "/" + action,
                 HttpMethod.POST,
-                null,
+                new HttpEntity<>(internalHeaders()),
                 String.class);
         if (!response.getStatusCode().is2xxSuccessful()) {
             throw new RuntimeException("Khong the " + action + " ton kho cho don hang: " + orderCode);
         }
+    }
+
+    private HttpHeaders internalHeaders() {
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("X-Internal-Service-Token", internalServiceToken);
+        return headers;
     }
 }

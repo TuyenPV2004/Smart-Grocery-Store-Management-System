@@ -7,6 +7,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
+import jakarta.persistence.Version;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -45,6 +46,9 @@ public class ProductBatch {
     private String importUnit;
     private Integer quantityInImportUnit;
     private Integer stockInImportUnit;
+
+    @Version
+    private Long version;
 
     @Transient
     public ProductView getProduct() {
