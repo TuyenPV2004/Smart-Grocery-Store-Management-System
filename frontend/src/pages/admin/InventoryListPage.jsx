@@ -2,16 +2,16 @@ import { toast } from "react-toastify";
 import React, { useEffect, useState } from "react";
 import inventoryService from "../../services/inventoryService";
 import {
-  FileSpreadsheet,
-  Eye,
-  Package,
-  ClipboardList,
-  X,
-  User,
-  Calendar,
-  Trash2,
-  Search,
-} from "lucide-react";
+  FiFileText as FileSpreadsheet,
+  FiEye as Eye,
+  FiPackage as Package,
+  FiClipboard as ClipboardList,
+  FiX as X,
+  FiUser as User,
+  FiCalendar as Calendar,
+  FiTrash2 as Trash2,
+  FiSearch as Search,
+} from "react-icons/fi";
 import Swal from "sweetalert2";
 import { getImageUrl } from "../../utils/imageUrl";
 

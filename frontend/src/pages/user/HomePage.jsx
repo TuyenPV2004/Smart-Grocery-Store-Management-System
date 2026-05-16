@@ -135,7 +135,7 @@ const HomePage = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const productsRes = await productService.getAll({ pageSize: 8 });
+        const productsRes = await productService.getAll({ pageSize: 15 });
         setProducts(productsRes.data?.content || productsRes.data || []);
       } catch (error) {
         console.error("Error fetching home data:", error);
@@ -418,18 +418,18 @@ const HomePage = () => {
               </Link>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
               {products.length > 0
-                ? products.map((product) => (
+                ? products.slice(0, 15).map((product) => (
                     <ProductCard key={product.id} product={product} />
                   ))
                 : !loading && (
-                    <div className="col-span-4 text-center py-20 bg-white rounded-3xl border border-dashed border-slate-300">
+                    <div className="col-span-full text-center py-20 bg-white rounded-3xl border border-dashed border-slate-300">
                       <p className="text-slate-500">Chưa có sản phẩm nào.</p>
                     </div>
                   )}
               {loading &&
-                Array(4)
+                Array(15)
                   .fill(0)
                   .map((_, i) => (
                     <div

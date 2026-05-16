@@ -1,27 +1,30 @@
 import React, { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { CircleCheck, Loader2, XCircle } from "lucide-react";
+import { FiCheckCircle, FiLoader, FiXCircle } from "react-icons/fi";
+import { Button, PageContainer, PageShell, SurfaceCard } from "../../components/ui";
 import { useCart } from "../../context/useCart";
 import paymentService from "../../services/paymentService";
 
 const VNPayReturnPage = () => {
   const [status, setStatus] = useState("processing");
-  const [message, setMessage] = useState("Đang xử lý kết quả thanh toán...");
+  const [message, setMessage] = useState("Processing payment result...");
   const [orderDetails, setOrderDetails] = useState(null);
   const location = useLocation();
   const { clearCart } = useCart();
 
   const formatDateTime = (dateValue) => {
-    if (!dateValue) return "Không xác định";
-    return new Date(dateValue).toLocaleString("vi-VN");
+    if (!dateValue) return "Not available";
+    const date = new Date(dateValue);
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${month}/${day}/${date.getFullYear()}, ${date.toLocaleTimeString("en-US")}`;
   };
 
-  const formatCurrency = (amount) => {
-    return new Intl.NumberFormat("vi-VN", {
+  const formatCurrency = (amount) =>
+    new Intl.NumberFormat("vi-VN", {
       style: "currency",
       currency: "VND",
     }).format(Number(amount || 0));
-  };
 
   useEffect(() => {
     const processPaymentReturn = async () => {
@@ -29,14 +32,14 @@ const VNPayReturnPage = () => {
         const queryParams = location.search;
         if (!queryParams) {
           setStatus("failed");
-          setMessage("Không tìm thấy thông tin thanh toán");
+          setMessage("Payment information was not found.");
           return;
         }
 
         const response = await paymentService.vnpayReturn(queryParams);
         const result = response.data || {};
 
-        setMessage(result.message || "Không thể xác định trạng thái thanh toán");
+        setMessage(result.message || "Unable to determine payment status.");
         setOrderDetails({
           code: result.orderCode,
           amount: result.finalAmount,
@@ -47,20 +50,19 @@ const VNPayReturnPage = () => {
           transactionNo: result.paymentTransactionNo,
         });
 
+        localStorage.removeItem("pendingVnpayOrderCode");
         if (result.status === "success") {
           clearCart();
-          localStorage.removeItem("pendingVnpayOrderCode");
           setStatus("success");
         } else {
-          localStorage.removeItem("pendingVnpayOrderCode");
           setStatus("failed");
         }
       } catch (error) {
-        console.error("Lỗi khi xử lý callback VNPAY:", error);
+        console.error("Error processing VNPAY callback:", error);
         const backendMessage =
           error.response?.data?.message ||
           error.response?.data ||
-          "Có lỗi hệ thống xảy ra trong quá trình xác thực thanh toán.";
+          "A system error occurred while verifying the payment.";
         localStorage.removeItem("pendingVnpayOrderCode");
         setStatus("failed");
         setMessage(backendMessage);
@@ -70,147 +72,93 @@ const VNPayReturnPage = () => {
     processPaymentReturn();
   }, [clearCart, location.search]);
 
+  const isSuccess = status === "success";
+  const isFailed = status === "failed";
+
   return (
-    <div className="app-page-bg flex flex-col items-center pt-8 p-4 font-poppins pb-24">
-      <div className="bg-white p-8 rounded-3xl shadow-xl border border-slate-100 max-w-md w-full text-center mt-2">
-        {status === "processing" && (
-          <div className="flex flex-col items-center justify-center py-8">
-            <Loader2 className="w-16 h-16 text-indigo-500 animate-spin mb-4" />
-            <h2 className="text-xl font-medium text-slate-800">Đang xử lý</h2>
-            <p className="text-slate-500 mt-2">{message}</p>
-          </div>
-        )}
+    <PageShell className="flex min-h-screen items-center py-10">
+      <PageContainer className="max-w-xl">
+        <SurfaceCard className="p-8 text-center">
+          {status === "processing" ? (
+            <StateBlock
+              icon={<FiLoader className="h-14 w-14 animate-spin text-emerald-700" />}
+              title="Processing payment"
+              message={message}
+            />
+          ) : null}
 
-        {status === "success" && (
-          <div className="flex flex-col items-center justify-center py-4">
-            <div className="mb-6">
-              <CircleCheck
-                size={80}
-                className="fill-green-500 text-white rounded-full p-2"
-              />
+          {isSuccess ? (
+            <StateBlock
+              icon={<FiCheckCircle className="h-20 w-20 text-emerald-700" />}
+              title="Payment successful"
+              message={message}
+            />
+          ) : null}
+
+          {isFailed ? (
+            <StateBlock
+              icon={<FiXCircle className="h-20 w-20 text-rose-600" />}
+              title="Payment failed"
+              message={message}
+            />
+          ) : null}
+
+          {status !== "processing" && orderDetails ? (
+            <div className="mt-6 rounded-2xl border border-slate-100 bg-slate-50/80 p-4 text-left">
+              <ReceiptRow label="Order code" value={orderDetails.code || "---"} />
+              {isSuccess ? (
+                <>
+                  <ReceiptRow label="Amount" value={formatCurrency(orderDetails.amount)} strong />
+                  <ReceiptRow label="Order status" value={orderDetails.orderStatus || "---"} />
+                  <ReceiptRow label="Payment status" value={orderDetails.paymentStatus || "---"} />
+                  <ReceiptRow label="Transaction no." value={orderDetails.transactionNo || "---"} />
+                  <ReceiptRow label="Confirmed at" value={formatDateTime(orderDetails.paidAt)} />
+                </>
+              ) : (
+                <>
+                  <ReceiptRow label="Order status" value={orderDetails.orderStatus || "---"} />
+                  {orderDetails.expiresAt ? (
+                    <ReceiptRow label="Expires at" value={formatDateTime(orderDetails.expiresAt)} />
+                  ) : null}
+                </>
+              )}
             </div>
-            <h2 className="text-2xl font-semibold text-slate-800 mb-2">
-              Thanh toán thành công!
-            </h2>
-            <p className="text-slate-500 mb-6">{message}</p>
+          ) : null}
 
-            {orderDetails && (
-              <div className="bg-slate-50 p-4 rounded-xl w-full text-left mb-6 border border-slate-100 space-y-2">
-                <div className="flex justify-between gap-4">
-                  <span className="text-slate-500 text-sm">Mã đơn hàng:</span>
-                  <span className="font-semibold text-slate-800 text-right">
-                    {orderDetails.code || "---"}
-                  </span>
-                </div>
-                <div className="flex justify-between gap-4">
-                  <span className="text-slate-500 text-sm">Số tiền:</span>
-                  <span className="font-semibold text-emerald-600 text-right">
-                    {formatCurrency(orderDetails.amount)}
-                  </span>
-                </div>
-                <div className="flex justify-between gap-4">
-                  <span className="text-slate-500 text-sm">Trạng thái đơn:</span>
-                  <span className="font-semibold text-slate-800 text-right">
-                    {orderDetails.orderStatus || "---"}
-                  </span>
-                </div>
-                <div className="flex justify-between gap-4">
-                  <span className="text-slate-500 text-sm">
-                    Trạng thái thanh toán:
-                  </span>
-                  <span className="font-semibold text-slate-800 text-right">
-                    {orderDetails.paymentStatus || "---"}
-                  </span>
-                </div>
-                <div className="flex justify-between gap-4">
-                  <span className="text-slate-500 text-sm">Mã giao dịch:</span>
-                  <span className="font-semibold text-slate-800 text-right">
-                    {orderDetails.transactionNo || "---"}
-                  </span>
-                </div>
-                <div className="flex justify-between gap-4">
-                  <span className="text-slate-500 text-sm">Xác nhận lúc:</span>
-                  <span className="font-semibold text-slate-800 text-right">
-                    {formatDateTime(orderDetails.paidAt)}
-                  </span>
-                </div>
-              </div>
-            )}
-
-            <div className="flex flex-col w-full gap-3">
-              <Link
-                to="/order-history"
-                className="w-full py-3 bg-green-600 text-white rounded-xl font-medium hover:bg-green-700 transition-all shadow-md shadow-green-200"
-              >
-                Xem lịch sử đơn hàng
-              </Link>
-              <Link
-                to="/products"
-                className="w-full py-3 bg-slate-100 text-slate-700 rounded-xl font-medium hover:bg-slate-200 transition-all"
-              >
-                Tiếp tục mua sắm
-              </Link>
+          {isSuccess ? (
+            <div className="mt-6 grid gap-3">
+              <Button as={Link} to="/order-history">View order history</Button>
+              <Button as={Link} to="/products" variant="secondary">Continue shopping</Button>
             </div>
-          </div>
-        )}
+          ) : null}
 
-        {status === "failed" && (
-          <div className="flex flex-col items-center justify-center py-4">
-            <div className="mb-6">
-              <XCircle
-                size={80}
-                className="fill-rose-500 text-white rounded-full p-2"
-              />
+          {isFailed ? (
+            <div className="mt-6 grid gap-3">
+              <Button as={Link} to="/cart" variant="danger">Back to cart</Button>
+              <Button as={Link} to="/order-history" variant="secondary">View my orders</Button>
             </div>
-            <h2 className="text-2xl font-semibold text-slate-800 mb-2">
-              Thanh toán không thành công
-            </h2>
-            <p className="text-slate-500 mb-6">{message}</p>
-
-            {orderDetails?.code && (
-              <div className="bg-slate-50 p-4 rounded-xl w-full text-left mb-6 border border-slate-100 space-y-2">
-                <div className="flex justify-between gap-4">
-                  <span className="text-slate-500 text-sm">Mã đơn hàng:</span>
-                  <span className="font-semibold text-slate-800 text-right">
-                    {orderDetails.code}
-                  </span>
-                </div>
-                <div className="flex justify-between gap-4">
-                  <span className="text-slate-500 text-sm">Trạng thái đơn:</span>
-                  <span className="font-semibold text-slate-800 text-right">
-                    {orderDetails.orderStatus || "---"}
-                  </span>
-                </div>
-                {orderDetails.expiresAt && (
-                  <div className="flex justify-between gap-4">
-                    <span className="text-slate-500 text-sm">Hết hạn lúc:</span>
-                    <span className="font-semibold text-slate-800 text-right">
-                      {formatDateTime(orderDetails.expiresAt)}
-                    </span>
-                  </div>
-                )}
-              </div>
-            )}
-
-            <div className="flex flex-col w-full gap-3">
-              <Link
-                to="/cart"
-                className="w-full py-3 bg-rose-600 text-white rounded-xl font-medium hover:bg-rose-700 transition-all shadow-md shadow-rose-200"
-              >
-                Quay lại giỏ hàng
-              </Link>
-              <Link
-                to="/order-history"
-                className="w-full py-3 bg-slate-100 text-slate-700 rounded-xl font-medium hover:bg-slate-200 transition-all"
-              >
-                Xem đơn hàng của tôi
-              </Link>
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
+          ) : null}
+        </SurfaceCard>
+      </PageContainer>
+    </PageShell>
   );
 };
+
+const StateBlock = ({ icon, title, message }) => (
+  <div className="flex flex-col items-center py-4">
+    <div className="mb-5 flex items-center justify-center">{icon}</div>
+    <h1 className="text-2xl font-medium text-slate-900">{title}</h1>
+    <p className="mt-2 text-sm leading-6 text-slate-500">{message}</p>
+  </div>
+);
+
+const ReceiptRow = ({ label, value, strong = false }) => (
+  <div className="flex items-start justify-between gap-4 border-b border-slate-200/70 py-2 last:border-b-0">
+    <span className="text-sm text-slate-500">{label}</span>
+    <span className={`text-right text-sm ${strong ? "font-semibold text-emerald-700" : "font-medium text-slate-900"}`}>
+      {value}
+    </span>
+  </div>
+);
 
 export default VNPayReturnPage;

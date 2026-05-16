@@ -1,26 +1,24 @@
-import { toast } from "react-toastify";
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ShoppingCart, Heart, Eye } from "lucide-react";
-import { useCart } from "../../context/useCart";
+import { toast } from "react-toastify";
+import { FiEye, FiHeart, FiShoppingCart } from "react-icons/fi";
 import { useAuth } from "../../context/useAuth";
+import { useCart } from "../../context/useCart";
 import { getImageUrl } from "../../utils/imageUrl";
 
 const ProductCard = ({ product }) => {
   const { addToCart } = useCart();
   const { user } = useAuth();
   const navigate = useNavigate();
-  const formatCurrency = (amount) => {
-    return new Intl.NumberFormat("vi-VN", {
+
+  const formatCurrency = (amount) =>
+    new Intl.NumberFormat("vi-VN", {
       style: "currency",
       currency: "VND",
-    }).format(amount);
-  };
+    }).format(amount || 0);
 
   const isOutOfStock = product.status === "OUT_OF_STOCK";
-
-  // Calculate discounted price
-  let discountedPrice = product.sellPrice;
+  let discountedPrice = product.sellPrice || 0;
   let hasDiscount = false;
   let discountDisplay = "";
 
@@ -28,137 +26,114 @@ const ProductCard = ({ product }) => {
     hasDiscount = true;
     if (product.activePromotion.discountType === "PERCENTAGE") {
       discountedPrice =
-        product.sellPrice -
-        (product.sellPrice * product.activePromotion.discountValue) / 100;
+        discountedPrice -
+        (discountedPrice * product.activePromotion.discountValue) / 100;
       discountDisplay = `-${product.activePromotion.discountValue}%`;
     } else {
-      discountedPrice =
-        product.sellPrice - product.activePromotion.discountValue;
-      if (discountedPrice < 0) discountedPrice = 0;
+      discountedPrice = Math.max(discountedPrice - product.activePromotion.discountValue, 0);
       discountDisplay = `-${formatCurrency(product.activePromotion.discountValue)}`;
     }
   }
 
+  const handleAddToCart = () => {
+    if (!user) {
+      toast.warning("Please sign in to add products to your cart.");
+      navigate("/login");
+      return;
+    }
+    addToCart(product);
+  };
+
   return (
-    <div className="group bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col h-full relative">
-      {/* Badge */}
-      {product.status !== "ACTIVE" && (
-        <div className="absolute top-3 left-3 z-10">
-          <span
-            className={`px-3 py-1 rounded-full text-[10px] font-medium uppercase tracking-wider ${
-              isOutOfStock ? "bg-rose-400 text-white" : "bg-rose-400 text-white"
-            }`}
-          >
-            {isOutOfStock ? "Hết hàng" : "Ngừng kinh doanh"}
+    <article className="group relative flex h-full flex-col overflow-hidden rounded-[1.35rem] border border-white/75 bg-white/92 shadow-[0_14px_34px_rgba(15,23,42,0.07)] backdrop-blur transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_22px_55px_rgba(15,23,42,0.12)]">
+      {product.status !== "ACTIVE" ? (
+        <div className="absolute left-3 top-3 z-30">
+          <span className="rounded-full bg-rose-500 px-3 py-1 text-[10px] font-medium uppercase tracking-wider text-white">
+            {isOutOfStock ? "Out of stock" : "Unavailable"}
           </span>
         </div>
-      )}
+      ) : null}
 
-      {/* Discount Badge */}
-      {hasDiscount && (
-        <div className="absolute top-3 right-3 z-10">
-          <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-500 text-white shadow-sm flex items-center gap-1">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="12"
-              height="12"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="m11.5 15.5 3-3" />
-              <path d="m21.5 9-1.5-1.5" />
-              <path d="m3 3 1.5 1.5" />
-              <path d="m8.5 21.5-1.5-1.5" />
-              <path d="m9 10.5 3-3" />
-              <path d="M4 11V4h7l10 10-7 7-10-10Z" />
-            </svg>
+      {hasDiscount ? (
+        <div className="absolute right-3 top-3 z-30">
+          <span className="inline-flex items-center rounded-full bg-amber-500 px-2.5 py-1 text-[11px] font-bold text-white shadow-sm">
             {discountDisplay}
           </span>
         </div>
-      )}
+      ) : null}
 
-      {/* Image Container */}
-      <div className="relative aspect-[5/4] overflow-hidden bg-slate-50 group-hover:bg-slate-100 transition-colors">
+      <div className="relative aspect-[1.08/1] overflow-hidden bg-[#eef5ea] transition-colors group-hover:bg-[#e5efde]">
+        <div className="absolute inset-x-5 top-5 h-20 rounded-full bg-white/50 blur-2xl" />
         <img
           src={getImageUrl(product.thumbnail, "https://via.placeholder.com/300x300?text=No+Image")}
           alt={product.name}
-          className={`w-full h-full object-cover transition-transform duration-500 group-hover:scale-110 ${
+          loading="lazy"
+          className={`relative z-10 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105 ${
             isOutOfStock ? "opacity-50 grayscale" : ""
           }`}
         />
 
-        {/* Quick Actions Overlay */}
-        <div className="absolute inset-0 bg-black/5 flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+        <div className="absolute inset-0 z-20 flex items-center justify-center gap-2 bg-slate-950/10 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
           <Link
             to={`/products/${product.id}`}
-            className="p-3 bg-white text-slate-700 rounded-full shadow-lg hover:bg-green-600 hover:text-white transition-all transform hover:scale-110"
-            title="Xem chi tiết"
+            className="flex h-11 w-11 items-center justify-center rounded-full bg-white text-slate-700 shadow-lg transition-all hover:scale-105 hover:bg-emerald-700 hover:text-white"
+            title="View details"
+            aria-label="View product details"
           >
-            <Eye size={18} />
+            <FiEye size={18} />
           </Link>
           <button
-            className="p-3 bg-white text-slate-700 rounded-full shadow-lg hover:bg-rose-500 hover:text-white transition-all transform hover:scale-110"
-            title="Yêu thích"
+            type="button"
+            className="flex h-11 w-11 items-center justify-center rounded-full bg-white text-slate-700 shadow-lg transition-all hover:scale-105 hover:bg-rose-500 hover:text-white"
+            title="Favorite"
+            aria-label="Favorite product"
           >
-            <Heart size={18} />
+            <FiHeart size={18} />
           </button>
         </div>
       </div>
 
-      {/* Content */}
-      <div className="p-3.5 flex flex-col flex-1">
+      <div className="flex flex-1 flex-col p-4">
         <h3
-          className="text-[15px] font-medium text-slate-800 line-clamp-2 mb-1.5 group-hover:text-green-600 transition-colors min-h-[36px]"
+          className="mb-1.5 line-clamp-2 min-h-[40px] text-[15px] font-medium leading-snug text-slate-900 transition-colors group-hover:text-emerald-700"
           title={product.name}
         >
           {product.name}
         </h3>
 
-        <div className="mt-auto pt-2.5 flex items-end justify-between border-t border-slate-50">
-          <div>
-            <p className="text-lg font-medium text-green-600">
+        <div className="mt-auto flex items-end justify-between border-t border-slate-100 pt-3">
+          <div className="min-w-0">
+            <p className="text-lg font-medium tabular-nums text-emerald-700">
               {formatCurrency(discountedPrice)}
             </p>
-            {hasDiscount && (
-              <p className="text-xs text-slate-400 line-through">
+            {hasDiscount ? (
+              <p className="text-xs tabular-nums text-slate-400 line-through">
                 {formatCurrency(product.sellPrice)}
               </p>
-            )}
-            {!hasDiscount && product.importPrice > 0 && (
-              <p className="text-xs text-slate-400 line-through">
+            ) : product.importPrice > 0 ? (
+              <p className="text-xs tabular-nums text-slate-400 line-through">
                 {formatCurrency(product.sellPrice * 1.2)}
               </p>
-            )}
+            ) : null}
           </div>
 
           <button
-            onClick={() => {
-              if (!user) {
-                toast.warning(
-                  "Vui lòng đăng nhập để có thể thêm sản phẩm vào giỏ hàng.",
-                );
-                navigate("/login");
-                return;
-              }
-              addToCart(product);
-            }}
-            className={`p-2.5 rounded-xl transition-all shadow-sm active:scale-95 ${
+            type="button"
+            onClick={handleAddToCart}
+            className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl shadow-sm transition-all active:scale-95 ${
               isOutOfStock
-                ? "bg-slate-100 text-slate-400 cursor-not-allowed"
-                : "bg-green-600 text-white hover:bg-green-700 shadow-green-100"
+                ? "cursor-not-allowed bg-slate-100 text-slate-400"
+                : "bg-emerald-700 text-white shadow-emerald-100 hover:bg-emerald-800"
             }`}
             disabled={isOutOfStock}
-            title={isOutOfStock ? "Hết hàng" : "Thêm vào giỏ"}
+            title={isOutOfStock ? "Out of stock" : "Add to cart"}
+            aria-label={isOutOfStock ? "Product is out of stock" : "Add to cart"}
           >
-            <ShoppingCart size={18} />
+            <FiShoppingCart size={18} />
           </button>
         </div>
       </div>
-    </div>
+    </article>
   );
 };
 

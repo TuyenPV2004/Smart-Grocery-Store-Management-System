@@ -84,6 +84,8 @@ public class DashboardDTO {
         private String productName;
         private long soldQuantity;
         private BigDecimal revenue;
+        private String thumbnail;
+        private BigDecimal price;
     }
 
     @Data

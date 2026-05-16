@@ -16,8 +16,10 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -91,13 +93,50 @@ public class DashboardService {
                 .map(row -> new DashboardDTO.TopProduct(
                         row[0] != null ? row[0].toString() : "Khong xac dinh",
                         row[1] != null ? ((Number) row[1]).longValue() : 0L,
-                        row[2] != null ? (BigDecimal) row[2] : BigDecimal.ZERO))
+                        row[2] != null ? (BigDecimal) row[2] : BigDecimal.ZERO,
+                        row[3] != null ? row[3].toString() : null,
+                        row[4] != null ? BigDecimal.valueOf(((Number) row[4]).doubleValue()) : BigDecimal.ZERO))
                 .toList();
     }
 
     public List<DashboardDTO.CategorySales> getCategorySales(Integer days) {
-        BigDecimal revenue = defaultZero(orderRepository.sumTotalRevenueSince(calculateStartDate(normalizeDays(days))));
-        return List.of(new DashboardDTO.CategorySales("Tat ca san pham", revenue));
+        Map<Long, String> categoryByProductId = catalogClient.getAllProducts().stream()
+                .filter(product -> product.get("id") instanceof Number)
+                .collect(Collectors.toMap(
+                        product -> ((Number) product.get("id")).longValue(),
+                        this::resolveCategoryName,
+                        (existing, replacement) -> existing));
+
+        Map<String, BigDecimal> revenueByCategory = new LinkedHashMap<>();
+        for (Object[] row : orderRepository.findRevenueByProductIdSince(calculateStartDate(normalizeDays(days)))) {
+            Long productId = row[0] != null ? ((Number) row[0]).longValue() : null;
+            BigDecimal revenue = row[1] != null ? (BigDecimal) row[1] : BigDecimal.ZERO;
+            String categoryName = categoryByProductId.getOrDefault(productId, "Uncategorized");
+            revenueByCategory.merge(categoryName, revenue, BigDecimal::add);
+        }
+
+        return revenueByCategory.entrySet().stream()
+                .sorted(Map.Entry.<String, BigDecimal>comparingByValue().reversed())
+                .map(entry -> new DashboardDTO.CategorySales(entry.getKey(), entry.getValue()))
+                .toList();
+    }
+
+    @SuppressWarnings("unchecked")
+    private String resolveCategoryName(Map<String, Object> product) {
+        Object labelsObject = product.get("labels");
+        if (labelsObject instanceof List<?> labels && !labels.isEmpty()) {
+            Object firstLabel = labels.get(0);
+            if (firstLabel instanceof Map<?, ?> label) {
+                Object parentObject = label.get("parent");
+                if (parentObject instanceof Map<?, ?> parent && parent.get("name") != null) {
+                    return parent.get("name").toString();
+                }
+                if (label.get("name") != null) {
+                    return label.get("name").toString();
+                }
+            }
+        }
+        return "Uncategorized";
     }
 
     private int normalizeDays(Integer days) {

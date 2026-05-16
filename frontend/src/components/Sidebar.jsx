@@ -1,24 +1,26 @@
-import { Link, useLocation, useNavigate } from "react-router-dom";
-import { useAuth } from "../context/useAuth";
-import {
-  LayoutDashboard,
-  Package,
-  Users,
-  LogOut,
-  Layers,
-  Warehouse,
-  Truck,
-  ChevronDown,
-  ClipboardList,
-  Download,
-  Boxes,
-  Upload,
-  Database,
-  Tag,
-  Ticket,
-  MessageCircle,
-} from "lucide-react";
 import { useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import {
+  FiArchive,
+  FiBox,
+  FiChevronDown,
+  FiClipboard,
+  FiDatabase,
+  FiDownload,
+  FiGrid,
+  FiLayers,
+  FiLogOut,
+  FiMessageCircle,
+  FiPackage,
+  FiTag,
+  FiTruck,
+  FiUpload,
+  FiUsers,
+} from "react-icons/fi";
+import { useAuth } from "../context/useAuth";
+
+const navItemBase =
+  "group flex w-full items-center rounded-2xl py-3 text-sm font-medium transition-all duration-200";
 
 const Sidebar = ({ isCollapsed, onToggle }) => {
   const { user, logout } = useAuth();
@@ -29,7 +31,7 @@ const Sidebar = ({ isCollapsed, onToggle }) => {
   );
   const [openFlyoutIndex, setOpenFlyoutIndex] = useState(null);
   const [flyoutTop, setFlyoutTop] = useState(0);
-  const BACKEND_URL = import.meta.env.VITE_PUBLIC_BASE_URL || "http://localhost:8088/";
+  const backendUrl = import.meta.env.VITE_PUBLIC_BASE_URL || "http://localhost:8088/";
   const avatarPath = user?.avatarUrl || user?.avatar_url || user?.avatar;
 
   const menuItems = [
@@ -37,83 +39,79 @@ const Sidebar = ({ isCollapsed, onToggle }) => {
       id: "dashboard",
       path: "/dashboard",
       label: "Dashboard",
-      icon: LayoutDashboard,
+      icon: FiGrid,
       roles: ["ADMIN", "STAFF"],
     },
     {
       id: "products",
       path: "/admin/products",
-      label: "Quản lý sản phẩm",
-      icon: Package,
+      label: "Products",
+      icon: FiPackage,
       roles: ["ADMIN", "STAFF"],
     },
     {
       id: "suppliers",
       path: "/suppliers",
-      label: "Nhà cung cấp",
-      icon: Truck,
+      label: "Suppliers",
+      icon: FiTruck,
       roles: ["ADMIN", "STAFF"],
     },
     {
       id: "inventory",
-      label: "Quản lý kho",
-      icon: Warehouse,
+      label: "Inventory",
+      icon: FiArchive,
       roles: ["ADMIN", "STAFF"],
       isParent: true,
       isOpen: isInventoryOpen,
-      toggle: () => setIsInventoryOpen(!isInventoryOpen),
+      toggle: () => setIsInventoryOpen((value) => !value),
       children: [
-        { title: "Quản lý nhập kho", path: "/inventory/entry", icon: Download },
-        {
-          title: "Danh sách phiếu",
-          path: "/inventory/list",
-          icon: ClipboardList,
-        },
-        { title: "Danh sách lô hàng", path: "/inventory/batches", icon: Boxes },
-        { title: "Quản lý xuất kho", path: "/inventory/export", icon: Upload },
-        { title: "Quản lý hàng tồn", path: "/inventory/stock", icon: Database },
+        { title: "Stock Entry", path: "/inventory/entry", icon: FiDownload },
+        { title: "Entry Notes", path: "/inventory/list", icon: FiClipboard },
+        { title: "Batches", path: "/inventory/batches", icon: FiBox },
+        { title: "Stock Export", path: "/inventory/export", icon: FiUpload },
+        { title: "Stock Management", path: "/inventory/stock", icon: FiDatabase },
       ],
     },
     {
       id: "categories",
       path: "/categories",
-      label: "Quản lý danh mục",
-      icon: Layers,
+      label: "Categories",
+      icon: FiLayers,
       roles: ["ADMIN"],
     },
     {
       id: "orders",
       path: "/orders",
-      label: "Quản lý đơn hàng",
-      icon: ClipboardList,
+      label: "Orders",
+      icon: FiClipboard,
       roles: ["ADMIN", "STAFF"],
     },
     {
       id: "chat",
       path: "/support/chat",
-      label: "Chat khách hàng",
-      icon: MessageCircle,
+      label: "Support Chat",
+      icon: FiMessageCircle,
       roles: ["ADMIN", "STAFF"],
     },
     {
       id: "users",
       path: "/users",
-      label: "Quản lý nhân sự",
-      icon: Users,
+      label: "Users",
+      icon: FiUsers,
       roles: ["ADMIN"],
     },
     {
       id: "promotions",
       path: "/promotions",
-      label: "Khuyến mãi",
-      icon: Tag,
+      label: "Promotions",
+      icon: FiTag,
       roles: ["ADMIN"],
     },
     {
       id: "vouchers",
       path: "/vouchers",
-      label: "Mã giảm giá",
-      icon: Ticket,
+      label: "Vouchers",
+      icon: FiTag,
       roles: ["ADMIN"],
     },
   ];
@@ -121,258 +119,213 @@ const Sidebar = ({ isCollapsed, onToggle }) => {
   const isActive = (path) => location.pathname === path;
   const isChildActive = (path) => location.pathname === path;
 
-  // Đóng flyout khi click ra ngoài hoặc chuyển trang
   const handleFlyoutLinkClick = (path) => {
     setOpenFlyoutIndex(null);
     navigate(path);
   };
 
-  const handleParentClick = (e, item, index) => {
+  const handleParentClick = (event, item, index) => {
     if (isCollapsed) {
-      const rect = e.currentTarget.getBoundingClientRect();
-      const centerY = rect.top + rect.height / 2;
-      setFlyoutTop(centerY);
+      const rect = event.currentTarget.getBoundingClientRect();
+      setFlyoutTop(rect.top + rect.height / 2);
       setOpenFlyoutIndex(openFlyoutIndex === index ? null : index);
-    } else {
-      item.toggle();
+      return;
     }
+
+    item.toggle();
+  };
+
+  const handleLogout = () => {
+    logout();
+    navigate("/");
   };
 
   return (
     <>
-      {/* Overlay để đóng flyout khi click ra ngoài (nằm dưới Sidebar nhưng trên nội dung chính) */}
-      {openFlyoutIndex !== null && (
-        <div
-          className="fixed inset-0 z-[40] bg-transparent"
+      {openFlyoutIndex !== null ? (
+        <button
+          type="button"
+          className="fixed inset-0 z-[40] cursor-default bg-transparent"
           onClick={() => setOpenFlyoutIndex(null)}
+          aria-label="Close sidebar flyout"
         />
-      )}
+      ) : null}
 
-      <div
-        className={`${
+      <aside
+        className={`fixed bottom-4 left-4 top-8 z-50 flex flex-col rounded-[1.5rem] border border-white/75 bg-white/90 shadow-[0_20px_55px_rgba(15,23,42,0.11)] backdrop-blur transition-all duration-300 ${
           isCollapsed ? "w-20" : "w-64"
-        } bg-white border border-slate-100 rounded-3xl flex flex-col fixed left-4 top-6 bottom-6 z-50 shadow-[4px_12px_30px_rgba(15,23,42,0.08)] transition-all duration-300`}
+        }`}
       >
-        {/* Logo Section */}
         <div
-          className={`p-6 flex items-center ${
+          className={`flex items-center p-5 ${
             isCollapsed ? "justify-center" : "gap-3"
-          } mb-4`}
+          }`}
         >
           <button
             type="button"
             onClick={onToggle}
-            className="w-10 h-10 bg-green-600 rounded-xl shadow-lg shadow-green-200 shrink-0 transition-transform hover:scale-105 flex items-center justify-center"
-            aria-label={isCollapsed ? "Mở rộng sidebar" : "Thu gọn sidebar"}
-            title={isCollapsed ? "Mở rộng sidebar" : "Thu gọn sidebar"}
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-emerald-700 text-lg font-semibold text-white shadow-[0_12px_28px_rgba(21,128,61,0.22)] transition-transform hover:scale-105"
+            aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+            title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
           >
-            <span className="text-white text-xl leading-none font-bold">G</span>
+            G
           </button>
-          {!isCollapsed && (
-            <h1 className="text-xl font-medium text-slate-900 tracking-tight truncate">
-              Grocery Store
-            </h1>
-          )}
+          {!isCollapsed ? (
+            <div className="min-w-0">
+              <h1 className="truncate text-lg font-medium tracking-tight text-slate-950">
+                Grocery Admin
+              </h1>
+              <p className="truncate text-xs font-medium text-slate-400">
+                Store operations
+              </p>
+            </div>
+          ) : null}
         </div>
 
-        {/* Menu */}
-        <nav className="flex-1 px-4 space-y-1.5 overflow-y-auto overflow-x-hidden [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+        <nav className="flex-1 space-y-1 overflow-y-auto overflow-x-hidden px-3 pb-3 scrollbar-hide">
           {menuItems.map((item, index) => {
             if (!item.roles.includes(user?.role)) return null;
+            const Icon = item.icon;
 
-            // Quản lý kho (menu cha)
             if (item.isParent) {
+              const active = location.pathname.startsWith("/inventory");
+
               return (
-                <div key={index} className="space-y-1 relative group">
+                <div key={item.id} className="relative space-y-1">
                   <button
-                    onClick={(e) => handleParentClick(e, item, index)}
-                    title={isCollapsed ? item.label : ""}
-                    className={`w-full flex items-center ${
-                      isCollapsed ? "justify-center" : "px-4"
-                    } py-3 rounded-2xl transition-all duration-200 group font-medium ${
-                      location.pathname.startsWith("/inventory") ||
-                      openFlyoutIndex === index
-                        ? "text-green-600"
-                        : "text-slate-500 hover:text-slate-900"
+                    type="button"
+                    onClick={(event) => handleParentClick(event, item, index)}
+                    title={isCollapsed ? item.label : undefined}
+                    className={`${navItemBase} ${
+                      isCollapsed ? "justify-center px-0" : "px-4"
+                    } ${
+                      active || openFlyoutIndex === index
+                        ? "bg-emerald-50 text-emerald-800"
+                        : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
                     }`}
+                    aria-expanded={item.isOpen}
                   >
-                    <item.icon
+                    <Icon
                       size={20}
                       className={`${isCollapsed ? "" : "mr-3"} ${
-                        location.pathname.startsWith("/inventory") ||
-                        openFlyoutIndex === index
-                          ? "text-green-600"
-                          : "text-slate-400 group-hover:text-slate-600"
+                        active ? "text-emerald-700" : "text-slate-400 group-hover:text-slate-600"
                       }`}
                     />
-                    {!isCollapsed && (
+                    {!isCollapsed ? (
                       <>
-                        <span className="text-[15px]">{item.label}</span>
-                        <ChevronDown
+                        <span className="truncate">{item.label}</span>
+                        <FiChevronDown
                           size={16}
                           className={`ml-auto transition-transform ${
                             item.isOpen ? "rotate-180" : ""
                           }`}
                         />
                       </>
-                    )}
+                    ) : null}
                   </button>
 
-                  {/* Flyout Menu (Centered relative to icon when collapsed) */}
-                  {isCollapsed && openFlyoutIndex === index && (
+                  {isCollapsed && openFlyoutIndex === index ? (
                     <div
-                      className="fixed left-24 bg-white rounded-2xl shadow-xl border border-slate-100 p-2 min-w-[220px] animate-in slide-in-from-left-2 duration-200 z-[60]"
-                      style={{
-                        top: `${flyoutTop}px`,
-                        transform: "translateY(-50%)",
-                      }}
-                      onClick={(e) => e.stopPropagation()}
+                      className="fixed left-24 z-[60] min-w-[230px] rounded-2xl border border-white/80 bg-white p-2 shadow-[0_20px_55px_rgba(15,23,42,0.14)]"
+                      style={{ top: `${flyoutTop}px`, transform: "translateY(-50%)" }}
+                      onClick={(event) => event.stopPropagation()}
                     >
-                      {/* Triangle Arrow */}
-                      <div className="absolute -left-2 top-1/2 -translate-y-1/2 w-4 h-4 bg-white border-l border-b border-slate-100 rotate-45" />
-
-                      <div className="relative bg-white rounded-2xl overflow-hidden p-1">
-                        <div className="px-4 py-2 border-b border-slate-50 mb-1">
-                          <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                      <div className="absolute -left-2 top-1/2 h-4 w-4 -translate-y-1/2 rotate-45 border-b border-l border-white/80 bg-white" />
+                      <div className="relative rounded-2xl bg-white p-1">
+                        <div className="mb-1 border-b border-slate-100 px-4 py-2">
+                          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
                             {item.label}
                           </p>
                         </div>
-                        <div className="space-y-1">
-                          {item.children.map((child) => (
+                        {item.children.map((child) => {
+                          const ChildIcon = child.icon;
+                          return (
                             <button
                               key={child.path}
+                              type="button"
                               onClick={() => handleFlyoutLinkClick(child.path)}
-                              className={`w-full flex items-center gap-3 py-2 px-3 rounded-xl text-[13.5px] font-medium transition-all ${
+                              className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all ${
                                 isChildActive(child.path)
-                                  ? "text-green-600"
-                                  : "text-slate-500 hover:text-slate-900"
+                                  ? "bg-emerald-50 text-emerald-800"
+                                  : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
                               }`}
                             >
-                              <child.icon
-                                size={16}
-                                className={
-                                  isChildActive(child.path)
-                                    ? "text-green-600"
-                                    : "text-slate-400"
-                                }
-                              />
+                              <ChildIcon size={16} />
                               <span>{child.title}</span>
                             </button>
-                          ))}
-                        </div>
+                          );
+                        })}
                       </div>
                     </div>
-                  )}
+                  ) : null}
 
-                  {item.isOpen && !isCollapsed && (
-                    <div className="pl-9 space-y-1 animate-in slide-in-from-top-1 duration-200 mt-1 mb-2">
-                      {item.children.map((child) => (
-                        <Link
-                          key={child.path}
-                          to={child.path}
-                          className={`flex items-center gap-3 py-2 px-3 rounded-xl text-[13.5px] font-medium transition-all ${
-                            isChildActive(child.path)
-                              ? "text-green-600"
-                              : "text-slate-500 hover:text-slate-900"
-                          }`}
-                        >
-                          <child.icon
-                            size={16}
-                            className={
-                              isChildActive(child.path)
-                                ? "text-green-600"
-                                : "text-slate-400"
-                            }
-                          />
-                          <span>{child.title}</span>
-                        </Link>
-                      ))}
+                  {!isCollapsed && item.isOpen ? (
+                    <div className="ml-4 space-y-1 border-l border-emerald-100 pl-3">
+                      {item.children.map((child) => {
+                        const ChildIcon = child.icon;
+                        const activeChild = isChildActive(child.path);
+                        return (
+                          <button
+                            key={child.path}
+                            type="button"
+                            onClick={() => navigate(child.path)}
+                            className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all ${
+                              activeChild
+                                ? "bg-emerald-50 text-emerald-800"
+                                : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
+                            }`}
+                          >
+                            <ChildIcon size={16} />
+                            <span className="truncate">{child.title}</span>
+                          </button>
+                        );
+                      })}
                     </div>
-                  )}
+                  ) : null}
                 </div>
               );
             }
 
-            // Menu thường
+            const active = isActive(item.path);
+
             return (
-              <Link
-                key={item.path}
-                to={item.path}
-                title={isCollapsed ? item.label : ""}
-                className={`flex items-center ${
-                  isCollapsed ? "justify-center" : "px-4"
-                } py-3 rounded-2xl transition-all duration-200 group font-medium ${
-                  isActive(item.path)
-                    ? "text-green-600"
-                    : "text-slate-500 hover:text-slate-900"
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => navigate(item.path)}
+                title={isCollapsed ? item.label : undefined}
+                className={`${navItemBase} ${isCollapsed ? "justify-center px-0" : "px-4"} ${
+                  active
+                    ? "bg-emerald-50 text-emerald-800"
+                    : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
                 }`}
               >
-                <item.icon
+                <Icon
                   size={20}
                   className={`${isCollapsed ? "" : "mr-3"} ${
-                    isActive(item.path)
-                      ? "text-green-600"
-                      : "text-slate-400 group-hover:text-slate-600"
+                    active ? "text-emerald-700" : "text-slate-400 group-hover:text-slate-600"
                   }`}
                 />
-                {!isCollapsed && (
-                  <span className="text-[15px]">{item.label}</span>
-                )}
-              </Link>
+                {!isCollapsed ? <span className="truncate">{item.label}</span> : null}
+              </button>
             );
           })}
         </nav>
 
-        {/* User - Đã được cập nhật để hiển thị Avatar thay thế cho icon chữ */}
-        <div className="p-4 mt-auto border-t border-slate-50 space-y-2">
+        <div className="border-t border-slate-100 p-3">
           <button
-            onClick={() => navigate("/profile")}
-            title={isCollapsed ? (user?.role === "ADMIN" ? "Quản trị viên" : user?.role === "STAFF" ? "Nhân viên" : "Khách hàng") : ""}
-            className={`w-full ${
-              isCollapsed ? "justify-center" : "px-4"
-            } py-3 rounded-2xl flex items-center gap-3 bg-slate-50 hover:bg-slate-100/50 transition-all`}
+            type="button"
+            onClick={handleLogout}
+            className={`flex w-full items-center rounded-2xl py-3 text-sm font-medium text-rose-600 transition-all hover:bg-rose-50 ${
+              isCollapsed ? "justify-center px-0" : "px-4"
+            }`}
+            title="Sign out"
           >
-            {avatarPath ? (
-              <img
-                src={
-                  avatarPath.startsWith("http")
-                    ? avatarPath
-                    : `${BACKEND_URL}${avatarPath}`
-                }
-                alt={user?.fullName || user?.username || "Avatar"}
-                className="w-9 h-9 rounded-xl object-cover border border-slate-200 shadow-sm shrink-0"
-              />
-            ) : (
-              <div className="w-9 h-9 rounded-xl bg-white border flex items-center justify-center text-green-600 font-medium shrink-0">
-                {user?.fullName?.charAt(0).toUpperCase() ||
-                  user?.username?.charAt(0).toUpperCase()}
-              </div>
-            )}
-
-            {!isCollapsed && (
-              <div className="text-left overflow-hidden">
-                <p className="text-[13px] font-medium text-slate-800 truncate">
-                  {user?.fullName || user?.username}
-                </p>
-                <p className="text-[11px] text-slate-400">
-                  {user?.role === "ADMIN" ? "Quản trị viên" : user?.role === "STAFF" ? "Nhân viên" : "Khách hàng"}
-                </p>
-              </div>
-            )}
-          </button>
-
-          <button
-            onClick={logout}
-            title={isCollapsed ? "Đăng xuất" : ""}
-            className={`flex items-center w-full ${
-              isCollapsed ? "justify-center" : "px-4"
-            } py-3 text-rose-500 rounded-2xl font-medium`}
-          >
-            <LogOut size={20} className={isCollapsed ? "" : "mr-3"} />
-            {!isCollapsed && "Đăng xuất"}
+            <FiLogOut size={18} className={isCollapsed ? "" : "mr-3"} />
+            {!isCollapsed ? <span>Sign out</span> : null}
           </button>
         </div>
-      </div>
+      </aside>
     </>
   );
 };

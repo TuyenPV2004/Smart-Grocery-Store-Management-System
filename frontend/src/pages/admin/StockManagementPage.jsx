@@ -2,16 +2,16 @@ import { toast } from "react-toastify";
 import React, { useState, useEffect } from "react";
 import ReactPaginate from "react-paginate";
 import {
-  Package,
-  TrendingDown,
-  AlertTriangle,
-  DollarSign,
-  Search,
-  Filter,
-  Clock,
-  Trash2,
-  Info,
-} from "lucide-react";
+  FiPackage as Package,
+  FiTrendingDown as TrendingDown,
+  FiAlertTriangle as AlertTriangle,
+  FiDollarSign as DollarSign,
+  FiSearch as Search,
+  FiFilter as Filter,
+  FiClock as Clock,
+  FiTrash2 as Trash2,
+  FiInfo as Info,
+} from "react-icons/fi";
 import Swal from "sweetalert2";
 import stockService from "../../services/stockService";
 import productService from "../../services/productService";

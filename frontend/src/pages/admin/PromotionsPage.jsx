@@ -1,20 +1,36 @@
-import { toast } from "react-toastify";
 import { useEffect, useState } from "react";
+import moment from "moment";
+import { toast } from "react-toastify";
+import Swal from "sweetalert2";
+import { FiEdit2, FiInfo, FiPlus, FiTag, FiTrash2 } from "react-icons/fi";
 import promotionService from "../../services/promotionService";
 import productService from "../../services/productService";
-import {
-  Edit,
-  Trash2,
-  Tag,
-  Calendar,
-  Percent,
-  DollarSign,
-  X,
-  Info,
-} from "lucide-react";
-import moment from "moment";
-import Swal from "sweetalert2";
 import { getImageUrl } from "../../utils/imageUrl";
+import {
+  AdminHeader,
+  AdminIconButton,
+  AdminModal,
+  AdminPage,
+  AdminSectionTitle,
+  AdminTableCard,
+  Button,
+} from "../../components/admin/AdminUi";
+import { StatusBadge } from "../../components/ui";
+
+const emptyForm = {
+  id: null,
+  name: "",
+  description: "",
+  discountType: "PERCENTAGE",
+  discountValue: "",
+  startDate: "",
+  endDate: "",
+  status: "ACTIVE",
+  productIds: [],
+};
+
+const formatMoney = (value) => `${Number(value || 0).toLocaleString("vi-VN")} VND`;
+const formatDate = (value) => (value ? moment(value).utc().format("DD MMM YYYY HH:mm") : "---");
 
 const PromotionsPage = () => {
   const [promotions, setPromotions] = useState([]);
@@ -23,45 +39,35 @@ const PromotionsPage = () => {
   const [loading, setLoading] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedPromo, setSelectedPromo] = useState(null);
-
-  const [formData, setFormData] = useState({
-    id: null,
-    name: "",
-    description: "",
-    discountType: "PERCENTAGE",
-    discountValue: "",
-    startDate: "",
-    endDate: "",
-    status: "ACTIVE",
-    productIds: [],
-  });
-
-  useEffect(() => {
-    fetchData();
-    fetchProducts();
-  }, []);
+  const [formData, setFormData] = useState(emptyForm);
 
   const fetchData = async () => {
     try {
       const res = await promotionService.getAll();
-      setPromotions(res.data);
+      setPromotions(res.data || []);
     } catch (error) {
-      console.error("Lỗi tải khuyến mãi:", error);
+      console.error("Failed to load promotions:", error);
+      toast.error("Unable to load promotions.");
     }
   };
 
   const fetchProducts = async () => {
     try {
       const res = await productService.getAll();
-      // res.data might be an array or paginated object, assuming array here
       setProducts(res.data?.content || res.data || []);
     } catch (error) {
-      console.error("Lỗi tải sản phẩm:", error);
+      console.error("Failed to load products:", error);
+      toast.error("Unable to load products.");
     }
   };
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
+  useEffect(() => {
+    fetchData();
+    fetchProducts();
+  }, []);
+
+  const handleChange = (event) => {
+    const { name, value } = event.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
@@ -77,8 +83,8 @@ const PromotionsPage = () => {
     });
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async (event) => {
+    event.preventDefault();
     setLoading(true);
     try {
       const payload = {
@@ -87,7 +93,7 @@ const PromotionsPage = () => {
           name: formData.name,
           description: formData.description,
           discountType: formData.discountType,
-          discountValue: formData.discountValue,
+          discountValue: Number(formData.discountValue),
           startDate: formData.startDate,
           endDate: formData.endDate,
           status: formData.status,
@@ -97,15 +103,15 @@ const PromotionsPage = () => {
 
       if (formData.id) {
         await promotionService.update(formData.id, payload);
-        toast.success("Cập nhật khuyến mãi thành công!");
+        toast.success("Promotion updated.");
       } else {
         await promotionService.create(payload);
-        toast.success("Tạo khuyến mãi mới thành công!");
+        toast.success("Promotion created.");
       }
       setShowModal(false);
       fetchData();
     } catch (error) {
-      toast.error("Lỗi: " + (error.response?.data || error.message));
+      toast.error(error.response?.data || error.message || "Unable to save promotion.");
     } finally {
       setLoading(false);
     }
@@ -113,594 +119,302 @@ const PromotionsPage = () => {
 
   const handleDelete = async (id) => {
     const result = await Swal.fire({
-      title: "Xác nhận xóa?",
-      text: "Bạn sẽ không thể khôi phục lại khuyến mãi này!",
+      title: "Delete promotion?",
+      text: "This action cannot be undone.",
       icon: "warning",
       showCancelButton: true,
-      confirmButtonColor: "#ef4444",
-      cancelButtonColor: "#94a3b8",
-      confirmButtonText: "Xóa",
-      cancelButtonText: "Hủy bỏ",
+      confirmButtonColor: "#e11d48",
+      cancelButtonColor: "#64748b",
+      confirmButtonText: "Delete",
+      cancelButtonText: "Cancel",
     });
 
-    if (result.isConfirmed) {
-      try {
-        await promotionService.delete(id);
-        toast.success("Xóa thành công!");
-        fetchData();
-      } catch (error) {
-        toast.error("Lỗi khi xóa: " + (error.response?.data || error.message));
-      }
+    if (!result.isConfirmed) return;
+
+    try {
+      await promotionService.delete(id);
+      toast.success("Promotion deleted.");
+      fetchData();
+    } catch (error) {
+      toast.error(error.response?.data || error.message || "Unable to delete promotion.");
     }
   };
 
-  const openEdit = (promo) => {
+  const openEdit = (promotion) => {
     setFormData({
-      id: promo.id,
-      name: promo.name,
-      description: promo.description || "",
-      discountType: promo.discountType || "PERCENTAGE",
-      discountValue: promo.discountValue || "",
-      startDate: promo.startDate
-        ? moment(promo.startDate).utc().format("YYYY-MM-DDTHH:mm")
-        : "",
-      endDate: promo.endDate
-        ? moment(promo.endDate).utc().format("YYYY-MM-DDTHH:mm")
-        : "",
-      status: promo.status || "ACTIVE",
-      productIds: promo.products ? promo.products.map((p) => p.id) : [],
+      id: promotion.id,
+      name: promotion.name,
+      description: promotion.description || "",
+      discountType: promotion.discountType || "PERCENTAGE",
+      discountValue: promotion.discountValue || "",
+      startDate: promotion.startDate ? moment(promotion.startDate).utc().format("YYYY-MM-DDTHH:mm") : "",
+      endDate: promotion.endDate ? moment(promotion.endDate).utc().format("YYYY-MM-DDTHH:mm") : "",
+      status: promotion.status || "ACTIVE",
+      productIds: promotion.products ? promotion.products.map((product) => product.id) : [],
     });
     setShowModal(true);
   };
 
-  const resetForm = () => {
-    setFormData({
-      id: null,
-      name: "",
-      description: "",
-      discountType: "PERCENTAGE",
-      discountValue: "",
-      startDate: "",
-      endDate: "",
-      status: "ACTIVE",
-      productIds: [],
-    });
+  const openCreate = () => {
+    setFormData(emptyForm);
     setShowModal(true);
   };
 
   return (
-    <div className="admin-page-shell p-6 font-poppins antialiased text-slate-600 min-h-screen">
-      <div className="max-w-[1400px] mx-auto">
-        {/* Header Section */}
-        <div className="flex justify-between items-center mb-6">
-          <div>
-            <h1 className="text-2xl font-medium text-slate-900 flex items-center gap-3">
-              Quản lý Khuyến mãi
-            </h1>
-            <p className="text-[14px] text-slate-500 mt-1 font-medium">
-              Thiết lập siêu khuyến mãi, giảm giá cho sản phẩm
-            </p>
-          </div>
-          <button
-            onClick={resetForm}
-            className="bg-green-600 text-white px-5 py-2.5 rounded-xl flex items-center shadow-sm hover:bg-green-700 transition-all active:scale-95 font-medium gap-2"
-          >
-            Thêm khuyến mãi
-          </button>
-        </div>
+    <AdminPage>
+      <AdminHeader
+        title="Promotions"
+        description="Create product-level campaigns and choose eligible products."
+        actions={
+          <Button onClick={openCreate}>
+            <FiPlus size={18} />
+            Add Promotion
+          </Button>
+        }
+      />
 
-        {/* Table Section */}
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse">
-              <thead>
-                <tr className="bg-slate-50/50 border-b border-slate-200">
-                  <th className="px-6 py-4 text-left text-[13px] font-medium text-slate-900 whitespace-nowrap">
-                    Tên GD
-                  </th>
-                  <th className="px-6 py-4 text-left text-[13px] font-medium text-slate-900 whitespace-nowrap">
-                    Chiết khấu
-                  </th>
-                  <th className="px-6 py-4 text-left text-[13px] font-medium text-slate-900 whitespace-nowrap">
-                    Bắt đầu
-                  </th>
-                  <th className="px-6 py-4 text-left text-[13px] font-medium text-slate-900 whitespace-nowrap">
-                    Kết thúc
-                  </th>
-                  <th className="px-6 py-4 text-center text-[13px] font-medium text-slate-900 whitespace-nowrap">
-                    Trạng thái
-                  </th>
-                  <th className="px-6 py-4 text-center text-[13px] font-medium text-slate-900 whitespace-nowrap w-[150px]">
-                    Thao tác
-                  </th>
+      <AdminTableCard>
+        <table>
+          <thead>
+            <tr>
+              <th className="px-6 py-4 text-left">Campaign</th>
+              <th className="px-6 py-4 text-left">Discount</th>
+              <th className="px-6 py-4 text-left">Start</th>
+              <th className="px-6 py-4 text-left">End</th>
+              <th className="px-6 py-4 text-center">Status</th>
+              <th className="px-6 py-4 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-100">
+            {promotions.length ? (
+              promotions.map((promotion) => (
+                <tr key={promotion.id}>
+                  <td className="px-6 py-4">
+                    <div className="font-medium text-slate-900">{promotion.name}</div>
+                    <div className="mt-1 line-clamp-1 text-xs text-slate-500">
+                      {promotion.description || "No description"}
+                    </div>
+                  </td>
+                  <td className="whitespace-nowrap px-6 py-4">
+                    <span className="inline-flex rounded-full border border-amber-100 bg-amber-50 px-3 py-1 text-sm font-medium text-amber-700">
+                      {promotion.discountType === "PERCENTAGE"
+                        ? `${promotion.discountValue}%`
+                        : formatMoney(promotion.discountValue)}
+                    </span>
+                  </td>
+                  <td className="whitespace-nowrap px-6 py-4 text-sm text-slate-700">
+                    {formatDate(promotion.startDate)}
+                  </td>
+                  <td className="whitespace-nowrap px-6 py-4 text-sm text-slate-700">
+                    {formatDate(promotion.endDate)}
+                  </td>
+                  <td className="whitespace-nowrap px-6 py-4 text-center">
+                    <StatusBadge tone={promotion.status === "ACTIVE" ? "emerald" : "slate"}>
+                      {promotion.status === "ACTIVE" ? "Active" : "Inactive"}
+                    </StatusBadge>
+                  </td>
+                  <td className="whitespace-nowrap px-6 py-4 text-right">
+                    <AdminIconButton
+                      onClick={() => {
+                        setSelectedPromo(promotion);
+                        setShowDetailModal(true);
+                      }}
+                      tone="blue"
+                      aria-label="View promotion"
+                    >
+                      <FiInfo size={18} />
+                    </AdminIconButton>
+                    <AdminIconButton onClick={() => openEdit(promotion)} tone="emerald" aria-label="Edit promotion">
+                      <FiEdit2 size={18} />
+                    </AdminIconButton>
+                    <AdminIconButton onClick={() => handleDelete(promotion.id)} tone="rose" aria-label="Delete promotion">
+                      <FiTrash2 size={18} />
+                    </AdminIconButton>
+                  </td>
                 </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {promotions.map((promo) => (
-                  <tr
-                    key={promo.id}
-                    className="hover:bg-slate-50/50 transition-colors"
-                  >
-                    <td className="px-6 py-4">
-                      <div className="font-medium text-slate-900">
-                        {promo.name}
-                      </div>
-                      <div className="text-[12px] text-slate-400 mt-1 line-clamp-1">
-                        {promo.description}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="inline-flex items-center px-3 py-1 bg-amber-50 text-amber-700 rounded-lg text-sm font-medium border border-amber-100/50">
-                        {promo.discountType === "PERCENTAGE"
-                          ? `${promo.discountValue}%`
-                          : `${promo.discountValue.toLocaleString()}đ`}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="text-sm">
-                        <div className="text-slate-900 flex items-center gap-1 mb-1">
-                          <div className="w-1.5 h-1.5 rounded-full bg-green-500"></div>
-                          {moment(promo.startDate)
-                            .utc()
-                            .format("HH:mm DD/MM/YYYY")}
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="text-sm">
-                        <div className="text-slate-900 flex items-center gap-1">
-                          <div className="w-1.5 h-1.5 rounded-full bg-rose-500"></div>
-                          {moment(promo.endDate)
-                            .utc()
-                            .format("HH:mm DD/MM/YYYY")}
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      <span
-                        className={`px-3 py-1 rounded-full text-[12px] font-medium ${promo.status === "ACTIVE" ? "bg-green-100 text-green-700" : "bg-slate-100 text-slate-600"}`}
-                      >
-                        {promo.status === "ACTIVE" ? "Đang chạy" : "Đã tắt"}
+              ))
+            ) : (
+              <tr>
+                <td colSpan="6" className="py-12 text-center text-sm font-medium text-slate-500">
+                  No promotions found.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </AdminTableCard>
+
+      {showModal ? (
+        <AdminModal
+          title={formData.id ? "Edit Promotion" : "Create Promotion"}
+          onClose={() => setShowModal(false)}
+          className="max-w-3xl"
+          footer={
+            <>
+              <Button variant="muted" onClick={() => setShowModal(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" form="promotion-form" disabled={loading}>
+                {loading ? "Saving..." : formData.id ? "Save Changes" : "Create Promotion"}
+              </Button>
+            </>
+          }
+        >
+          <form id="promotion-form" onSubmit={handleSubmit} className="space-y-6">
+            <section className="space-y-4 rounded-2xl border border-slate-100 bg-slate-50/60 p-5">
+              <AdminSectionTitle>Campaign</AdminSectionTitle>
+              <Field required label="Campaign name" name="name" value={formData.name} onChange={handleChange} />
+              <label className="block space-y-1.5">
+                <span className="text-sm font-medium text-slate-700">Description</span>
+                <textarea
+                  rows="3"
+                  name="description"
+                  className="ui-input min-h-[96px] w-full resize-none"
+                  value={formData.description}
+                  onChange={handleChange}
+                />
+              </label>
+            </section>
+
+            <section className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div className="space-y-4 rounded-2xl border border-slate-100 bg-slate-50/60 p-5">
+                <AdminSectionTitle>Discount</AdminSectionTitle>
+                <SelectField label="Discount type" name="discountType" value={formData.discountType} onChange={handleChange}>
+                  <option value="PERCENTAGE">Percentage</option>
+                  <option value="FIXED_AMOUNT">Fixed amount</option>
+                </SelectField>
+                <Field required type="number" label="Discount value" name="discountValue" value={formData.discountValue} onChange={handleChange} />
+              </div>
+
+              <div className="space-y-4 rounded-2xl border border-slate-100 bg-slate-50/60 p-5">
+                <AdminSectionTitle>Schedule</AdminSectionTitle>
+                <Field required type="datetime-local" label="Start date" name="startDate" value={formData.startDate} onChange={handleChange} />
+                <Field required type="datetime-local" label="End date" name="endDate" value={formData.endDate} onChange={handleChange} />
+                <label className="flex items-center justify-between rounded-2xl border border-slate-100 bg-white px-4 py-3">
+                  <span className="text-sm font-medium text-slate-700">Active</span>
+                  <input
+                    type="checkbox"
+                    checked={formData.status === "ACTIVE"}
+                    onChange={(event) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        status: event.target.checked ? "ACTIVE" : "INACTIVE",
+                      }))
+                    }
+                  />
+                </label>
+              </div>
+            </section>
+
+            <section className="space-y-4 rounded-2xl border border-slate-100 bg-slate-50/60 p-5">
+              <div className="flex items-center justify-between gap-3">
+                <AdminSectionTitle>Products</AdminSectionTitle>
+                <span className="text-xs font-medium text-slate-500">
+                  {formData.productIds.length} selected
+                </span>
+              </div>
+              <div className="max-h-72 overflow-y-auto rounded-2xl border border-slate-100 bg-white">
+                {products.length ? (
+                  products.map((product) => (
+                    <label
+                      key={product.id}
+                      className="flex cursor-pointer items-center gap-3 border-b border-slate-100 px-4 py-3 last:border-b-0 hover:bg-emerald-50/40"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={formData.productIds.includes(product.id)}
+                        onChange={() => handleProductToggle(product.id)}
+                      />
+                      {product.thumbnail ? (
+                        <img
+                          src={getImageUrl(product.thumbnail)}
+                          alt={product.name}
+                          className="h-10 w-10 rounded-xl object-cover"
+                        />
+                      ) : null}
+                      <span className="line-clamp-1 flex-1 text-sm font-medium text-slate-800">
+                        {product.name}
                       </span>
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      <div className="flex justify-center items-center gap-3">
-                        <button
-                          onClick={() => {
-                            setSelectedPromo(promo);
-                            setShowDetailModal(true);
-                          }}
-                          className="text-blue-500 hover:text-blue-700 hover:bg-blue-50 p-2 rounded-xl transition-all"
-                          title="Chi tiết"
-                        >
-                          <Info size={18} />
-                        </button>
-                        <button
-                          onClick={() => openEdit(promo)}
-                          className="text-indigo-500 hover:text-indigo-700 hover:bg-indigo-50 p-2 rounded-xl transition-all"
-                          title="Sửa"
-                        >
-                          <Edit size={18} />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(promo.id)}
-                          className="text-rose-500 hover:text-rose-700 hover:bg-rose-50 p-2 rounded-xl transition-all"
-                          title="Xóa"
-                        >
-                          <Trash2 size={18} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          {promotions.length === 0 && (
-            <div className="p-12 text-center flex flex-col items-center justify-center text-slate-400">
-              <Tag size={48} className="text-slate-200 mb-4" />
-              <p className="font-medium text-slate-500">
-                Chưa có chương trình khuyến mãi nào
+                      <span className="text-sm font-medium text-slate-500">
+                        {formatMoney(product.sellPrice)}
+                      </span>
+                    </label>
+                  ))
+                ) : (
+                  <div className="p-6 text-center text-sm text-slate-500">No products found.</div>
+                )}
+              </div>
+            </section>
+          </form>
+        </AdminModal>
+      ) : null}
+
+      {showDetailModal && selectedPromo ? (
+        <AdminModal
+          title="Promotion Details"
+          onClose={() => setShowDetailModal(false)}
+          className="max-w-3xl"
+        >
+          <div className="space-y-5">
+            <div className="rounded-2xl border border-emerald-100 bg-emerald-50/50 p-5">
+              <h3 className="text-lg font-medium text-slate-900">{selectedPromo.name}</h3>
+              <p className="mt-2 text-sm text-slate-600">
+                {selectedPromo.description || "No description"}
               </p>
             </div>
-          )}
-        </div>
-      </div>
-
-      {/* MODAL FORM */}
-      {showModal && (
-        <div className="fixed inset-0 bg-slate-900/40 z-[100] flex items-center justify-center p-4 backdrop-blur-sm">
-          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200 border border-slate-100">
-            <div className="px-6 py-5 border-b border-slate-100 flex justify-between items-center bg-white sticky top-0 z-10">
-              <h2 className="text-xl font-semibold text-slate-800 flex items-center gap-3">
-                {formData.id ? "Cập nhật khuyến mãi" : "Tạo khuyến mãi mới"}
-              </h2>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+              <InfoTile label="Discount" value={selectedPromo.discountType === "PERCENTAGE" ? `${selectedPromo.discountValue}%` : formatMoney(selectedPromo.discountValue)} />
+              <InfoTile label="Start" value={formatDate(selectedPromo.startDate)} />
+              <InfoTile label="End" value={formatDate(selectedPromo.endDate)} />
             </div>
-
-            <div className="p-6 overflow-y-auto custom-scrollbar flex-1 bg-slate-50/30">
-              <form
-                id="promoForm"
-                onSubmit={handleSubmit}
-                className="space-y-6"
-              >
-                <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm space-y-4">
-                  <h3 className="text-sm font-semibold text-indigo-600 mb-2">
-                    Thông tin chung
-                  </h3>
-                  <div>
-                    <label className="block text-[13px] font-medium text-slate-700 mb-2">
-                      Tên chương trình
-                    </label>
-                    <input
-                      required
-                      name="name"
-                      className="w-full border-slate-200 rounded-xl px-4 py-3 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 transition-all font-medium text-slate-700 text-sm"
-                      value={formData.name}
-                      onChange={handleChange}
-                      placeholder="Nhập tên chương trình"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[13px] font-medium text-slate-700 mb-2">
-                      Mô tả
-                    </label>
-                    <textarea
-                      rows="2"
-                      name="description"
-                      className="w-full border-slate-200 rounded-xl px-4 py-3 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 transition-all font-medium text-slate-700 text-sm resize-none"
-                      placeholder="Chi tiết khuyến mãi"
-                      value={formData.description}
-                      onChange={handleChange}
-                    ></textarea>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm space-y-4">
-                    <h3 className="text-sm font-semibold text-indigo-600 mb-2">
-                      Mức giảm
-                    </h3>
-                    <div>
-                      <label className="block text-[13px] font-medium text-slate-700 mb-2">
-                        Loại chiết khấu
-                      </label>
-                      <select
-                        name="discountType"
-                        className="w-full border-slate-200 rounded-xl px-4 py-3 bg-slate-50 focus:bg-white focus:border-indigo-400 transition-all font-medium text-slate-700 text-sm"
-                        value={formData.discountType}
-                        onChange={handleChange}
-                      >
-                        <option value="PERCENTAGE">Phần trăm</option>
-                        <option value="FIXED_AMOUNT">Số tiền</option>
-                      </select>
+            <div>
+              <h3 className="mb-3 text-sm font-medium text-slate-800">
+                Applied products ({selectedPromo.products?.length || 0})
+              </h3>
+              <div className="max-h-60 overflow-y-auto rounded-2xl border border-slate-100">
+                {selectedPromo.products?.length ? (
+                  selectedPromo.products.map((product) => (
+                    <div key={product.id} className="flex items-center gap-3 border-b border-slate-100 px-4 py-3 last:border-b-0">
+                      {product.thumbnail ? (
+                        <img src={getImageUrl(product.thumbnail)} alt={product.name} className="h-10 w-10 rounded-xl object-cover" />
+                      ) : null}
+                      <span className="flex-1 text-sm font-medium text-slate-800">{product.name}</span>
+                      <span className="text-sm text-slate-500">{formatMoney(product.sellPrice)}</span>
                     </div>
-                    <div>
-                      <label className="block text-[13px] font-medium text-slate-700 mb-2">
-                        Giá trị giảm
-                      </label>
-                      <input
-                        type="number"
-                        required
-                        name="discountValue"
-                        className="w-full border-slate-200 rounded-xl px-4 py-3 bg-slate-50 focus:bg-white focus:border-indigo-400 transition-all font-medium text-slate-700 text-sm"
-                        value={formData.discountValue}
-                        onChange={handleChange}
-                        placeholder="Nhập số"
-                        min="0"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm space-y-4">
-                    <h3 className="text-sm font-semibold text-indigo-600 mb-2">
-                      Thời gian
-                    </h3>
-                    <div>
-                      <label className="block text-[13px] font-medium text-slate-700 mb-2">
-                        Từ ngày
-                      </label>
-                      <input
-                        type="datetime-local"
-                        step="60"
-                        required
-                        lang="en-GB"
-                        name="startDate"
-                        className="w-full border-slate-200 rounded-xl px-4 py-3 bg-slate-50 focus:bg-white focus:border-indigo-400 transition-all font-medium text-slate-700 text-sm [color-scheme:light] [&::-webkit-calendar-picker-indicator]:cursor-pointer"
-                        value={formData.startDate}
-                        onChange={handleChange}
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[13px] font-medium text-slate-700 mb-2">
-                        Đến ngày
-                      </label>
-                      <input
-                        type="datetime-local"
-                        step="60"
-                        required
-                        lang="en-GB"
-                        name="endDate"
-                        className="w-full border-slate-200 rounded-xl px-4 py-3 bg-slate-50 focus:bg-white focus:border-indigo-400 transition-all font-medium text-slate-700 text-sm [color-scheme:light] [&::-webkit-calendar-picker-indicator]:cursor-pointer"
-                        value={formData.endDate}
-                        onChange={handleChange}
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
-                  <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-sm font-semibold text-indigo-600">
-                      Sản phẩm áp dụng{" "}
-                      {formData.productIds.length > 0 &&
-                        `(${formData.productIds.length})`}
-                    </h3>
-                  </div>
-                  <div className="max-h-60 overflow-y-auto custom-scrollbar border border-slate-100 rounded-xl">
-                    {products.length === 0 ? (
-                      <div className="p-4 text-center text-sm text-slate-500">
-                        Không có sản phẩm nào
-                      </div>
-                    ) : (
-                      <table className="w-full text-left text-sm border-collapse">
-                        <thead className="sticky top-0 bg-slate-50 font-medium text-slate-600 z-10 border-b border-slate-200">
-                          <tr>
-                            <th className="py-2 px-4 w-12 text-center">
-                              <input
-                                type="checkbox"
-                                className="w-4 h-4 rounded text-indigo-600 border-slate-300 focus:ring-indigo-500"
-                                checked={
-                                  formData.productIds.length > 0 &&
-                                  formData.productIds.length === products.length
-                                }
-                                onChange={(e) => {
-                                  if (e.target.checked) {
-                                    setFormData((p) => ({
-                                      ...p,
-                                      productIds: products.map((x) => x.id),
-                                    }));
-                                  } else {
-                                    setFormData((p) => ({
-                                      ...p,
-                                      productIds: [],
-                                    }));
-                                  }
-                                }}
-                              />
-                            </th>
-                            <th className="py-2 px-4 text-xs font-semibold">
-                              Tên sản phẩm
-                            </th>
-                            <th className="py-2 px-4 text-xs font-semibold text-right">
-                              Giá bán
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-50">
-                          {products.map((p) => (
-                            <tr
-                              key={p.id}
-                              className="hover:bg-slate-50/50 cursor-pointer"
-                              onClick={() => handleProductToggle(p.id)}
-                            >
-                              <td className="py-2.5 px-4 text-center">
-                                <input
-                                  type="checkbox"
-                                  readOnly
-                                  checked={formData.productIds.includes(p.id)}
-                                  className="w-4 h-4 rounded text-indigo-600 border-slate-300 pointer-events-none"
-                                />
-                              </td>
-                              <td className="py-2.5 px-4 font-medium text-slate-700 flex items-center gap-2">
-                                {p.thumbnail && (
-                                  <img
-                                    src={getImageUrl(p.thumbnail)}
-                                    className="w-8 h-8 rounded-lg object-cover"
-                                    alt=""
-                                  />
-                                )}
-                                <span className="line-clamp-1">{p.name}</span>
-                              </td>
-                              <td className="py-2.5 px-4 text-right text-slate-500">
-                                {p.sellPrice?.toLocaleString()}đ
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    )}
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <label className="text-[13px] font-medium text-slate-700">
-                    Trạng thái:
-                  </label>
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input
-                      type="checkbox"
-                      className="sr-only peer"
-                      checked={formData.status === "ACTIVE"}
-                      onChange={(e) =>
-                        setFormData((p) => ({
-                          ...p,
-                          status: e.target.checked ? "ACTIVE" : "INACTIVE",
-                        }))
-                      }
-                    />
-                    <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500"></div>
-                  </label>
-                  <span className="text-sm font-medium text-slate-500">
-                    {formData.status === "ACTIVE" ? "Kích hoạt" : "Tắt"}
-                  </span>
-                </div>
-              </form>
-            </div>
-
-            <div className="px-6 py-4 border-t border-slate-100 bg-slate-50/50 flex justify-end gap-3 sticky bottom-0">
-              <button
-                type="button"
-                onClick={() => setShowModal(false)}
-                className="px-5 py-2.5 bg-white text-slate-600 rounded-xl hover:bg-slate-50 font-medium transition-all border border-slate-200"
-              >
-                Hủy bỏ
-              </button>
-              <button
-                form="promoForm"
-                type="submit"
-                disabled={loading}
-                className="px-6 py-2.5 bg-green-600 text-white rounded-xl hover:bg-green-700 font-medium shadow-sm transition-all active:scale-95 disabled:opacity-70 disabled:pointer-events-none flex items-center gap-2"
-              >
-                {loading && (
-                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                )}
-                {formData.id ? "Lưu thay đổi" : "Tạo khuyến mãi"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* DETAIL MODAL */}
-      {showDetailModal && selectedPromo && (
-        <div className="fixed inset-0 bg-slate-900/40 z-[100] flex items-center justify-center p-4 backdrop-blur-sm">
-          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200 border border-slate-100">
-            <div className="px-6 py-5 border-b border-slate-100 flex justify-between items-center bg-white sticky top-0 z-10">
-              <h2 className="text-xl font-semibold text-slate-800 flex items-center gap-3">
-                Chi tiết khuyến mãi
-              </h2>
-              <button
-                onClick={() => setShowDetailModal(false)}
-                className="text-slate-400 hover:text-slate-600 hover:bg-slate-100 p-2 rounded-xl transition-all"
-              >
-                <X size={20} />
-              </button>
-            </div>
-            <div className="p-6 overflow-y-auto custom-scrollbar flex-1 bg-slate-50/30 space-y-6">
-              <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm space-y-4">
-                <h3 className="text-sm font-semibold text-indigo-600 border-b border-slate-100 pb-2">
-                  Thông tin chung
-                </h3>
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <p className="text-slate-500 mb-1">Tên chương trình:</p>
-                    <p className="font-medium text-slate-800">
-                      {selectedPromo.name}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-slate-500 mb-1">Trạng thái:</p>
-                    <span
-                      className={`px-3 py-1 rounded-full text-[12px] font-medium inline-block ${selectedPromo.status === "ACTIVE" ? "bg-green-100 text-green-700" : "bg-slate-100 text-slate-600"}`}
-                    >
-                      {selectedPromo.status === "ACTIVE"
-                        ? "Đang chạy"
-                        : "Đã tắt"}
-                    </span>
-                  </div>
-                  <div className="col-span-2">
-                    <p className="text-slate-500 mb-1">Mô tả:</p>
-                    <p className="font-medium text-slate-800">
-                      {selectedPromo.description || "Không có mô tả"}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm space-y-4">
-                  <h3 className="text-sm font-semibold text-indigo-600 border-b border-slate-100 pb-2">
-                    Mức giảm
-                  </h3>
-                  <div className="text-sm">
-                    <p className="text-slate-500 mb-1">Chiết khấu:</p>
-                    <p className="font-medium text-slate-800">
-                      {selectedPromo.discountType === "PERCENTAGE"
-                        ? `${selectedPromo.discountValue}%`
-                        : `${selectedPromo.discountValue.toLocaleString()}đ`}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm space-y-4">
-                  <h3 className="text-sm font-semibold text-indigo-600 border-b border-slate-100 pb-2">
-                    Thời gian
-                  </h3>
-                  <div className="text-sm space-y-2">
-                    <div className="flex items-center">
-                      <p className="w-20 text-slate-500">Bắt đầu:</p>
-                      <p className="font-medium text-slate-800">
-                        {moment(selectedPromo.startDate)
-                          .utc()
-                          .format("HH:mm DD/MM/YYYY")}
-                      </p>
-                    </div>
-
-                    <div className="flex items-center">
-                      <p className="w-20 text-slate-500">Kết thúc:</p>
-                      <p className="font-medium text-slate-800">
-                        {moment(selectedPromo.endDate)
-                          .utc()
-                          .format("HH:mm DD/MM/YYYY")}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm space-y-4">
-                <h3 className="text-sm font-semibold text-indigo-600 border-b border-slate-100 pb-2">
-                  Sản phẩm áp dụng ({selectedPromo.products?.length || 0})
-                </h3>
-                {selectedPromo.products && selectedPromo.products.length > 0 ? (
-                  <div className="max-h-48 overflow-y-auto custom-scrollbar border border-slate-100 rounded-xl">
-                    <table className="w-full text-left text-sm border-collapse">
-                      <thead className="sticky top-0 bg-slate-50 font-medium text-slate-600 z-10 border-b border-slate-200">
-                        <tr>
-                          <th className="py-2 px-4 text-xs font-semibold">
-                            Sản phẩm
-                          </th>
-                          <th className="py-2 px-4 text-xs font-semibold text-right">
-                            Giá bán
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-50">
-                        {selectedPromo.products.map((p) => (
-                          <tr
-                            key={p.id}
-                            className="hover:bg-slate-50/50 transition-colors"
-                          >
-                            <td className="py-2.5 px-4 font-medium text-slate-700 flex items-center gap-2">
-                              {p.thumbnail && (
-                                <img
-                                  src={getImageUrl(p.thumbnail)}
-                                  className="w-8 h-8 rounded-lg object-cover"
-                                  alt=""
-                                />
-                              )}
-                              <span className="line-clamp-1">{p.name}</span>
-                            </td>
-                            <td className="py-2.5 px-4 text-right text-slate-500">
-                              {p.sellPrice?.toLocaleString()}đ
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
+                  ))
                 ) : (
-                  <p className="text-sm text-slate-500 text-center py-4">
-                    Không có sản phẩm nào được áp dụng
-                  </p>
+                  <div className="p-6 text-center text-sm text-slate-500">No products applied.</div>
                 )}
               </div>
             </div>
           </div>
-        </div>
-      )}
-    </div>
+        </AdminModal>
+      ) : null}
+    </AdminPage>
   );
 };
+
+const Field = ({ label, ...props }) => (
+  <label className="block space-y-1.5">
+    <span className="text-sm font-medium text-slate-700">{label}</span>
+    <input className="ui-input w-full" {...props} />
+  </label>
+);
+
+const SelectField = ({ label, children, ...props }) => (
+  <label className="block space-y-1.5">
+    <span className="text-sm font-medium text-slate-700">{label}</span>
+    <select className="ui-input w-full" {...props}>
+      {children}
+    </select>
+  </label>
+);
+
+const InfoTile = ({ label, value }) => (
+  <div className="rounded-2xl border border-slate-100 bg-white p-4">
+    <p className="text-xs font-medium uppercase tracking-[0.14em] text-slate-400">{label}</p>
+    <p className="mt-2 text-sm font-medium text-slate-900">{value}</p>
+  </div>
+);
 
 export default PromotionsPage;

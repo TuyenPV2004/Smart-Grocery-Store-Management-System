@@ -24,7 +24,6 @@ import StockManagementPage from "./pages/admin/StockManagementPage";
 import OrderManagementPage from "./pages/admin/OrderManagementPage";
 import HomePage from "./pages/user/HomePage";
 import PublicLayout from "./components/PublicLayout";
-import RoleBasedLayout from "./components/RoleBasedLayout";
 import PromotionsPage from "./pages/admin/PromotionsPage";
 import VouchersPage from "./pages/admin/VouchersPage";
 import OrderHistoryPage from "./pages/user/OrderHistoryPage";
@@ -52,7 +51,7 @@ function App() {
             <Route path="/products" element={<CustomerProductPage />} />
           </Route>
           <Route element={<ProtectedRoute />}>
-            <Route element={<RoleBasedLayout />}>
+            <Route element={<PublicLayout />}>
               <Route path="/checkout" element={<CheckoutPage />} />
               <Route path="/profile" element={<ProfilePage />} />
               <Route path="/order-history" element={<OrderHistoryPage />} />

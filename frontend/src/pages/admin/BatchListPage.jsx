@@ -2,14 +2,14 @@ import { toast } from "react-toastify";
 import React, { useEffect, useState } from "react";
 import batchService from "../../services/batchService";
 import {
-  Eye,
-  X,
-  Search,
-  AlertCircle,
-  CheckCircle,
-  Clock,
-  Trash2,
-} from "lucide-react";
+  FiEye as Eye,
+  FiX as X,
+  FiSearch as Search,
+  FiAlertCircle as AlertCircle,
+  FiCheckCircle as CheckCircle,
+  FiClock as Clock,
+  FiTrash2 as Trash2,
+} from "react-icons/fi";
 import Swal from "sweetalert2";
 import ReactPaginate from "react-paginate";
 

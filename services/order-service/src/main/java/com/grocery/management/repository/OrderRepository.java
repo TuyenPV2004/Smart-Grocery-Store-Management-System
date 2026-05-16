@@ -75,13 +75,24 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     List<Object[]> findRevenueAndOrderCountByDate(@Param("startDate") LocalDateTime startDate);
 
     @Query("""
-            SELECT d.productName, SUM(d.quantity), COALESCE(SUM(d.totalLine), 0)
+            SELECT d.productName, SUM(d.quantity), COALESCE(SUM(d.totalLine), 0), MAX(d.productThumbnail), COALESCE(AVG(d.price), 0)
             FROM OrderDetail d
             JOIN d.order o
             WHERE o.status = 'COMPLETED'
               AND o.createdAt >= :startDate
-            GROUP BY d.productName
+            GROUP BY d.productId, d.productName
             ORDER BY SUM(d.quantity) DESC
             """)
     List<Object[]> findTopProductsByDate(@Param("startDate") LocalDateTime startDate);
+
+    @Query("""
+            SELECT d.productId, COALESCE(SUM(d.totalLine), 0)
+            FROM OrderDetail d
+            JOIN d.order o
+            WHERE o.status = 'COMPLETED'
+              AND o.createdAt >= :startDate
+              AND d.productId IS NOT NULL
+            GROUP BY d.productId
+            """)
+    List<Object[]> findRevenueByProductIdSince(@Param("startDate") LocalDateTime startDate);
 }

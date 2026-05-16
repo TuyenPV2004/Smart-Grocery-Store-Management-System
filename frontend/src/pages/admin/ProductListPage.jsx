@@ -9,28 +9,115 @@ import HistoryModal from "../../components/HistoryModal";
 import PriceManagementModal from "../../components/PriceManagementModal";
 import ProductImageModal from "../../components/ProductImageModal";
 import { getImageUrl } from "../../utils/imageUrl";
+import AdminTopbar from "../../components/admin/AdminTopbar";
 import {
-  Plus,
-  Search,
-  Edit,
-  Trash2,
-  Info,
-  ArrowUp,
-  ArrowDown,
-  Package,
-  ArrowLeft,
-  Layers,
-  AlertTriangle,
-  X,
-  CheckCircle,
-  Archive,
-  Search as SearchIcon,
-  AlertCircle,
-  ChartNoAxesCombined,
-  TrendingUp,
-  TrendingDown,
-  Image as ImageIcon,
-} from "lucide-react";
+  FiPlus as Plus,
+  FiSearch as Search,
+  FiEdit2 as Edit,
+  FiTrash2 as Trash2,
+  FiInfo as Info,
+  FiArrowUp as ArrowUp,
+  FiArrowDown as ArrowDown,
+  FiPackage as Package,
+  FiArrowLeft as ArrowLeft,
+  FiLayers as Layers,
+  FiAlertTriangle as AlertTriangle,
+  FiX as X,
+  FiCheckCircle as CheckCircle,
+  FiArchive as Archive,
+  FiSearch as SearchIcon,
+  FiAlertCircle as AlertCircle,
+  FiBarChart2 as ChartNoAxesCombined,
+  FiTrendingUp as TrendingUp,
+  FiTrendingDown as TrendingDown,
+  FiImage as ImageIcon,
+  FiMoreHorizontal as MoreHorizontal,
+} from "react-icons/fi";
+
+const productMetricTone = {
+  emerald: {
+    accent: "bg-emerald-50 text-emerald-600",
+    border: "border-emerald-100",
+  },
+  blue: { accent: "bg-blue-50 text-blue-600", border: "border-blue-100" },
+  amber: { accent: "bg-amber-50 text-amber-600", border: "border-amber-100" },
+  rose: { accent: "bg-rose-50 text-rose-600", border: "border-rose-100" },
+  violet: {
+    accent: "bg-violet-50 text-violet-600",
+    border: "border-violet-100",
+  },
+};
+
+const ProductMetricCard = ({ title, value, icon: Icon, tone }) => (
+  <div
+    className={`min-h-[124px] bg-white p-5 rounded-[2rem] border ${productMetricTone[tone].border} shadow-sm`}
+  >
+    <div className="mb-4 flex items-center justify-between gap-3">
+      <div className="flex min-w-0 items-center gap-3">
+        <p className="truncate text-sm font-medium text-slate-500">{title}</p>
+      </div>
+      <div
+        className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full ${productMetricTone[tone].accent}`}
+      >
+        <Icon size={21} />
+      </div>
+    </div>
+    <p className="truncate text-2xl font-medium text-slate-900">{value}</p>
+  </div>
+);
+
+const normalizeProductList = (data) => {
+  if (Array.isArray(data?.content)) return data.content;
+  if (Array.isArray(data)) return data;
+  return [];
+};
+
+const resolveProductCategory = (product) => {
+  const label = product?.labels?.[0];
+  return label?.parent?.name || label?.name || "Uncategorized";
+};
+
+const buildProductMetrics = (items = []) => {
+  const lowStockProducts = items.filter((product) => {
+    const quantity = Number(product?.stockQuantity || 0);
+    const minStock = Number(product?.minStock || 0);
+    return product?.status !== "OUT_OF_STOCK" && minStock > 0 && quantity <= minStock;
+  });
+  const outOfStockProducts = items.filter(
+    (product) =>
+      product?.status === "OUT_OF_STOCK" || Number(product?.stockQuantity || 0) <= 0,
+  );
+  const categoryCounts = items.reduce((acc, product) => {
+    const categoryName = resolveProductCategory(product);
+    acc[categoryName] = (acc[categoryName] || 0) + 1;
+    return acc;
+  }, {});
+  const topCategory = Object.entries(categoryCounts).sort((a, b) => b[1] - a[1])[0];
+
+  return {
+    totalProducts: items.length,
+    lowStock: lowStockProducts.length,
+    outOfStock: outOfStockProducts.length,
+    topCategoryName: topCategory?.[0] || "N/A",
+    topCategoryCount: topCategory?.[1] || 0,
+  };
+};
+
+const INVENTORY_FILTERS = [
+  { id: "ALL", label: "All Products" },
+  { id: "IN_STOCK", label: "In Stock" },
+  { id: "LOW_STOCK", label: "Low Stock" },
+  { id: "OUT_OF_STOCK", label: "Out of Stock" },
+];
+
+const getInventoryFilterLabel = (filterId) =>
+  INVENTORY_FILTERS.find((item) => item.id === filterId)?.label || "selected";
+
+const isLowStockProduct = (product) => {
+  const quantity = Number(product?.stockQuantity || 0);
+  const minStock = Number(product?.minStock || 0);
+  return product?.status !== "OUT_OF_STOCK" && minStock > 0 && quantity <= minStock;
+};
 
 // Product Check Modal Component
 const ProductCheckModal = ({
@@ -251,12 +338,20 @@ const ProductCheckModal = ({
 
 const ProductListPage = () => {
   const location = useLocation();
-  const productsPerPage = 10;
+  const productsPerPage = 8;
   const [products, setProducts] = useState([]);
+  const [productMetrics, setProductMetrics] = useState({
+    totalProducts: 0,
+    lowStock: 0,
+    outOfStock: 0,
+    topCategoryName: "N/A",
+    topCategoryCount: 0,
+  });
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [totalProducts, setTotalProducts] = useState(0);
   const [filter, setFilter] = useState({ keyword: "", status: "" });
+  const [inventoryFilter, setInventoryFilter] = useState("ALL");
   const [debouncedKeyword, setDebouncedKeyword] = useState("");
   const [showModal, setShowModal] = useState(() =>
     Boolean(location.state?.openAddForm),
@@ -271,12 +366,26 @@ const ProductListPage = () => {
   const [selectedProductForPrice, setSelectedProductForPrice] = useState(null);
   const [showImageModal, setShowImageModal] = useState(false);
   const [selectedProductForImage, setSelectedProductForImage] = useState(null);
+  const [actionMenu, setActionMenu] = useState(null);
 
   useEffect(() => {
     if (location.state?.openAddForm) {
       window.history.replaceState({}, document.title);
     }
   }, [location]);
+
+  useEffect(() => {
+    if (!actionMenu) return undefined;
+
+    const closeMenu = () => setActionMenu(null);
+    window.addEventListener("click", closeMenu);
+    window.addEventListener("scroll", closeMenu, true);
+
+    return () => {
+      window.removeEventListener("click", closeMenu);
+      window.removeEventListener("scroll", closeMenu, true);
+    };
+  }, [actionMenu]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -288,9 +397,30 @@ const ProductListPage = () => {
 
   const fetchProducts = useCallback(async () => {
     try {
+      if (inventoryFilter === "LOW_STOCK") {
+        const res = await productService.getAll({
+          keyword: debouncedKeyword,
+          status: filter.status || undefined,
+        });
+        const filteredProducts = normalizeProductList(res.data).filter(isLowStockProduct);
+        const startIndex = currentPage * productsPerPage;
+        const pageItems = filteredProducts.slice(startIndex, startIndex + productsPerPage);
+
+        setProducts(pageItems);
+        setTotalPages(Math.ceil(filteredProducts.length / productsPerPage));
+        setTotalProducts(filteredProducts.length);
+        return;
+      }
+
+      const inventoryStatus =
+        inventoryFilter === "IN_STOCK"
+          ? "ACTIVE"
+          : inventoryFilter === "OUT_OF_STOCK"
+            ? "OUT_OF_STOCK"
+            : filter.status;
       const res = await productService.getAll({
         keyword: debouncedKeyword,
-        status: filter.status,
+        status: inventoryStatus,
         page: currentPage,
         size: productsPerPage,
       });
@@ -358,12 +488,25 @@ const ProductListPage = () => {
     } catch (error) {
       console.error("Lỗi tải sản phẩm", error);
     }
-  }, [currentPage, debouncedKeyword, filter.status]);
+  }, [currentPage, debouncedKeyword, filter.status, inventoryFilter]);
+
+  const fetchProductMetrics = useCallback(async () => {
+    try {
+      const res = await productService.getAll({});
+      setProductMetrics(buildProductMetrics(normalizeProductList(res.data)));
+    } catch (error) {
+      console.error("Failed to load product metrics", error);
+    }
+  }, []);
 
   useEffect(() => {
     const timer = setTimeout(fetchProducts, 0);
     return () => clearTimeout(timer);
   }, [fetchProducts]);
+
+  useEffect(() => {
+    fetchProductMetrics();
+  }, [fetchProductMetrics]);
 
   const pageCount = totalPages;
   const currentProducts = products;
@@ -385,6 +528,7 @@ const ProductListPage = () => {
       setDeleteStep(0);
       setProductToDelete(null);
       fetchProducts();
+      fetchProductMetrics();
     } catch (error) {
       toast.error("Lỗi cập nhật: " + (error.response?.data || "Có lỗi xảy ra"));
     }
@@ -402,6 +546,7 @@ const ProductListPage = () => {
       setDeleteStep(0);
       setProductToDelete(null);
       fetchProducts();
+      fetchProductMetrics();
     } catch (error) {
       toast.error("Lỗi xóa: " + (error.response?.data || "Có lỗi xảy ra"));
     }
@@ -439,6 +584,32 @@ const ProductListPage = () => {
 
   const handlePriceUpdated = () => {
     fetchProducts();
+    fetchProductMetrics();
+  };
+
+  const openActionMenu = (event, product) => {
+    event.stopPropagation();
+    const rect = event.currentTarget.getBoundingClientRect();
+    const menuEstimatedHeight = 196;
+    const gap = 8;
+    const shouldOpenUpward =
+      rect.bottom + gap + menuEstimatedHeight > window.innerHeight;
+
+    setActionMenu((current) =>
+      current?.product?.id === product.id
+        ? null
+        : {
+            product,
+            x: rect.left + rect.width / 2,
+            y: shouldOpenUpward ? rect.top - gap : rect.bottom + gap,
+            placement: shouldOpenUpward ? "top" : "bottom",
+          },
+    );
+  };
+
+  const runAction = (callback) => {
+    setActionMenu(null);
+    callback();
   };
 
   const handleSave = async (id, data, imageFile) => {
@@ -449,6 +620,7 @@ const ProductListPage = () => {
         await productService.create(data, imageFile);
       }
       fetchProducts();
+      fetchProductMetrics();
     } catch (error) {
       toast.error("Lỗi: " + (error.response?.data || "Vui lòng kiểm tra lại"));
       throw error;
@@ -458,94 +630,167 @@ const ProductListPage = () => {
   return (
     <div className="admin-page-shell min-h-screen p-6 font-poppins antialiased text-slate-600 relative">
       {/* Header Section */}
-      <div className="max-w-[1400px] mx-auto flex justify-between items-center mb-6">
-        <div className="flex items-center gap-3">
-          <div>
-            <h2 className="text-2xl font-medium text-slate-900 leading-none">
-              Quản lý sản phẩm
-            </h2>
-            <p className="text-slate-500 text-sm mt-1.5 font-medium">
-              Tìm kiếm theo tên sản phẩm hoặc mã SKU
-            </p>
-          </div>
+      <div className="max-w-[1400px] mx-auto mb-6 flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+        <div>
+          <h2 className="text-2xl font-medium text-slate-900 leading-none">
+            Product Catalog
+          </h2>
+          <p className="text-slate-500 text-sm mt-1.5 font-medium">
+            Search products by name, SKU, or barcode
+          </p>
         </div>
+        <AdminTopbar />
       </div>
 
-      {/* Filter Bar */}
-      <div className="max-w-[1400px] mx-auto mb-6 flex flex-wrap items-center gap-4">
-        <div className="relative w-full max-w-[420px]">
-          <Search
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-            size={18}
-          />
-          <input
-            type="text"
-            placeholder="Tìm theo tên sản phẩm, mã SKU, Barcode"
-            className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:bg-white transition-all font-medium"
-            onChange={(e) => {
-              setFilter({ ...filter, keyword: e.target.value });
-              setCurrentPage(0);
-            }}
-          />
-        </div>
-        <select
-          className="order-3 border border-slate-200 rounded-xl px-4 py-2 focus:outline-none font-medium text-slate-600 bg-white cursor-pointer"
-          onChange={(e) => {
-            setFilter({ ...filter, status: e.target.value });
-            setCurrentPage(0);
-          }}
-        >
-          <option value="">Tất cả trạng thái</option>
-          <option value="ACTIVE">Đang kinh doanh</option>
-          <option value="INACTIVE">Ngừng kinh doanh</option>
-          <option value="OUT_OF_STOCK">Hết hàng</option>
-        </select>
-        <button
-          onClick={handleProductNotFound}
-          className="order-2 ml-auto bg-green-600 text-white px-5 py-2 rounded-xl flex items-center shadow-sm hover:bg-green-700 transition-all font-medium whitespace-nowrap"
-        >
-          Thêm sản phẩm
-        </button>
+      <div className="max-w-[1400px] mx-auto grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
+        <ProductMetricCard
+          title="Total Products"
+          value={productMetrics.totalProducts}
+          icon={Package}
+          tone="emerald"
+        />
+        <ProductMetricCard
+          title="Low Stock"
+          value={productMetrics.lowStock}
+          icon={AlertTriangle}
+          tone="amber"
+        />
+        <ProductMetricCard
+          title="Out of Stock"
+          value={productMetrics.outOfStock}
+          icon={Archive}
+          tone="rose"
+        />
+        <ProductMetricCard
+          title="Top Category"
+          value={productMetrics.topCategoryName}
+          icon={Layers}
+          tone="blue"
+        />
       </div>
 
       {/* Table Section */}
-      <div className="max-w-[1400px] mx-auto bg-white rounded-2xl shadow-sm border border-slate-100 overflow-x-auto">
-        <table className="w-full text-left border-collapse">
-          <thead>
+      <div className="max-w-[1400px] mx-auto bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+        <div className="px-6 py-5 border-b border-slate-100">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <h3 className="text-lg font-medium text-slate-900">
+              Product Inventory
+            </h3>
+          </div>
+          <div className="mt-5 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex flex-wrap items-center gap-2">
+              {INVENTORY_FILTERS.map((item) => {
+                const isActive = inventoryFilter === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => {
+                      setInventoryFilter(item.id);
+                      setCurrentPage(0);
+                    }}
+                    className={`rounded-full px-4 py-2 text-sm font-medium transition-all ${
+                      isActive
+                        ? "bg-slate-900 text-white shadow-sm"
+                        : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                    }`}
+                  >
+                    {item.label}
+                  </button>
+                );
+              })}
+            </div>
+            <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center lg:w-auto">
+              <div className="relative w-full sm:w-[360px]">
+                <Search
+                  className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+                  size={18}
+                />
+                <input
+                  type="text"
+                  value={filter.keyword}
+                  placeholder="Search..."
+                  className="w-full rounded-full border border-slate-200 bg-slate-100 py-2.5 pl-11 pr-11 font-medium text-slate-700 outline-none transition-all placeholder:text-slate-400 focus:border-slate-300 focus:bg-slate-50"
+                  onChange={(e) => {
+                    setFilter({ ...filter, keyword: e.target.value });
+                    setCurrentPage(0);
+                  }}
+                />
+                {filter.keyword ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFilter({ ...filter, keyword: "" });
+                      setCurrentPage(0);
+                    }}
+                    className="absolute right-3 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center text-red-500 transition-colors hover:text-red-700"
+                    aria-label="Clear search"
+                  >
+                    <X size={15} />
+                  </button>
+                ) : null}
+              </div>
+              <button
+                onClick={handleProductNotFound}
+                className="rounded-full bg-green-600 px-5 py-2.5 font-medium text-white shadow-sm transition-all hover:bg-green-700 whitespace-nowrap"
+              >
+                Add product
+              </button>
+            </div>
+          </div>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="product-inventory-table w-full text-left border-collapse">
+            <thead>
             <tr className="bg-slate-50/50 border-b border-slate-100">
-              <th className="px-6 py-4 text-sm font-medium text-slate-900">
-                Tên sản phẩm
+              <th className="px-6 py-4 text-base font-medium text-slate-900">
+                Product Name
               </th>
-              <th className="px-6 py-4 text-sm font-medium text-slate-900">
-                Mã SKU
+              <th className="px-6 py-4 text-base font-medium text-slate-900">
+                SKU
               </th>
-              <th className="px-6 py-4 text-sm font-medium text-slate-900">
+              <th className="px-6 py-4 text-base font-medium text-slate-900">
                 Barcode
               </th>
-              <th className="px-4 py-4 text-right text-sm font-medium text-slate-900">
+              <th className="px-4 py-4 text-right text-base font-medium text-slate-900">
                 <div className="flex flex-col items-center ml-auto w-fit">
-                  <span className="block">Giá nhập</span>
+                  <span className="block">Cost Price</span>
                 </div>
               </th>
-              <th className="px-4 py-4 text-right text-sm font-medium text-slate-900">
+              <th className="px-4 py-4 text-right text-base font-medium text-slate-900">
                 <div className="flex flex-col items-center ml-auto w-fit">
-                  <span className="block">Giá bán</span>
+                  <span className="block">Selling Price</span>
                 </div>
               </th>
-              <th className="px-6 py-4 text-sm font-medium text-slate-900">
-                Trạng thái
+              <th className="px-6 py-4 text-base font-medium text-slate-900">
+                Status
               </th>
-              <th className="px-6 py-4 text-center text-sm font-medium text-slate-900">
-                Thao tác
+              <th className="px-6 py-4 text-center text-base font-medium text-slate-900">
+                Actions
               </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-50">
-              {currentProducts.map((p) => {
+              {currentProducts.length === 0 ? (
+                <tr className="product-empty-row bg-white">
+                  <td colSpan="7" className="px-6 py-14">
+                    <div className="flex flex-col items-center justify-center text-center">
+                      <Package className="mb-4 text-slate-950" size={30} />
+                      <h4 className="text-base font-medium text-slate-900">
+                        No matching products
+                      </h4>
+                      <p className="mt-2 max-w-md text-sm font-medium text-slate-500">
+                        There are no products in the {getInventoryFilterLabel(inventoryFilter).toLowerCase()} group.
+                      </p>
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+              currentProducts.map((p) => {
               return (
                 <tr
                   key={p.id}
-                  className="hover:bg-slate-50/50 transition-colors"
+                  className="product-inventory-row transition-colors"
                 >
                   <td className="px-6 py-4">
                     <div className="flex items-center min-w-[200px]">
@@ -620,62 +865,93 @@ const ProductListPage = () => {
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center justify-center gap-3">
+                    <div className="flex items-center justify-center">
                       <button
-                        onClick={() => {
-                          setSelectedProduct(p);
-                          setShowModal(true);
-                        }}
-                        className="text-indigo-600 hover:text-indigo-800 transition-colors"
-                        title="Sửa"
+                        type="button"
+                        onClick={(event) => openActionMenu(event, p)}
+                        className="flex h-9 w-9 items-center justify-center rounded-full text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900"
+                        title="Actions"
                       >
-                        <Edit size={18} />
-                      </button>
-
-                      <button
-                        onClick={() => handleOpenPriceModal(p)}
-                        className="text-emerald-600 hover:text-emerald-800 transition-colors"
-                        title="Quản lý giá"
-                      >
-                        <ChartNoAxesCombined size={18} />
-                      </button>
-
-                      {/* Quản lý ảnh sản phẩm */}
-                      <button
-                        onClick={() => {
-                          setSelectedProductForImage(p);
-                          setShowImageModal(true);
-                        }}
-                        className="text-purple-600 hover:text-purple-800 transition-colors"
-                        title="Quản lý ảnh sản phẩm"
-                      >
-                        <ImageIcon size={18} />
-                      </button>
-
-                      {/* Nút Xóa Mới */}
-                      <button
-                        onClick={() => handleDeleteClick(p)}
-                        className="text-red-600 hover:text-red-800 transition-colors"
-                        title="Xóa"
-                      >
-                        <Trash2 size={18} />
-                      </button>
-
-                      <button
-                        onClick={() => handleViewHistory(p.id)}
-                        className="text-blue-500 hover:text-blue-700 transition-colors"
-                        title="Lịch sử"
-                      >
-                        <Info size={19} />
+                        <MoreHorizontal size={20} />
                       </button>
                     </div>
                   </td>
                 </tr>
               );
-            })}
-          </tbody>
-        </table>
+            })
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
+
+      {actionMenu ? (
+        <div
+          className={`fixed z-[80] !w-44 -translate-x-[calc(100%-1.25rem)] rounded-xl border border-slate-200 bg-white p-1 shadow-[0_12px_30px_rgba(100,116,139,0.22)] ring-1 ring-slate-300/45 ${
+            actionMenu.placement === "top" ? "-translate-y-full" : ""
+          }`}
+          style={{ left: actionMenu.x, top: actionMenu.y }}
+          onClick={(event) => event.stopPropagation()}
+        >
+          <button
+            type="button"
+            onClick={() =>
+              runAction(() => {
+                setSelectedProduct(actionMenu.product);
+                setShowModal(true);
+              })
+            }
+            className="flex w-full items-center gap-1.5 rounded-lg px-2 py-2 text-left text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
+            title="Edit"
+          >
+            <Edit className="text-indigo-600" size={18} />
+            <span>Edit</span>
+          </button>
+          <button
+            type="button"
+            onClick={() =>
+              runAction(() => handleOpenPriceModal(actionMenu.product))
+            }
+            className="flex w-full items-center gap-1.5 rounded-lg px-2 py-2 text-left text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
+            title="Manage price"
+          >
+            <ChartNoAxesCombined className="text-emerald-600" size={18} />
+            <span>Manage price</span>
+          </button>
+          <button
+            type="button"
+            onClick={() =>
+              runAction(() => {
+                setSelectedProductForImage(actionMenu.product);
+                setShowImageModal(true);
+              })
+            }
+            className="flex w-full items-center gap-1.5 rounded-lg px-2 py-2 text-left text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
+            title="Manage images"
+          >
+            <ImageIcon className="text-purple-600" size={18} />
+            <span>Manage images</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => runAction(() => handleDeleteClick(actionMenu.product))}
+            className="flex w-full items-center gap-1.5 rounded-lg px-2 py-2 text-left text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
+            title="Delete"
+          >
+            <Trash2 className="text-red-600" size={18} />
+            <span>Delete</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => runAction(() => handleViewHistory(actionMenu.product.id))}
+            className="flex w-full items-center gap-1.5 rounded-lg px-2 py-2 text-left text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
+            title="History"
+          >
+            <Info className="text-blue-500" size={19} />
+            <span>History</span>
+          </button>
+        </div>
+      ) : null}
 
       {/* --- CÁC MODAL XỬ LÝ XÓA --- */}
 
@@ -776,11 +1052,10 @@ const ProductListPage = () => {
         </div>
       )}
 
-      <div className="max-w-[1400px] mx-auto mt-6 flex flex-col gap-4 md:flex-row md:justify-between md:items-center">
-        <div className="flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-200 bg-white text-slate-700 font-medium shadow-sm">
-          <span>Tổng sản phẩm:</span>
-          <span className="text-slate-900">{totalProducts}</span>
-        </div>
+      <div className="max-w-[1400px] mx-auto mt-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <p className="text-sm font-medium text-slate-500">
+          Page {Math.min(currentPage + 1, pageCount)}/{pageCount}
+        </p>
 
         {pageCount > 1 && (
           <ReactPaginate

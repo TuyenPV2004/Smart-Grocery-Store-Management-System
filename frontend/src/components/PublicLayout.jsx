@@ -1,10 +1,24 @@
 import React from "react";
-import { Outlet } from "react-router-dom";
+import { Link, Outlet } from "react-router-dom";
+import { FaFacebookF, FaInstagram, FaTwitter } from "react-icons/fa";
+import { FiMail, FiMapPin, FiPhone } from "react-icons/fi";
 import Navbar from "./Navbar";
-import { FaFacebookF, FaTwitter, FaInstagram } from "react-icons/fa";
-import { FiMail, FiPhone, FiMapPin } from "react-icons/fi";
 
 const PublicLayout = () => {
+  const quickLinks = [
+    { label: "About us", to: "/" },
+    { label: "Products", to: "/products" },
+    { label: "Cart", to: "/cart" },
+    { label: "Orders", to: "/order-history" },
+  ];
+
+  const supportLinks = [
+    "Help center",
+    "Return policy",
+    "Privacy policy",
+    "Terms of service",
+  ];
+
   return (
     <div className="public-shell font-poppins text-slate-600">
       <Navbar />
@@ -13,93 +27,85 @@ const PublicLayout = () => {
         <Outlet />
       </main>
 
-      {/* Footer */}
-      <footer className="bg-[#10521d] text-white border-t border-transparent pt-8 pb-4">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
+      <footer className="border-t border-emerald-950/20 bg-[#047857] pb-5 pt-10 text-white">
+        <div className="mx-auto max-w-7xl px-6">
+          <div className="mb-8 grid grid-cols-1 gap-8 md:grid-cols-4">
             <div>
-              <div className="flex items-center gap-2 mb-4">
-                <div className="w-8 h-8 bg-white/10 rounded-lg flex items-center justify-center text-white font-bold">
+              <div className="mb-4 flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white/12 text-lg font-bold text-white">
                   G
                 </div>
-                <span className="text-xl font-bold text-white">
+                <span className="text-xl font-medium text-white">
                   Grocery Store
                 </span>
               </div>
-              <p className="text-white/90 mb-4">
-                Mang đến những sản phẩm tươi ngon nhất cho gia đình bạn mỗi
-                ngày.
+              <p className="mb-5 text-sm leading-7 text-white/82">
+                Fresh groceries and daily essentials delivered with a clean,
+                reliable shopping experience.
               </p>
-              <div className="flex gap-4">
+              <div className="flex gap-3">
                 {[FaFacebookF, FaTwitter, FaInstagram].map((Icon, idx) => (
-                  <a
+                  <Link
                     key={idx}
-                    href="#"
-                    className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-white/90 hover:bg-white/20 hover:text-white transition-colors"
+                    to="/"
+                    className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white/90 transition-colors hover:bg-white/18 hover:text-white"
+                    aria-label="Social link"
                   >
-                    <Icon size={18} />
-                  </a>
+                    <Icon size={17} />
+                  </Link>
                 ))}
               </div>
             </div>
 
             <div>
-              <h3 className="font-bold text-white mb-4">Liên kết nhanh</h3>
+              <h3 className="mb-4 font-medium text-white">Quick links</h3>
               <ul className="space-y-2">
-                {["Về chúng tôi", "Sản phẩm", "Blog", "Liên hệ"].map((item) => (
-                  <li key={item}>
-                    <a
-                      href="#"
-                      className="text-white/90 hover:text-emerald-200 transition-colors"
+                {quickLinks.map((item) => (
+                  <li key={item.label}>
+                    <Link
+                      to={item.to}
+                      className="text-sm text-white/78 transition-colors hover:text-emerald-100"
                     >
-                      {item}
-                    </a>
+                      {item.label}
+                    </Link>
                   </li>
                 ))}
               </ul>
             </div>
 
             <div>
-              <h3 className="font-bold text-white mb-4">Hỗ trợ khách hàng</h3>
+              <h3 className="mb-4 font-medium text-white">Customer support</h3>
               <ul className="space-y-2">
-                {[
-                  "Trung tâm trợ giúp",
-                  "Chính sách đổi trả",
-                  "Chính sách bảo mật",
-                  "Điều khoản dịch vụ",
-                ].map((item) => (
+                {supportLinks.map((item) => (
                   <li key={item}>
-                    <a
-                      href="#"
-                      className="text-white/90 hover:text-emerald-200 transition-colors"
-                    >
-                      {item}
-                    </a>
+                    <span className="text-sm text-white/78">{item}</span>
                   </li>
                 ))}
               </ul>
             </div>
 
             <div>
-              <h3 className="font-bold text-white mb-4">Liên hệ</h3>
-              <ul className="space-y-2">
+              <h3 className="mb-4 font-medium text-white">Contact</h3>
+              <ul className="space-y-3 text-sm">
                 <li className="flex items-start gap-3">
-                  <FiMapPin size={20} className="text-white shrink-0" />
-                  <span className="text-white/90">Trần Phú, Hà Đông, Hà Nội</span>
+                  <FiMapPin size={19} className="shrink-0 text-emerald-100" />
+                  <span className="text-white/82">Tran Phu, Ha Dong, Ha Noi</span>
                 </li>
                 <li className="flex items-center gap-3">
-                  <FiPhone size={20} className="text-white shrink-0" />
-                  <span className="text-white/90">1900 1234</span>
+                  <FiPhone size={19} className="shrink-0 text-emerald-100" />
+                  <span className="text-white/82">1900 1234</span>
                 </li>
                 <li className="flex items-center gap-3">
-                  <FiMail size={20} className="text-white shrink-0" />
-                  <span className="text-white/90">support@grocery.com</span>
+                  <FiMail size={19} className="shrink-0 text-emerald-100" />
+                  <span className="text-white/82">support@grocery.com</span>
                 </li>
               </ul>
             </div>
           </div>
-          <div className="border-t border-white/10 pt-4 flex items-center justify-center gap-4">
-            <p className="w-full text-center text-sm text-white/80">© 2026 Grocery Store. All rights reserved.</p>
+          <div className="border-t border-white/10 pt-4">
+            <p className="text-center text-sm text-white/72">
+              © 2026 Grocery Store. All rights reserved.
+            </p>
           </div>
         </div>
       </footer>

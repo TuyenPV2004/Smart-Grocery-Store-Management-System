@@ -1,15 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
-  CheckCheck,
-  Download,
-  Loader2,
-  LockOpen,
-  MessageCircle,
-  Search,
-  SendHorizonal,
-  Trash2,
-  UserCheck,
-} from "lucide-react";
+  FiCheckCircle as CheckCheck,
+  FiDownload as Download,
+  FiLoader as Loader2,
+  FiUnlock as LockOpen,
+  FiMessageCircle as MessageCircle,
+  FiSearch as Search,
+  FiSend as SendHorizonal,
+  FiTrash2 as Trash2,
+  FiUserCheck as UserCheck,
+} from "react-icons/fi";
 import { toast } from "react-toastify";
 import { useAuth } from "../../context/useAuth";
 import chatService from "../../services/chatService";

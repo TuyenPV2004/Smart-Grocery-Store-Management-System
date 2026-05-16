@@ -2,23 +2,23 @@ import { toast } from "react-toastify";
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  Search,
-  Trash2,
-  Save,
-  Package,
-  Calendar,
-  User,
-  Smile,
-  FileText,
-  Plus,
-  X,
-  CheckCircle,
-  AlertCircle,
-  PackagePlus,
-  Dices,
-  Upload,
-  ImageIcon,
-} from "lucide-react";
+  FiSearch as Search,
+  FiTrash2 as Trash2,
+  FiSave as Save,
+  FiPackage as Package,
+  FiCalendar as Calendar,
+  FiUser as User,
+  FiSmile as Smile,
+  FiFileText as FileText,
+  FiPlus as Plus,
+  FiX as X,
+  FiCheckCircle as CheckCircle,
+  FiAlertCircle as AlertCircle,
+  FiPackage as PackagePlus,
+  FiShuffle as Dices,
+  FiUpload as Upload,
+  FiImage as ImageIcon,
+} from "react-icons/fi";
 import { getImageUrl } from "../../utils/imageUrl";
 import Swal from "sweetalert2";
 import productService from "../../services/productService";

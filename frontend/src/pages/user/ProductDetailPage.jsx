@@ -1,82 +1,55 @@
-import { toast } from "react-toastify";
 import React, { useEffect, useMemo, useState } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import { toast } from "react-toastify";
 import {
-  ArrowLeft,
-  ArrowRight,
-  ShoppingCart,
-  Heart,
-  Minus,
-  Plus,
-  Truck,
-  ShieldCheck,
-  RotateCw,
-} from "lucide-react";
-import productService from "../../services/productService";
-import { useCart } from "../../context/useCart";
-import { useAuth } from "../../context/useAuth";
-import ProductCard from "../../components/common/ProductCard";
-import { getImageUrl } from "../../utils/imageUrl";
+  FiArrowRight,
+  FiHeart,
+  FiLoader,
+  FiMinus,
+  FiPlus,
+  FiRefreshCw,
+  FiShield,
+  FiShoppingCart,
+  FiTruck,
+} from "react-icons/fi";
 import ImageGallery from "react-image-gallery";
 import "react-image-gallery/styles/image-gallery.css";
+import ProductCard from "../../components/common/ProductCard";
+import { Button, EmptyState, PageContainer, PageHeader, PageShell, StatusBadge, SurfaceCard } from "../../components/ui";
+import { useAuth } from "../../context/useAuth";
+import { useCart } from "../../context/useCart";
+import productService from "../../services/productService";
+import { getImageUrl } from "../../utils/imageUrl";
 
-const ARTICLE_TEMPLATES = [
+const ARTICLE_CARDS = [
   {
-    badge: "Mẹo mua sắm",
-    titlePrefix: "Cách chọn",
-    description:
-      "Bí quyết nhận biết sản phẩm tươi ngon, an toàn cho cả gia đình khi đi chợ online.",
+    badge: "Shopping tips",
+    title: "How to choose fresh groceries",
+    description: "Simple cues for checking freshness, color, texture, and packaging before you add items to cart.",
+    image: "https://cdn.tgdd.vn//News/1443302//cach-chon-sua-cong-thuc-phu-hop-cho-tre-3-845x479.jpg",
+    url: "https://www.avakids.com/me-va-be/cach-chon-sua-cong-thuc-phu-hop-cho-tre-1443302",
   },
   {
-    badge: "Bảo quản",
-    titlePrefix: "Bảo quản",
-    description:
-      "Hướng dẫn lưu trữ đúng cách để giữ hương vị, dinh dưỡng và kéo dài độ tươi của thực phẩm.",
+    badge: "Storage",
+    title: "Keep seafood and meat fresh longer",
+    description: "Storage habits that help preserve flavor and reduce waste after your delivery arrives.",
+    image: "https://giadinh.mediacdn.vn/thumb_w/640/296230595582509056/2025/3/18/hs3-17422715838861107342096.jpg",
+    url: "https://giadinh.suckhoedoisong.vn/5-meo-bao-quan-hai-san-tuoi-lau-khong-bi-mat-vi-172250312155805609.htm",
   },
   {
-    badge: "Gợi ý món ăn",
-    titlePrefix: "Thực đơn nhanh với",
-    description:
-      "Gợi ý món ngon dễ làm từ các sản phẩm đang bán, phù hợp cho bữa cơm bận rộn mỗi ngày.",
+    badge: "Meal ideas",
+    title: "Fast meals with vegetables",
+    description: "Build quick weekday meals from fresh vegetables, mushrooms, fruits, and pantry basics.",
+    image: "https://cdn.tgdd.vn/Files/2021/02/23/1329736/thuc-don-giam-can-7-ngay-tu-rau-cu-qua-ma-chi-em-nao-cung-me-202112301215164181.jpg",
+    url: "https://www.bachhoaxanh.com/kinh-nghiem-hay/thuc-don-giam-can-7-ngay-tu-rau-cu-qua-ma-chi-em-nao-cung-me-1329736",
   },
   {
-    badge: "Ưu đãi",
-    titlePrefix: "Mua",
-    description:
-      "Cách kết hợp combo thông minh để tối ưu chi phí mà vẫn đầy đủ nhóm thực phẩm cần thiết.",
+    badge: "Offers",
+    title: "Shop smarter with bundles",
+    description: "Combine essentials and promotions to control your grocery budget without reducing quality.",
+    image: "https://cdn.tgdd.vn//News/1508028//cach-lam-kem-sua-chua-dau-800x564.jpg",
+    url: "https://www.avakids.com/me-va-be/cach-lam-kem-sua-chua-1508028",
   },
-];
-
-const DETAIL_POST_READ_MORE_URLS = [
-  "https://www.avakids.com/me-va-be/cach-chon-sua-cong-thuc-phu-hop-cho-tre-1443302",
-  "https://giadinh.suckhoedoisong.vn/5-meo-bao-quan-hai-san-tuoi-lau-khong-bi-mat-vi-172250312155805609.htm",
-  "https://www.bachhoaxanh.com/kinh-nghiem-hay/thuc-don-giam-can-7-ngay-tu-rau-cu-qua-ma-chi-em-nao-cung-me-1329736",
-  "https://www.avakids.com/me-va-be/cach-lam-kem-sua-chua-1508028",
-  "https://www.bachhoaxanh.com/kinh-nghiem-hay/15-cach-lam-mi-tron-hao-hao-de-lam-sieu-ngon-tai-nha-1578703",
-  "https://petal.vn/huong-dan-bao-quan-nuoc-uong-tai-gia-dinh-tot-nhat/",
-  "http://winmilk.com.vn/tin-tuc/4-mon-an-dinh-duong-de-lam-tu-sua-cho-ca-gia-dinh-4.html",
-  "https://www.bachhoaxanh.com/kinh-nghiem-hay/cach-lua-chon-hai-san-tuoi-ngon-chat-luong-va-an-toan-1112991",
-];
-const DETAIL_POST_IMAGES = [
-  "https://cdn.tgdd.vn//News/1443302//cach-chon-sua-cong-thuc-phu-hop-cho-tre-3-845x479.jpg",
-  "https://giadinh.mediacdn.vn/thumb_w/640/296230595582509056/2025/3/18/hs3-17422715838861107342096.jpg",
-  "https://cdn.tgdd.vn/Files/2021/02/23/1329736/thuc-don-giam-can-7-ngay-tu-rau-cu-qua-ma-chi-em-nao-cung-me-202112301215164181.jpg",
-  "https://cdn.tgdd.vn//News/1508028//cach-lam-kem-sua-chua-dau-800x564.jpg",
-  "https://cdnv2.tgdd.vn/bhx-static/bhx/News/Images/2025/06/07/1578703/image10_202506071739360428.jpg",
-  "https://petal.vn/wp-content/uploads/2021/04/nuoc-tinh-khiet.jpg",
-  "http://winmilk.com.vn/upload/images/pexels-joshsorenson-990439.jpg",
-  "https://cdn.tgdd.vn/Files/2018/12/22/1139752/tuyet-chieu-chon-hai-san-tuoi-ngon-cho-chi-em-3_700x450.jpg",
-];
-
-const DETAIL_POST_TITLES = [
-  "Cách chọn Sữa",
-  "Bảo quản Thịt, trứng, hải sản",
-  "Thực đơn nhanh với Rau, củ, nấm, trái cây",
-  "Mua Kem, sữa chua",
-  "Cách chọn Mì gói",
-  "Bảo quản Bia, nước giải khát",
-  "Thực đơn nhanh với Sữa",
-  "Mua Thịt, trứng, hải sản",
 ];
 
 const ProductDetailPage = () => {
@@ -88,7 +61,6 @@ const ProductDetailPage = () => {
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
-  const [mainImage, setMainImage] = useState("");
   const [allProducts, setAllProducts] = useState([]);
 
   useEffect(() => {
@@ -99,12 +71,7 @@ const ProductDetailPage = () => {
           productService.getAll({ status: "ACTIVE", pageSize: 1000 }),
         ]);
 
-        const currentProduct = productRes.data;
-        setProduct(currentProduct);
-        if (currentProduct.thumbnail) {
-          setMainImage(getImageUrl(currentProduct.thumbnail));
-        }
-
+        setProduct(productRes.data);
         const productList = productsRes.data?.content || productsRes.data || [];
         setAllProducts(Array.isArray(productList) ? productList : []);
       } catch (error) {
@@ -114,461 +81,308 @@ const ProductDetailPage = () => {
       }
     };
 
-    if (id) {
-      fetchProduct();
-    }
+    if (id) fetchProduct();
   }, [id]);
 
+  const galleryItems = useMemo(() => {
+    if (!product) return [];
+    const primary = product.thumbnail ? [getImageUrl(product.thumbnail)] : [];
+    const extra = (product.images || []).map((image) => getImageUrl(image.imageUrl));
+    return [...primary, ...extra].map((image) => ({
+      original: image,
+      thumbnail: image,
+      originalClass: "aspect-square w-full object-cover",
+      thumbnailClass: "h-20 w-20 object-cover",
+    }));
+  }, [product]);
+
   const relatedProducts = useMemo(() => {
-    if (!product || !Array.isArray(allProducts) || allProducts.length === 0) {
-      return [];
-    }
+    if (!product || !Array.isArray(allProducts)) return [];
 
     const currentId = Number(product.id);
     const currentBrand = (product.brand || "").trim().toLowerCase();
     const currentSupplierId = product.supplier?.id;
-    const currentLabelIds = new Set((product.labels || []).map((l) => l.id));
+    const currentLabelIds = new Set((product.labels || []).map((label) => label.id));
 
     const scored = allProducts
-      .filter((p) => Number(p.id) !== currentId && p.status === "ACTIVE")
-      .map((p) => {
+      .filter((candidate) => Number(candidate.id) !== currentId && candidate.status === "ACTIVE")
+      .map((candidate) => {
         let score = 0;
-
-        if (
-          currentBrand &&
-          (p.brand || "").trim().toLowerCase() === currentBrand
-        ) {
-          score += 3;
-        }
-
-        if (
-          currentSupplierId &&
-          p.supplier?.id &&
-          Number(p.supplier.id) === Number(currentSupplierId)
-        ) {
-          score += 2;
-        }
-
-        const sharedLabelCount = (p.labels || []).filter((l) =>
-          currentLabelIds.has(l.id),
-        ).length;
-        if (sharedLabelCount > 0) {
-          score += sharedLabelCount * 2;
-        }
-
-        return { product: p, score };
-      });
-
-    const withScore = scored
-      .filter((item) => item.score > 0)
+        if (currentBrand && (candidate.brand || "").trim().toLowerCase() === currentBrand) score += 3;
+        if (currentSupplierId && Number(candidate.supplier?.id) === Number(currentSupplierId)) score += 2;
+        score += (candidate.labels || []).filter((label) => currentLabelIds.has(label.id)).length * 2;
+        return { product: candidate, score };
+      })
       .sort((a, b) => b.score - a.score)
-      .slice(0, 8)
       .map((item) => item.product);
 
-    if (withScore.length >= 4) {
-      return withScore;
-    }
-
-    const fallback = allProducts
-      .filter((p) => Number(p.id) !== currentId && p.status === "ACTIVE")
-      .slice(0, 8);
-
-    return withScore.length > 0 ? withScore : fallback;
+    return (scored.length ? scored : allProducts.filter((candidate) => Number(candidate.id) !== currentId)).slice(0, 10);
   }, [product, allProducts]);
-
-  const handleQuantityChange = (type) => {
-    if (type === "decrease") {
-      setQuantity((prev) => (prev > 1 ? prev - 1 : 1));
-    } else {
-      setQuantity((prev) => prev + 1);
-    }
-  };
 
   const handleAddToCart = () => {
     if (!user) {
-      toast.warning("Vui lòng đăng nhập để có thể thêm sản phẩm vào giỏ hàng.");
+      toast.warning("Please sign in to add products to your cart.");
       navigate("/login");
       return;
     }
+
     if (product) {
       addToCart(product, quantity);
-      toast.success("Đã thêm vào giỏ hàng!");
+      toast.success("Product added to cart.");
     }
   };
 
+  const formatCurrency = (amount) =>
+    new Intl.NumberFormat("vi-VN", {
+      style: "currency",
+      currency: "VND",
+    }).format(Number(amount || 0));
+
+  const breadcrumbProductName = product?.name ? `${product.name.slice(0, 30)}...` : "Product";
+
   if (loading) {
     return (
-      <div className="app-page-bg min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
-      </div>
+      <PageShell className="flex items-center justify-center">
+        <FiLoader className="h-12 w-12 animate-spin text-emerald-700" />
+      </PageShell>
     );
   }
 
   if (!product) {
     return (
-      <div className="app-page-bg min-h-screen flex flex-col items-center justify-center gap-4">
-        <h2 className="text-2xl font-medium text-slate-800">
-          Không tìm thấy sản phẩm
-        </h2>
-        <button
-          onClick={() => navigate("/products")}
-          className="px-6 py-2 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors"
-        >
-          Quay lại danh sách
-        </button>
-      </div>
+      <PageShell className="flex items-center justify-center p-4">
+        <PageContainer className="max-w-xl">
+          <EmptyState
+            title="Product not found"
+            description="The product may have been removed or is no longer available."
+            action={<Button type="button" onClick={() => navigate("/products")}>Back to products</Button>}
+          />
+        </PageContainer>
+      </PageShell>
     );
   }
 
+  const isOutOfStock = product.status === "OUT_OF_STOCK";
+
   return (
-    <div className="app-page-bg min-h-screen py-8 px-4 font-poppins">
-      <div className="max-w-7xl mx-auto">
-        {/* Breadcrumb / Back Button */}
+    <PageShell className="py-8">
+      <PageContainer>
+        <div className="mb-4 flex items-center gap-2 text-sm font-medium text-slate-500">
+          <Link to="/" className="text-black hover:text-slate-900">Home</Link>
+          <span className="font-semibold text-black">&gt;</span>
+          <Link to="/products" className="text-black hover:text-slate-900">Products</Link>
+          <span className="font-semibold text-black">&gt;</span>
+          <span className="text-emerald-700">{breadcrumbProductName}</span>
+        </div>
 
-        <div className="bg-white rounded-[2.5rem] p-6 md:p-10 shadow-xl shadow-slate-200/50 border border-slate-100">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20">
-            {/* Left Column - Images */}
-            <div className="space-y-6 relative">
-              {/* Status Badge */}
-              {product.status === "OUT_OF_STOCK" && (
-                <div className="absolute top-6 left-6 z-10 bg-red-500 text-white px-4 py-1.5 rounded-full text-sm font-medium shadow-lg shadow-red-500/30">
-                  Hết hàng
-                </div>
-              )}
+        <div className="grid grid-cols-1 gap-10 lg:grid-cols-[minmax(0,0.78fr)_minmax(0,1.22fr)] xl:gap-14">
+          <div className="relative">
+            {isOutOfStock ? (
+              <div className="absolute left-4 top-4 z-10">
+                <StatusBadge tone="rose">Out of stock</StatusBadge>
+              </div>
+            ) : null}
 
-              {mainImage ? (
-                <div className="gallery-wrapper rounded-[2rem] overflow-hidden border border-slate-100 bg-white">
-                  <style>
-                    {`
-                      .image-gallery-thumbnail {
-                        border-radius: 0.5rem;
-                        overflow: hidden;
-                        transition: all 0.2s;
-                      }
-                      .image-gallery-thumbnail.active,
-                      .image-gallery-thumbnail:hover {
-                        border: 2px solid #16a34a;
-                      }
-                      .image-gallery-icon {
-                        color: rgba(255, 255, 255, 0.8);
-                      }
-                      .image-gallery-icon:hover {
-                        color: #fff;
-                      }
+            {galleryItems.length > 0 ? (
+              <div className="gallery-wrapper mx-auto max-w-[480px] overflow-hidden rounded-[1.5rem] border border-slate-100 bg-white lg:mx-0 xl:max-w-[500px]">
+                <style>
+                  {`
+                    .gallery-wrapper .image-gallery-slide-wrapper { aspect-ratio: 1 / 1; }
+                    .gallery-wrapper .image-gallery-swipe,
+                    .gallery-wrapper .image-gallery-slides,
+                    .gallery-wrapper .image-gallery-slide { height: 100% !important; }
+                    .gallery-wrapper .image-gallery-image {
+                      width: 100% !important;
+                      height: 100% !important;
+                      object-fit: contain;
+                      padding: 1.5rem;
+                      display: block;
+                    }
+                    .gallery-wrapper .image-gallery-thumbnail {
+                      border-radius: 0.75rem;
+                      overflow: hidden;
+                    }
+                    .gallery-wrapper .image-gallery-thumbnail.active,
+                    .gallery-wrapper .image-gallery-thumbnail:hover {
+                      border: 2px solid #15803d;
+                    }
+                  `}
+                </style>
+                <ImageGallery
+                  items={galleryItems}
+                  showPlayButton={false}
+                  showFullscreenButton={false}
+                  thumbnailPosition="bottom"
+                />
+              </div>
+            ) : (
+              <div className="mx-auto flex aspect-square max-w-[480px] items-center justify-center rounded-[1.5rem] border border-slate-100 bg-slate-50 text-5xl font-semibold text-slate-200 lg:mx-0 xl:max-w-[500px]">
+                IMG
+              </div>
+            )}
+          </div>
 
-                      /* Cấu hình mũi tên chuyển ảnh */
-                      .gallery-wrapper .image-gallery-left-nav,
-                      .gallery-wrapper .image-gallery-right-nav {
-                        opacity: 0;
-                        transition: opacity 0.3s ease-in-out;
-                      }
-
-                      .gallery-wrapper .image-gallery-slide-wrapper:hover .image-gallery-left-nav,
-                      .gallery-wrapper .image-gallery-slide-wrapper:hover .image-gallery-right-nav {
-                        opacity: 1;
-                      }
-
-                      /* Giảm kích thước và tăng độ đậm mũi tên */
-                      .gallery-wrapper .image-gallery-left-nav .image-gallery-svg,
-                      .gallery-wrapper .image-gallery-right-nav .image-gallery-svg {
-                        height: 48px;
-                        width: 24px;
-                        stroke-width: 4px; /* Tăng độ đậm */
-                        stroke: currentColor;
-                      }
-
-                      /* Giảm khoảng cách giữa ảnh chính và ảnh phụ */
-                      .image-gallery-thumbnails-wrapper.bottom {
-                        margin-top: 8px !important;
-                      }
-                      .image-gallery-slide-wrapper {
-                        margin-bottom: 0px !important;
-                      }
-
-                      /* Khung ảnh chính vuông (giống BHX), không còn dư trắng */
-                      .gallery-wrapper .image-gallery-slide-wrapper {
-                        aspect-ratio: 1 / 1;
-                      }
-
-                      /* Bảo đảm các lớp con ăn theo chiều cao khung */
-                      .gallery-wrapper .image-gallery-swipe,
-                      .gallery-wrapper .image-gallery-slides,
-                      .gallery-wrapper .image-gallery-slide {
-                        height: 100% !important;
-                      }
-
-                      /* Ảnh lấp khung */
-                      .gallery-wrapper .image-gallery-image {
-                        width: 100% !important;
-                        height: 100% !important;
-                        object-fit: cover; /* cover sẽ không bị khoảng trắng */
-                        display: block;
-                      }
-                    `}
-                  </style>
-                  <ImageGallery
-                    items={[
-                      {
-                        original: mainImage,
-                        thumbnail: mainImage,
-                        originalClass:
-                          "aspect-square w-full object-cover rounded-t-[2rem]",
-                        thumbnailClass: "h-20 w-20 object-cover",
-                      },
-                      ...(product.images || []).map((img) => ({
-                        original: getImageUrl(img.imageUrl),
-                        thumbnail: getImageUrl(img.imageUrl),
-                        originalClass:
-                          "aspect-square w-full object-cover rounded-t-[2rem]",
-                        thumbnailClass: "h-20 w-20 object-cover",
-                      })),
-                    ]}
-                    showPlayButton={false}
-                    showFullscreenButton={false}
-                    thumbnailPosition="bottom"
-                  />
-                </div>
-              ) : (
-                <div className="aspect-square bg-slate-50 rounded-[2rem] border border-slate-100 flex items-center justify-center">
-                  <div className="text-slate-300 flex flex-col items-center">
-                    <span className="text-6xl font-black opacity-20 select-none">
-                      IMG
-                    </span>
-                  </div>
-                </div>
-              )}
+          <div className="flex flex-col">
+            <div className="mb-4">
+              <StatusBadge tone="emerald">{product.brand || "Grocery Store"}</StatusBadge>
             </div>
 
-            {/* Right Column - Info */}
-            <div>
-              <div className="mb-2">
-                <span className="text-white font-medium tracking-wider text-sm uppercase bg-green-600 px-3 py-1 rounded-full">
-                  {product.brand || "Grocery Store"}
-                </span>
-              </div>
+            <h1 className="text-3xl font-medium leading-tight text-slate-950">
+              {product.name}
+            </h1>
 
-              <h1 className="text-2xl md:text-3xl font-medium text-slate-900 mb-4 leading-tight">
-                {product.name}
-              </h1>
+            <div className="mt-5 flex items-end gap-2">
+              <span className="text-3xl font-medium tabular-nums text-emerald-700">
+                {formatCurrency(product.sellPrice)}
+              </span>
+              <span className="pb-1 text-sm font-medium text-slate-500">
+                / {product.unit}
+              </span>
+            </div>
 
-              <div className="flex items-center gap-4 mb-8">
-                <div className="flex items-end gap-2">
-                  <span className="text-3xl font-medium text-slate-900">
-                    {product.sellPrice?.toLocaleString("vi-VN")}
-                  </span>
-                  <span className="text-lg font-medium text-slate-900 mb-1">
-                    ₫ / {product.unit}
-                  </span>
-                </div>
-              </div>
+            <p className="mt-6 text-base leading-8 text-slate-500">
+              {product.description ||
+                "Fresh grocery item selected for everyday meals and convenient home delivery."}
+            </p>
 
-              <p className="text-slate-500 leading-relaxed mb-10 text-lg">
-                {product.description ||
-                  "Sản phẩm tươi ngon, được chọn lọc kỹ càng để đảm bảo chất lượng tốt nhất cho bữa ăn gia đình bạn."}
-              </p>
-
-              <div className="flex flex-col sm:flex-row gap-4 mb-6">
-                {/* Quantity Selector */}
-                <div className="flex items-center bg-slate-50 rounded-2xl border border-slate-200 p-1 w-fit">
-                  <button
-                    onClick={() => handleQuantityChange("decrease")}
-                    className="w-12 h-12 flex items-center justify-center rounded-xl hover:bg-white hover:shadow-sm text-slate-500 transition-all active:scale-95 bg-white shadow-sm"
-                  >
-                    <Minus size={20} />
-                  </button>
-                  <span className="w-16 text-center font-medium text-lg text-slate-900">
-                    {quantity}
-                  </span>
-                  <button
-                    onClick={() => handleQuantityChange("increase")}
-                    className="w-12 h-12 flex items-center justify-center rounded-xl hover:bg-white hover:shadow-sm text-slate-500 transition-all active:scale-95 bg-white shadow-sm"
-                  >
-                    <Plus size={20} />
-                  </button>
-                </div>
-
-                {/* Add to Cart */}
+            <div className="mt-8 flex flex-col gap-4 sm:flex-row">
+              <div className="flex w-fit items-center rounded-2xl border border-slate-200 bg-slate-50 p-1">
                 <button
-                  onClick={handleAddToCart}
-                  disabled={product.status === "OUT_OF_STOCK"}
-                  className="flex-1 bg-green-600 text-white px-8 py-4 rounded-2xl font-medium text-lg shadow-lg shadow-green-200 hover:bg-green-700 transition-all active:scale-95 flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
+                  type="button"
+                  onClick={() => setQuantity((prev) => Math.max(1, prev - 1))}
+                  className="flex h-12 w-12 items-center justify-center text-slate-600 transition-colors hover:text-emerald-700"
+                  aria-label="Decrease quantity"
                 >
-                  <ShoppingCart size={24} />
-                  <span>Thêm vào giỏ hàng</span>
+                  <FiMinus size={18} />
                 </button>
-
-                {/* Favorite Button */}
-                <button className="w-16 h-16 flex items-center justify-center rounded-2xl border border-slate-200 text-slate-400 hover:text-rose-500 hover:border-rose-200 hover:bg-rose-50 transition-all active:scale-95 shadow-sm">
-                  <Heart size={24} />
+                <span className="w-16 text-center text-lg font-medium text-slate-900">
+                  {quantity}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setQuantity((prev) => prev + 1)}
+                  className="flex h-12 w-12 items-center justify-center text-slate-600 transition-colors hover:text-emerald-700"
+                  aria-label="Increase quantity"
+                >
+                  <FiPlus size={18} />
                 </button>
               </div>
 
-              {/* Extra Info */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {[
-                  {
-                    icon: Truck,
-                    label: "Giao hàng",
-                    value: "từ 2-4 giờ",
-                    color:
-                      "bg-blue-50 text-blue-600 border-blue-100 hover:border-blue-200",
-                    iconColor: "text-blue-500",
-                  },
-                  {
-                    icon: ShieldCheck,
-                    label: "Đảm bảo",
-                    value: "tươi ngon",
-                    color:
-                      "bg-emerald-50 text-emerald-600 border-emerald-100 hover:border-emerald-200",
-                    iconColor: "text-emerald-500",
-                  },
-                  {
-                    icon: RotateCw,
-                    label: "Đổi trả",
-                    value: "trong 24h",
-                    color:
-                      "bg-amber-50 text-amber-600 border-amber-100 hover:border-amber-200",
-                    iconColor: "text-amber-500",
-                  },
-                ].map((item, idx) => (
-                  <div
-                    key={idx}
-                    className={`flex items-center gap-3 p-4 rounded-2xl border transition-all duration-300 ${item.color} shadow-sm hover:shadow-md cursor-default`}
-                  >
-                    <div
-                      className={`p-2.5 rounded-full bg-white shadow-sm ${item.iconColor}`}
-                    >
-                      <item.icon size={22} strokeWidth={2.5} />
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium tracking-wider mb-0.5">
-                        {item.label}
-                      </p>
-                      <p className="text-sm font-medium">{item.value}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
+              <Button
+                type="button"
+                onClick={handleAddToCart}
+                disabled={isOutOfStock}
+                className="flex-1 py-4 text-base"
+              >
+                <FiShoppingCart size={21} />
+                Add to cart
+              </Button>
+
+              <button
+                type="button"
+                className="flex h-14 w-14 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-400 transition-colors hover:border-rose-200 hover:bg-rose-50 hover:text-rose-500"
+                aria-label="Favorite product"
+              >
+                <FiHeart size={22} />
+              </button>
+            </div>
+
+            <div className="mt-8 grid grid-cols-1 gap-3 md:grid-cols-3">
+              <TrustCard icon={FiTruck} label="Delivery" value="2-4 hours" tone="blue" />
+              <TrustCard icon={FiShield} label="Quality" value="Fresh pick" tone="emerald" />
+              <TrustCard icon={FiRefreshCw} label="Return" value="24-hour support" tone="amber" />
             </div>
           </div>
         </div>
 
-        <div className="mt-10">
-          <div className="flex items-center justify-between mb-5">
-            <h2 className="text-2xl font-medium text-slate-900">
-              Sản phẩm tương tự
-            </h2>
+        <section className="mt-10">
+          <div className="mb-5 flex items-center justify-between">
+            <h2 className="text-2xl font-medium text-slate-900">Similar products</h2>
           </div>
 
           {relatedProducts.length > 0 ? (
-            <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
               {relatedProducts.map((related) => (
                 <ProductCard key={related.id} product={related} />
               ))}
             </div>
           ) : (
-            <div className="bg-white border border-slate-100 rounded-2xl p-6 text-slate-500">
-              Hiện chưa có sản phẩm liên quan.
-            </div>
+            <SurfaceCard className="text-slate-500">No related products available.</SurfaceCard>
           )}
-        </div>
+        </section>
 
-        {/* Related Posts */}
-        <div className="mt-14">
-          <div className="flex items-end justify-between gap-6 mb-8">
+        <section className="mt-14">
+          <div className="mb-8 flex items-end justify-between gap-6">
             <div>
-              <h2 className="text-2xl font-medium text-slate-900 mb-2">
-                Bài viết liên quan
-              </h2>
-              <p className="text-slate-500 font-medium text-sm">
-                Gợi ý bài viết hữu ích từ các nhóm sản phẩm
+              <h2 className="text-2xl font-medium text-slate-900">Related articles</h2>
+              <p className="mt-2 text-sm font-medium text-slate-500">
+                Useful guides for choosing, storing, and cooking fresh groceries.
               </p>
             </div>
-            <Link
-              to="/products"
-              className="shrink-0 text-green-600 font-semibold hover:text-green-700 flex items-center gap-1.5 group text-sm"
-            >
-              Xem sản phẩm
-              <ArrowRight
-                size={16}
-                className="transition-transform duration-300 group-hover:translate-x-1"
-              />
+            <Link to="/products" className="group flex shrink-0 items-center gap-1.5 text-sm font-semibold text-emerald-700 hover:text-emerald-800">
+              View products
+              <FiArrowRight size={16} className="transition-transform group-hover:translate-x-1" />
             </Link>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
-            {Array.from({ length: 8 }, (_, index) => {
-              const template = ARTICLE_TEMPLATES[index % ARTICLE_TEMPLATES.length];
-              const image = DETAIL_POST_IMAGES[index] || "";
-              const readMoreUrl = DETAIL_POST_READ_MORE_URLS[index] || "";
-              const title = DETAIL_POST_TITLES[index] || `${template.titlePrefix} sản phẩm`;
-
-              return (
-                <article
-                  key={`detail-post-${index}`}
-                  className="group h-full bg-white rounded-3xl border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden"
-                >
-                  {readMoreUrl ? (
-                    <a href={readMoreUrl} target="_blank" rel="noopener noreferrer" className="block">
-                      <div className="h-48 overflow-hidden">
-                        <img
-                          src={image}
-                          alt={title}
-                          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                        />
-                      </div>
-                    </a>
-                  ) : (
-                    <div className="h-48 overflow-hidden">
-                      <img
-                        src={image}
-                        alt={title}
-                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                      />
-                    </div>
-                  )}
-
-                  <div className="p-5 flex min-h-[240px] flex-col">
-                    <span className="w-fit rounded-md bg-emerald-50 text-emerald-700 px-1 py-0.5 text-[11px] font-semibold leading-none mb-3">
-                      {template.badge}
-                    </span>
-
-                    <h3 className="text-lg font-bold text-slate-900 leading-snug mb-2 line-clamp-2">
-                      {title}
-                    </h3>
-
-                    <p className="text-sm text-slate-500 leading-relaxed mb-4 line-clamp-3">
-                      {template.description}
-                    </p>
-
-                    <div className="mt-auto flex items-center justify-between">
-                      <span className="text-xs font-medium text-slate-400">
-                        {template.readTime}
-                      </span>
-                      {readMoreUrl ? (
-                        <a
-                          href={readMoreUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-green-600 font-semibold text-sm hover:text-green-700 flex items-center gap-1"
-                        >
-                          Đọc thêm
-                        </a>
-                      ) : (
-                        <Link
-                          to="/products"
-                          className="text-green-600 font-semibold text-sm hover:text-green-700 flex items-center gap-1"
-                        >
-                          Đọc thêm
-                        </Link>
-                      )}
-                    </div>
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
+            {ARTICLE_CARDS.map((article) => (
+              <article
+                key={article.title}
+                className="group h-full overflow-hidden rounded-[1.5rem] border border-white/75 bg-white/90 shadow-[0_14px_34px_rgba(15,23,42,0.07)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_22px_55px_rgba(15,23,42,0.12)]"
+              >
+                <a href={article.url} target="_blank" rel="noopener noreferrer">
+                  <div className="h-48 overflow-hidden">
+                    <img
+                      src={article.image}
+                      alt={article.title}
+                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    />
                   </div>
-                </article>
-              );
-            })}
+                </a>
+                <div className="flex min-h-[220px] flex-col p-5">
+                  <StatusBadge tone="emerald" className="mb-3 w-fit">
+                    {article.badge}
+                  </StatusBadge>
+                  <h3 className="line-clamp-2 text-lg font-medium leading-snug text-slate-900">
+                    {article.title}
+                  </h3>
+                  <p className="mt-3 line-clamp-3 text-sm leading-6 text-slate-500">
+                    {article.description}
+                  </p>
+                  <a
+                    href={article.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-auto inline-flex items-center gap-1 text-sm font-semibold text-emerald-700 hover:text-emerald-800"
+                  >
+                    Read more
+                  </a>
+                </div>
+              </article>
+            ))}
           </div>
-        </div>
+        </section>
+      </PageContainer>
+    </PageShell>
+  );
+};
+
+const TrustCard = ({ icon: Icon, label, value, tone }) => {
+  const toneClass = {
+    blue: "border-sky-100 bg-sky-50 text-sky-700",
+    emerald: "border-emerald-100 bg-emerald-50 text-emerald-700",
+    amber: "border-amber-100 bg-amber-50 text-amber-700",
+  };
+
+  return (
+    <div className={`flex items-start gap-3 rounded-2xl border p-4 ${toneClass[tone]}`}>
+      <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-transparent">
+        {React.createElement(Icon, { size: 20 })}
+      </span>
+      <div className="min-w-0">
+        <p className="text-sm font-medium">{label}</p>
+        <p className="mt-1 text-sm leading-5 text-current/80">{value}</p>
       </div>
     </div>
   );

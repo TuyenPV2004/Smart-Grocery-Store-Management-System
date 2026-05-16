@@ -1,17 +1,27 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import {
-  Loader2,
-  Minus,
-  Plus,
-  ShoppingBag,
-  Trash2,
-  User,
-  X,
-} from "lucide-react";
-import { useCart } from "../../context/useCart";
+  FiCheck,
+  FiInfo,
+  FiLoader,
+  FiMinus,
+  FiPlus,
+  FiShoppingBag,
+  FiTrash2,
+  FiUser,
+} from "react-icons/fi";
+import {
+  Button,
+  EmptyState,
+  ModalShell,
+  PageContainer,
+  PageHeader,
+  PageShell,
+  SurfaceCard,
+} from "../../components/ui";
 import { useAuth } from "../../context/useAuth";
+import { useCart } from "../../context/useCart";
 import orderService from "../../services/orderService";
 import voucherService from "../../services/voucherService";
 import { getImageUrl } from "../../utils/imageUrl";
@@ -37,6 +47,16 @@ const CartPage = () => {
   const [isLoadingVouchers, setIsLoadingVouchers] = useState(false);
   const [selectedVoucherOption, setSelectedVoucherOption] = useState(null);
   const [voucherConditionTarget, setVoucherConditionTarget] = useState(null);
+  const [selectedCartItems, setSelectedCartItems] = useState([]);
+
+  const selectedCartCount = selectedCartItems.length;
+  const selectedCartTotal = useMemo(
+    () =>
+      cartItems
+        .filter((item) => selectedCartItems.includes(item.product.id))
+        .reduce((sum, item) => sum + getProductPrice(item.product) * item.quantity, 0),
+    [cartItems, getProductPrice, selectedCartItems],
+  );
 
   useEffect(() => {
     const reconcilePendingPayment = async () => {
@@ -75,13 +95,13 @@ const CartPage = () => {
   const formatVoucherDiscount = (voucher) => {
     if (!voucher) return "";
     return voucher.discountType === "PERCENTAGE"
-      ? `Giảm ${voucher.discountValue}%`
-      : `Giảm ${formatCurrency(voucher.discountValue || 0)}`;
+      ? `${voucher.discountValue}% off`
+      : `${formatCurrency(voucher.discountValue || 0)} off`;
   };
 
   const formatVoucherExpiry = (date) => {
-    if (!date) return "Không xác định";
-    return new Date(date).toLocaleString("vi-VN");
+    if (!date) return "No expiry date";
+    return new Date(date).toLocaleString("en-US");
   };
 
   const calculateDiscount = () => {
@@ -115,34 +135,43 @@ const CartPage = () => {
       const voucher = res.data;
 
       if (voucher.minOrderValue && cartTotal < voucher.minOrderValue) {
-        setVoucherError(
-          `Đơn hàng cần đạt tối thiểu ${formatCurrency(voucher.minOrderValue)}`,
-        );
+        setVoucherError(`Order minimum is ${formatCurrency(voucher.minOrderValue)}.`);
         return false;
       }
 
       setVoucherCode(voucher.code);
       setAppliedVoucher(voucher);
-      toast.success("Áp dụng mã giảm giá thành công!");
+      toast.success("Voucher applied successfully.");
       return true;
     } catch (error) {
-      setVoucherError(
-        error.response?.data || "Mã giảm giá không hợp lệ hoặc đã hết hạn",
-      );
+      setVoucherError(error.response?.data || "Voucher is invalid or expired.");
       return false;
     } finally {
       setIsApplyingVoucher(false);
     }
   };
 
-  const handleApplyVoucher = async () => {
-    await applyVoucherByCode(voucherCode);
-  };
-
   const handleRemoveVoucher = () => {
     setAppliedVoucher(null);
     setVoucherCode("");
     setVoucherError("");
+  };
+
+  const toggleCartItemSelection = (productId) => {
+    setSelectedCartItems((prev) =>
+      prev.includes(productId) ? prev.filter((id) => id !== productId) : [...prev, productId],
+    );
+  };
+
+  const selectAllCartItems = () => {
+    setSelectedCartItems((prev) =>
+      prev.length === cartItems.length ? [] : cartItems.map((item) => item.product.id),
+    );
+  };
+
+  const clearSelectedCartItems = () => {
+    selectedCartItems.forEach((productId) => removeFromCart(productId));
+    setSelectedCartItems([]);
   };
 
   const handleOpenVoucherModal = async () => {
@@ -155,17 +184,11 @@ const CartPage = () => {
       const res = await voucherService.getActive();
       setAvailableVouchers(Array.isArray(res.data) ? res.data : []);
     } catch {
-      toast.error("Không thể tải danh sách voucher");
+      toast.error("Could not load vouchers.");
       setAvailableVouchers([]);
     } finally {
       setIsLoadingVouchers(false);
     }
-  };
-
-  const handleToggleVoucherOption = (voucherCodeValue) => {
-    setSelectedVoucherOption((prev) =>
-      prev === voucherCodeValue ? null : voucherCodeValue,
-    );
   };
 
   const handleConfirmVoucherSelection = async () => {
@@ -176,9 +199,7 @@ const CartPage = () => {
     }
 
     const success = await applyVoucherByCode(selectedVoucherOption);
-    if (success) {
-      setShowVoucherModal(false);
-    }
+    if (success) setShowVoucherModal(false);
   };
 
   const cartDiscount = calculateDiscount();
@@ -186,241 +207,218 @@ const CartPage = () => {
 
   if (!user) {
     return (
-      <div className="app-page-bg min-h-screen flex flex-col items-center justify-center p-4 font-poppins">
-        <div className="w-24 h-24 bg-emerald-100 rounded-full flex items-center justify-center mb-6 text-emerald-500">
-          <User size={48} />
-        </div>
-        <h2 className="text-2xl font-medium text-slate-800 mb-2">
-          Yêu cầu đăng nhập
-        </h2>
-        <p className="text-slate-500 mb-8 text-center max-w-md">
-          Bạn cần đăng nhập tài khoản hệ thống để truy cập giỏ hàng và thanh
-          toán.
-        </p>
-        <Link
-          to="/login"
-          className="px-8 py-3 bg-emerald-600 text-white rounded-xl font-medium hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-200"
-        >
-          Quay về trang đăng nhập
-        </Link>
-      </div>
+      <PageShell className="flex items-center justify-center p-4">
+        <PageContainer className="max-w-xl">
+          <EmptyState
+            icon={FiUser}
+            title="Sign in required"
+            description="Please sign in to access your cart and checkout."
+            action={<Button as={Link} to="/login">Go to sign in</Button>}
+          />
+        </PageContainer>
+      </PageShell>
     );
   }
 
   if (cartItems.length === 0) {
     return (
-      <div className="app-page-bg min-h-screen flex flex-col items-center justify-center p-4">
-        <div className="w-24 h-24 bg-slate-100 rounded-full flex items-center justify-center mb-6 text-slate-300">
-          <ShoppingBag size={48} />
-        </div>
-        <h2 className="text-2xl font-medium text-slate-800 mb-2">
-          Giỏ hàng trống
-        </h2>
-        <p className="text-slate-500 mb-8 text-center max-w-md">
-          Chưa có sản phẩm nào trong giỏ hàng của bạn. Hãy dạo một vòng cửa hàng
-          để chọn nhé!
-        </p>
-        <Link
-          to="/products"
-          className="px-8 py-3 bg-green-600 text-white rounded-xl font-medium hover:bg-green-700 transition-all shadow-lg shadow-green-200"
-        >
-          Tiếp tục mua sắm
-        </Link>
-        <Link
-          to="/order-history"
-          className="mt-3 px-8 py-3 bg-white text-green-700 border border-green-200 rounded-xl font-medium hover:bg-green-50 transition-all"
-        >
-          Xem lịch sử đơn hàng
-        </Link>
-      </div>
+      <PageShell className="flex items-center justify-center p-4">
+        <PageContainer className="max-w-xl">
+          <EmptyState
+            icon={FiShoppingBag}
+            title="Your cart is empty"
+            description="Browse the store and add fresh groceries to your cart."
+            action={
+              <div className="flex flex-col gap-3 sm:flex-row">
+                <Button as={Link} to="/products">Continue shopping</Button>
+                <Button as={Link} to="/order-history" variant="secondary">View order history</Button>
+              </div>
+            }
+          />
+        </PageContainer>
+      </PageShell>
     );
   }
 
   return (
-    <div className="app-page-bg min-h-screen pt-6 pb-12 px-4 sm:px-6 font-poppins relative">
-      <div className="max-w-6xl mx-auto">
-        <div className="flex items-center mb-8 gap-4">
-          <h1 className="text-2xl font-medium text-slate-900">
-            Giỏ hàng của bạn
-          </h1>
-          <span className="bg-green-100 text-green-700 font-medium px-3 py-1 rounded-full text-sm">
-            {cartItems.length} sản phẩm
-          </span>
+    <PageShell className="py-8">
+      <PageContainer className="max-w-6xl">
+        <div className="mb-4 flex items-center gap-2 text-sm font-medium text-slate-500">
+          <Link to="/" className="text-black hover:text-slate-900">Home</Link>
+          <span className="font-semibold text-black">&gt;</span>
+          <span className="text-emerald-700">Cart</span>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          <div className="lg:col-span-7 space-y-4">
-            {cartItems.map((item) => (
-              <div
-                key={item.product.id}
-                className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex gap-4 sm:items-center"
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
+          <div className="space-y-4 lg:col-span-7">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <button
+                type="button"
+                onClick={selectAllCartItems}
+                className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:border-emerald-300 hover:text-emerald-700"
               >
-                <div className="w-24 h-24 bg-slate-50 rounded-xl flex-shrink-0 overflow-hidden border border-slate-100">
+                {selectedCartCount === cartItems.length ? "Clear all selected" : "Select all"}
+              </button>
+              <button
+                type="button"
+                onClick={clearSelectedCartItems}
+                disabled={selectedCartCount === 0}
+                className="rounded-full bg-rose-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Clear selected ({selectedCartCount})
+              </button>
+            </div>
+
+            {cartItems.map((item) => {
+              const isSelected = selectedCartItems.includes(item.product.id);
+              return (
+              <SurfaceCard key={item.product.id} className={`flex gap-4 p-4 sm:items-center ${isSelected ? "ring-2 ring-emerald-500" : ""}`}>
+                <button
+                  type="button"
+                  onClick={() => toggleCartItemSelection(item.product.id)}
+                  className={`mt-1 flex h-6 w-6 shrink-0 items-center justify-center rounded border transition-colors ${
+                    isSelected ? "border-emerald-700 bg-emerald-700 text-white" : "border-slate-300 bg-white"
+                  }`}
+                  aria-label="Select cart item"
+                >
+                  {isSelected ? <FiCheck size={14} /> : null}
+                </button>
+
+                <div className="h-24 w-24 flex-shrink-0 overflow-hidden rounded-2xl border border-slate-100 bg-[#eef5ea]">
                   <img
                     src={getImageUrl(item.product.thumbnail, "https://via.placeholder.com/100x100?text=No+Image")}
                     alt={item.product.name}
-                    className="w-full h-full object-cover"
+                    className="h-full w-full object-cover"
                   />
                 </div>
 
-                <div className="flex-1 flex flex-col justify-between min-h-[100px]">
-                  <div className="flex justify-between items-start gap-4">
-                    <h3 className="font-medium text-slate-800 text-lg line-clamp-2">
-                      {item.product.name}
-                    </h3>
+                <div className="min-h-[100px] flex-1">
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <h2 className="line-clamp-2 text-lg font-medium text-slate-900">
+                        {item.product.name}
+                      </h2>
+                      <p className="mt-1 text-sm text-slate-500">
+                        Unit: {item.product.unit || "item"}
+                      </p>
+                    </div>
                     <button
+                      type="button"
                       onClick={() => removeFromCart(item.product.id)}
-                      className="p-1.5 bg-rose-500 text-white hover:bg-rose-600 rounded-full transition-all shrink-0 shadow-sm"
+                      className="flex h-10 w-10 shrink-0 items-center justify-center text-rose-600 transition-colors hover:text-rose-700"
+                      aria-label="Remove item"
                     >
-                      <Trash2 size={18} />
+                      <FiTrash2 size={17} />
                     </button>
                   </div>
 
-                  <div className="mb-2">
-                    <p className="text-slate-500 text-sm">
-                      Đơn vị: {item.product.unit}
-                    </p>
-                  </div>
-
-                  <div className="flex items-end justify-between mt-auto">
-                    <div className="flex items-center gap-3 bg-slate-50 rounded-xl p-1 border border-slate-100 w-fit">
+                  <div className="mt-4 flex items-end justify-between gap-4">
+                    <div className="flex items-center gap-2 rounded-2xl border border-slate-100 bg-slate-50 p-1">
                       <button
-                        onClick={() =>
-                          updateQuantity(item.product.id, item.quantity - 1)
-                        }
-                        className="w-8 h-8 flex items-center justify-center bg-white rounded-lg shadow-sm text-slate-600 hover:text-green-600 disabled:opacity-50"
+                        type="button"
+                        onClick={() => updateQuantity(item.product.id, item.quantity - 1)}
+                        className="flex h-9 w-9 items-center justify-center text-slate-600 transition-colors hover:text-emerald-700 disabled:opacity-50"
                         disabled={item.quantity <= 1}
+                        aria-label="Decrease quantity"
                       >
-                        <Minus size={14} />
+                        <FiMinus size={14} />
                       </button>
-                      <span className="w-8 text-center font-medium text-slate-700">
+                      <span className="w-8 text-center font-medium text-slate-800">
                         {item.quantity}
                       </span>
                       <button
-                        onClick={() =>
-                          updateQuantity(item.product.id, item.quantity + 1)
-                        }
-                        className="w-8 h-8 flex items-center justify-center bg-white rounded-lg shadow-sm text-slate-600 hover:text-green-600"
+                        type="button"
+                        onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
+                        className="flex h-9 w-9 items-center justify-center text-slate-600 transition-colors hover:text-emerald-700"
+                        aria-label="Increase quantity"
                       >
-                        <Plus size={14} />
+                        <FiPlus size={14} />
                       </button>
                     </div>
 
                     <div className="text-right">
-                      <p className="font-medium text-slate-900 text-lg">
-                        {formatCurrency(
-                          getProductPrice(item.product) * item.quantity,
-                        )}
+                      <p className="text-lg font-medium tabular-nums text-slate-900">
+                        {formatCurrency(getProductPrice(item.product) * item.quantity)}
                       </p>
-                      {item.product.sellPrice > getProductPrice(item.product) && (
-                        <p className="text-xs text-slate-400 line-through mt-1">
+                      {item.product.sellPrice > getProductPrice(item.product) ? (
+                        <p className="mt-1 text-xs tabular-nums text-slate-400 line-through">
                           {formatCurrency(item.product.sellPrice * item.quantity)}
                         </p>
-                      )}
+                      ) : null}
                     </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              </SurfaceCard>
+              );
+            })}
 
-            <button
-              onClick={clearCart}
-              className="text-rose-500 font-medium hover:text-rose-700 hover:underline px-2"
-            >
-              Xóa tất cả
-            </button>
           </div>
 
-          <div className="lg:col-span-4">
-            <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm sticky top-24">
-              <h3 className="text-xl font-medium text-slate-800 mb-6">
-                Tổng đơn hàng
-              </h3>
+          <div className="lg:col-span-5">
+            <SurfaceCard className="lg:sticky lg:top-28">
+              <h2 className="mb-6 text-xl font-medium text-slate-900">Order summary</h2>
 
-              <div className="space-y-4 mb-6">
-                <div className="flex justify-between text-slate-500">
-                  <span>Tạm tính</span>
-                  <span className="font-medium text-slate-900">
-                    {formatCurrency(cartTotal)}
-                  </span>
-                </div>
-                <div className="flex justify-between text-slate-500">
-                  <span>Giảm giá</span>
-                  <span className="font-medium text-rose-500">
-                    {formatCurrency(cartDiscount)}
-                  </span>
-                </div>
-                <div className="h-px bg-slate-100 my-4" />
-
-                <div className="mb-4">
-                  <div className="mb-2 flex justify-end">
-                    <button
-                      type="button"
-                      onClick={handleOpenVoucherModal}
-                      className="w-[88px] text-center text-xs font-medium text-indigo-600 transition-all hover:text-indigo-800 hover:underline"
-                    >
-                      Voucher
-                    </button>
-                  </div>
-
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      className="w-full border-slate-200 rounded-xl px-4 py-2.5 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 font-medium text-slate-700 text-sm uppercase placeholder:normal-case"
-                      placeholder="Nhập mã ưu đãi"
-                      value={voucherCode}
-                      onChange={(e) =>
-                        setVoucherCode(e.target.value.toUpperCase())
-                      }
-                      disabled={!!appliedVoucher || isApplyingVoucher}
-                    />
-
-                    {appliedVoucher ? (
-                      <button
-                        onClick={handleRemoveVoucher}
-                        className="px-4 bg-rose-50 text-rose-600 rounded-xl font-medium hover:bg-rose-100 transition-all text-sm shrink-0"
-                      >
-                        Hủy
-                      </button>
-                    ) : (
-                      <button
-                        onClick={handleApplyVoucher}
-                        disabled={isApplyingVoucher || !voucherCode.trim()}
-                        className="px-4 bg-indigo-600 text-white rounded-xl font-medium hover:bg-indigo-700 transition-all text-sm shrink-0 disabled:opacity-50"
-                      >
-                        {isApplyingVoucher ? "..." : "Áp dụng"}
-                      </button>
-                    )}
-                  </div>
-
-                  {voucherError && (
-                    <p className="text-rose-500 text-xs font-medium mt-2">
-                      {voucherError}
-                    </p>
-                  )}
-                  {appliedVoucher && (
-                    <p className="text-green-600 text-xs font-medium mt-2">
-                      Đã áp dụng mã: {appliedVoucher.code}
-                    </p>
-                  )}
-                </div>
-
-                <div className="flex justify-between items-end">
-                  <span className="font-medium text-slate-800">Tổng cộng</span>
-                  <span className="text-2xl font-medium text-green-600">
-                    {formatCurrency(finalTotal)}
-                  </span>
-                </div>
+              <div className="mb-6 space-y-4">
+                <SummaryRow label="Total" value={formatCurrency(cartTotal)} />
+                <SummaryRow label="Selected total" value={formatCurrency(selectedCartTotal)} />
+                <SummaryRow label="Discount" value={formatCurrency(cartDiscount)} tone="discount" />
               </div>
 
-              <button
-                onClick={() => {
-                  if (!user) {
-                    toast.warning("Vui lòng đăng nhập để thanh toán!");
-                    navigate("/login");
-                    return;
-                  }
+              <div className="mb-6 rounded-2xl border border-emerald-100 bg-emerald-50 p-4">
+                <div className="mb-3 flex items-center justify-between gap-3">
+                  <span className="text-sm font-medium text-emerald-800">Voucher</span>
+                  <button
+                    type="button"
+                    onClick={handleOpenVoucherModal}
+                    className="text-sm font-medium text-emerald-700 hover:text-emerald-900"
+                  >
+                    Browse
+                  </button>
+                </div>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    className="ui-input w-full uppercase placeholder:normal-case"
+                    placeholder="Enter voucher code"
+                    value={voucherCode}
+                    onChange={(event) => setVoucherCode(event.target.value.toUpperCase())}
+                    disabled={!!appliedVoucher || isApplyingVoucher}
+                  />
+                  {appliedVoucher ? (
+                    <Button type="button" variant="danger" onClick={handleRemoveVoucher}>
+                      Remove
+                    </Button>
+                  ) : (
+                    <Button
+                      type="button"
+                      onClick={() => applyVoucherByCode(voucherCode)}
+                      disabled={isApplyingVoucher || !voucherCode.trim()}
+                    >
+                      {isApplyingVoucher ? "..." : "Apply"}
+                    </Button>
+                  )}
+                </div>
+                {voucherError ? (
+                  <p className="mt-2 text-xs font-medium text-rose-600">{voucherError}</p>
+                ) : null}
+                {appliedVoucher ? (
+                  <p className="mt-2 text-xs font-medium text-emerald-700">
+                    Applied voucher: {appliedVoucher.code}
+                  </p>
+                ) : null}
+              </div>
 
+              <div className="mb-6 flex items-end justify-between rounded-2xl bg-slate-950 p-4 text-white">
+                <span className="font-medium">Final total</span>
+                <span className="text-2xl font-medium tabular-nums">
+                  {formatCurrency(finalTotal)}
+                </span>
+              </div>
+
+              <Button
+                type="button"
+                className="w-full"
+                onClick={() => {
                   navigate("/checkout", {
                     state: {
                       appliedVoucher,
@@ -428,209 +426,127 @@ const CartPage = () => {
                     },
                   });
                 }}
-                className="w-full rounded-xl bg-green-600 py-3 text-white font-medium hover:bg-green-700 transition-all shadow-lg shadow-green-200 active:scale-95 flex items-center justify-center gap-2"
               >
-                Tiến hành checkout
-              </button>
-            </div>
+                Continue to checkout
+              </Button>
+            </SurfaceCard>
           </div>
         </div>
-      </div>
+      </PageContainer>
 
-      {showVoucherModal && (
-        <div className="fixed inset-0 z-[140] flex items-center justify-center bg-black/55 p-4 backdrop-blur-sm">
-          <div
-            className="absolute inset-0"
-            onClick={() => setShowVoucherModal(false)}
-          />
-          <div className="relative z-[141] w-full max-w-lg rounded-[22px] border border-slate-100 bg-white shadow-2xl">
-            <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3.5">
-              <div>
-                <h3 className="text-lg font-medium text-slate-900">
-                  Chọn voucher giảm giá
-                </h3>
-                <p className="mt-1 text-xs text-slate-500">
-                  Chọn voucher phù hợp cho đơn hàng hiện tại
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setShowVoucherModal(false)}
-                className="rounded-full p-2 text-slate-400 transition-all hover:bg-slate-100 hover:text-slate-700"
-              >
-                <X size={20} />
-              </button>
+      {showVoucherModal ? (
+        <ModalShell
+          title="Choose a voucher"
+          onClose={() => setShowVoucherModal(false)}
+          footer={
+            <>
+              <Button type="button" variant="muted" onClick={() => setShowVoucherModal(false)}>
+                Cancel
+              </Button>
+              <Button type="button" onClick={handleConfirmVoucherSelection} disabled={isApplyingVoucher}>
+                {isApplyingVoucher ? "Applying..." : "Confirm"}
+              </Button>
+            </>
+          }
+        >
+          {isLoadingVouchers ? (
+            <div className="flex min-h-[220px] items-center justify-center gap-2 text-slate-500">
+              <FiLoader className="animate-spin" size={18} />
+              Loading vouchers...
             </div>
-
-            <div className="max-h-[52vh] overflow-y-auto px-4 py-3">
-              {isLoadingVouchers ? (
-                <div className="flex min-h-[240px] items-center justify-center gap-2 text-slate-500">
-                  <Loader2 size={18} className="animate-spin" />
-                  Đang tải voucher...
-                </div>
-              ) : availableVouchers.length === 0 ? (
-                <div className="flex min-h-[240px] items-center justify-center text-sm text-slate-500">
-                  Hiện chưa có voucher khả dụng
-                </div>
-              ) : (
-                <div className="space-y-2.5">
-                  {availableVouchers.map((voucher) => {
-                    const isSelected = selectedVoucherOption === voucher.code;
-                    return (
-                      <div
-                        key={voucher.id}
-                        className="rounded-2xl border border-slate-200 bg-white p-3 transition-all"
-                      >
-                        <div className="flex min-h-[92px] items-stretch gap-2.5">
-                          <div className="flex min-w-[96px] flex-1 items-center justify-center px-2 py-2 text-center">
-                            <p className="text-sm font-semibold text-slate-900 break-all">
-                              {voucher.code}
-                            </p>
-                          </div>
-
-                          <div className="flex-[1.45] rounded-xl bg-white px-1 py-0.5">
-                            <div className="mb-1.5 flex items-start justify-between gap-2">
-                              <div className="space-y-1.5">
-                                <p className="text-xs font-medium text-slate-800">
-                                  {formatVoucherDiscount(voucher)}
-                                </p>
-                                <p className="text-xs font-medium text-slate-800">
-                                  {voucher.discountType === "PERCENTAGE" &&
-                                  voucher.maxDiscountAmount
-                                    ? formatCurrency(
-                                        voucher.maxDiscountAmount || 0,
-                                      )
-                                    : "Không giới hạn"}
-                                </p>
-                              </div>
-
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  handleToggleVoucherOption(voucher.code)
-                                }
-                                className="mt-0.5 flex h-5 w-5 items-center justify-center rounded-full border border-slate-300 bg-white transition-all"
-                                aria-label={
-                                  isSelected
-                                    ? "Bỏ chọn voucher"
-                                    : "Chọn voucher"
-                                }
-                              >
-                                <span
-                                  className={`h-3 w-3 rounded-full ${
-                                    isSelected
-                                      ? "bg-indigo-600"
-                                      : "bg-transparent"
-                                  }`}
-                                />
-                              </button>
-                            </div>
-
-                            <div className="space-y-1.5 pt-0.5">
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  setVoucherConditionTarget(voucher)
-                                }
-                                className="text-[11px] font-medium text-indigo-600 transition-all hover:text-indigo-800 hover:underline"
-                              >
-                                Xem điều kiện
-                              </button>
-                              <p className="text-xs font-medium text-slate-800">
-                                {formatVoucherExpiry(voucher.endDate)}
-                              </p>
-                            </div>
-                          </div>
-                        </div>
+          ) : availableVouchers.length === 0 ? (
+            <div className="flex min-h-[220px] items-center justify-center text-sm text-slate-500">
+              No vouchers available.
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {availableVouchers.map((voucher) => {
+                const isSelected = selectedVoucherOption === voucher.code;
+                return (
+                  <button
+                    key={voucher.id}
+                    type="button"
+                    onClick={() =>
+                      setSelectedVoucherOption((prev) =>
+                        prev === voucher.code ? null : voucher.code,
+                      )
+                    }
+                    className={`w-full rounded-2xl border p-4 text-left transition-all ${
+                      isSelected
+                        ? "border-emerald-300 bg-emerald-50"
+                        : "border-slate-200 bg-white hover:border-emerald-200"
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <p className="font-medium text-slate-900">{voucher.code}</p>
+                        <p className="mt-1 text-sm text-slate-500">
+                          {formatVoucherDiscount(voucher)}
+                        </p>
+                        <p className="mt-2 text-xs text-slate-500">
+                          Expires: {formatVoucherExpiry(voucher.endDate)}
+                        </p>
                       </div>
-                    );
-                  })}
-                </div>
-              )}
+                      <span
+                        className={`flex h-6 w-6 items-center justify-center rounded-full border ${
+                          isSelected
+                            ? "border-emerald-700 bg-emerald-700 text-white"
+                            : "border-slate-300 bg-white text-transparent"
+                        }`}
+                      >
+                        <FiCheck size={14} />
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        setVoucherConditionTarget(voucher);
+                      }}
+                      className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-emerald-700 hover:text-emerald-900"
+                    >
+                      <FiInfo size={13} />
+                      View conditions
+                    </button>
+                  </button>
+                );
+              })}
             </div>
+          )}
+        </ModalShell>
+      ) : null}
 
-            <div className="flex items-center justify-end gap-2.5 border-t border-slate-100 px-4 py-3.5">
-              <button
-                type="button"
-                onClick={() => setShowVoucherModal(false)}
-                className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-600 transition-all hover:bg-slate-50"
-              >
-                Hủy
-              </button>
-              <button
-                type="button"
-                onClick={handleConfirmVoucherSelection}
-                disabled={isApplyingVoucher}
-                className="rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white transition-all hover:bg-indigo-700 disabled:opacity-60"
-              >
-                {isApplyingVoucher ? "Đang áp dụng..." : "Xác nhận"}
-              </button>
-            </div>
+      {voucherConditionTarget ? (
+        <ModalShell
+          title={`Voucher conditions: ${voucherConditionTarget.code}`}
+          onClose={() => setVoucherConditionTarget(null)}
+        >
+          <div className="space-y-3 rounded-2xl bg-slate-50 p-5 text-sm">
+            <SummaryRow label="Discount" value={formatVoucherDiscount(voucherConditionTarget)} />
+            <SummaryRow label="Minimum order" value={formatCurrency(voucherConditionTarget.minOrderValue || 0)} />
+            {voucherConditionTarget.discountType === "PERCENTAGE" &&
+            voucherConditionTarget.maxDiscountAmount ? (
+              <SummaryRow label="Maximum discount" value={formatCurrency(voucherConditionTarget.maxDiscountAmount || 0)} />
+            ) : null}
+            <SummaryRow label="Expiry date" value={formatVoucherExpiry(voucherConditionTarget.endDate)} />
           </div>
-        </div>
-      )}
-
-      {voucherConditionTarget && (
-        <div className="fixed inset-0 z-[150] flex items-center justify-center bg-black/55 p-4 backdrop-blur-sm">
-          <div
-            className="absolute inset-0"
-            onClick={() => setVoucherConditionTarget(null)}
-          />
-          <div className="relative z-[151] w-full max-w-lg rounded-[28px] border border-slate-100 bg-white p-6 shadow-2xl">
-            <div className="mb-5 flex items-start justify-between gap-4">
-              <div>
-                <p className="text-xs font-medium uppercase tracking-[0.18em] text-slate-400">
-                  Điều kiện voucher
-                </p>
-                <h3 className="mt-1 text-xl font-medium text-slate-900">
-                  {voucherConditionTarget.code}
-                </h3>
-              </div>
-              <button
-                type="button"
-                onClick={() => setVoucherConditionTarget(null)}
-                className="rounded-full p-2 text-slate-400 transition-all hover:bg-slate-100 hover:text-slate-700"
-              >
-                <X size={18} />
-              </button>
-            </div>
-
-            <div className="space-y-3 rounded-3xl bg-slate-50 p-5 text-sm text-slate-600">
-              <div className="flex items-start justify-between gap-4">
-                <span className="text-slate-500">Mức giảm</span>
-                <span className="text-right font-medium text-slate-900">
-                  {formatVoucherDiscount(voucherConditionTarget)}
-                </span>
-              </div>
-              <div className="flex items-start justify-between gap-4">
-                <span className="text-slate-500">Đơn tối thiểu</span>
-                <span className="text-right font-medium text-slate-900">
-                  {formatCurrency(voucherConditionTarget.minOrderValue || 0)}
-                </span>
-              </div>
-              {voucherConditionTarget.discountType === "PERCENTAGE" &&
-                voucherConditionTarget.maxDiscountAmount && (
-                  <div className="flex items-start justify-between gap-4">
-                    <span className="text-slate-500">Giảm tối đa</span>
-                    <span className="text-right font-medium text-slate-900">
-                      {formatCurrency(
-                        voucherConditionTarget.maxDiscountAmount || 0,
-                      )}
-                    </span>
-                  </div>
-                )}
-              <div className="flex items-start justify-between gap-4">
-                <span className="text-slate-500">Hạn sử dụng</span>
-                <span className="text-right font-medium text-slate-900">
-                  {formatVoucherExpiry(voucherConditionTarget.endDate)}
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
+        </ModalShell>
+      ) : null}
+    </PageShell>
   );
 };
+
+const SummaryRow = ({ label, value, tone }) => (
+  <div className="flex items-center justify-between gap-4 text-sm">
+    <span className="text-slate-500">{label}</span>
+    <span
+      className={`text-right font-medium tabular-nums ${
+        tone === "discount" ? "text-rose-600" : "text-slate-900"
+      }`}
+    >
+      {value}
+    </span>
+  </div>
+);
 
 export default CartPage;

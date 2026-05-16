@@ -8,6 +8,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -47,5 +49,25 @@ public class CatalogClient {
             return number.longValue();
         }
         return 0L;
+    }
+
+    @SuppressWarnings("unchecked")
+    public List<Map<String, Object>> getAllProducts() {
+        ResponseEntity<Object> response = restTemplate.exchange(
+                catalogServiceBaseUrl + "/api/products",
+                HttpMethod.GET,
+                null,
+                Object.class);
+        if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null) {
+            return Collections.emptyList();
+        }
+        Object body = response.getBody();
+        if (body instanceof List<?> list) {
+            return (List<Map<String, Object>>) (List<?>) list;
+        }
+        if (body instanceof Map<?, ?> map && map.get("content") instanceof List<?> content) {
+            return (List<Map<String, Object>>) (List<?>) content;
+        }
+        return Collections.emptyList();
     }
 }
