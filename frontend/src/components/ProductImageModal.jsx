@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { X, Upload, Trash2, Image as ImageIcon } from "lucide-react";
+import { IoImages } from "react-icons/io5";
 import Swal from "sweetalert2";
 import productService from "../services/productService";
 import { getImageUrl } from "../utils/imageUrl";
@@ -23,8 +24,8 @@ const ProductImageModal = ({ isOpen, onClose, product, onUpdate }) => {
     } catch {
       Swal.fire({
         icon: "error",
-        title: "Lỗi",
-        text: "Không thể tải danh sách ảnh",
+        title: "Error",
+        text: "Failed to load product images",
         confirmButtonColor: "#3085d6",
       });
     }
@@ -36,8 +37,8 @@ const ProductImageModal = ({ isOpen, onClose, product, onUpdate }) => {
       if (file.size > 5 * 1024 * 1024) {
         Swal.fire({
           icon: "warning",
-          title: "Cảnh báo",
-          text: "Kích thước ảnh không được vượt quá 5MB",
+          title: "Warning",
+          text: "Image size cannot exceed 5MB",
           confirmButtonColor: "#f8bb86",
         });
         return;
@@ -55,8 +56,8 @@ const ProductImageModal = ({ isOpen, onClose, product, onUpdate }) => {
       await productService.uploadImage(product.id, selectedFile);
       Swal.fire({
         icon: "success",
-        title: "Thành công",
-        text: "Tải ảnh lên thành công",
+        title: "Success",
+        text: "Image uploaded successfully",
         timer: 1500,
         showConfirmButton: false,
       });
@@ -68,8 +69,8 @@ const ProductImageModal = ({ isOpen, onClose, product, onUpdate }) => {
       console.error("Upload error:", error);
       Swal.fire({
         icon: "error",
-        title: "Lỗi tải ảnh",
-        text: error.response?.data || error.message || "Lỗi khi tải ảnh lên",
+        title: "Upload Error",
+        text: error.response?.data || error.message || "Failed to upload image",
         confirmButtonColor: "#3085d6",
       });
     } finally {
@@ -79,14 +80,14 @@ const ProductImageModal = ({ isOpen, onClose, product, onUpdate }) => {
 
   const handleDelete = async (imageId) => {
     const result = await Swal.fire({
-      title: "Xác nhận xóa?",
-      text: "Bạn có chắc chắn muốn xóa ảnh này không?",
+      title: "Confirm Delete?",
+      text: "Are you sure you want to delete this image?",
       icon: "warning",
       showCancelButton: true,
       confirmButtonColor: "#ef4444",
       cancelButtonColor: "#94a3b8",
-      confirmButtonText: "Đồng ý, xóa!",
-      cancelButtonText: "Hủy",
+      confirmButtonText: "Yes, delete it!",
+      cancelButtonText: "Cancel",
     });
 
     if (!result.isConfirmed) return;
@@ -95,8 +96,8 @@ const ProductImageModal = ({ isOpen, onClose, product, onUpdate }) => {
       await productService.deleteImage(product.id, imageId);
       Swal.fire({
         icon: "success",
-        title: "Đã xóa",
-        text: "Xóa ảnh thành công",
+        title: "Deleted",
+        text: "Image deleted successfully",
         timer: 1500,
         showConfirmButton: false,
       });
@@ -105,8 +106,8 @@ const ProductImageModal = ({ isOpen, onClose, product, onUpdate }) => {
     } catch {
       Swal.fire({
         icon: "error",
-        title: "Lỗi",
-        text: "Lỗi khi xóa ảnh",
+        title: "Error",
+        text: "Failed to delete image",
         confirmButtonColor: "#3085d6",
       });
     }
@@ -118,18 +119,16 @@ const ProductImageModal = ({ isOpen, onClose, product, onUpdate }) => {
     <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[70] flex items-center justify-center p-4 sm:p-6 animate-in fade-in duration-200">
       <div className="bg-white rounded-[2rem] shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col border border-slate-200 animate-in zoom-in duration-200 overflow-hidden">
         {/* Header */}
-        <div className="flex justify-between items-center p-6 sm:p-8 border-b border-slate-100 flex-shrink-0">
-          <div className="flex items-center gap-4">
-            <div>
-              <h2 className="text-xl sm:text-2xl font-medium text-slate-900">
-                Quản lý ảnh sản phẩm
-              </h2>
-              <p className="text-slate-500 font-medium mt-1">{product.name}</p>
-            </div>
+        <div className="relative flex justify-center items-center p-6 sm:p-8 border-b border-slate-100 flex-shrink-0">
+          <div className="flex items-center gap-2.5">
+            <IoImages className="text-purple-600 shrink-0" size={26} />
+            <h2 className="text-xl sm:text-2xl font-medium text-slate-900 leading-none">
+              Product Image Management
+            </h2>
           </div>
           <button
             onClick={onClose}
-            className="text-slate-400 hover:text-slate-700 transition-colors"
+            className="absolute right-8 text-slate-400 hover:text-slate-700 transition-colors"
           >
             <X size={24} strokeWidth={2.5} />
           </button>
@@ -140,11 +139,14 @@ const ProductImageModal = ({ isOpen, onClose, product, onUpdate }) => {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Upload Section */}
             <div className="lg:col-span-1 space-y-4">
-              <h3 className="text-[15px] font-semibold text-slate-900 flex items-center gap-2">
-                Thêm ảnh mới
-              </h3>
+              <div className="flex items-center gap-2">
+                <div className="w-1.5 h-6 bg-slate-900 rounded-full"></div>
+                <h3 className="text-lg font-semibold text-slate-900">
+                  Add New Image
+                </h3>
+              </div>
 
-              <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm">
+              <div className="bg-[#DFEBDF] border border-[#DFEBDF]/50 rounded-2xl p-4 shadow-sm">
                 <div
                   className="border-2 border-dashed border-slate-200 rounded-xl p-6 text-center hover:border-purple-400 hover:bg-purple-50 transition-colors cursor-pointer group relative"
                   onClick={() =>
@@ -160,7 +162,7 @@ const ProductImageModal = ({ isOpen, onClose, product, onUpdate }) => {
                       />
                       <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center">
                         <span className="text-white font-medium text-sm">
-                          Đổi ảnh khác
+                          Change Image
                         </span>
                       </div>
                     </div>
@@ -174,7 +176,7 @@ const ProductImageModal = ({ isOpen, onClose, product, onUpdate }) => {
                       </div>
                       <div>
                         <p className="text-sm font-medium text-slate-700">
-                          Click để chọn ảnh
+                          Click to select image
                         </p>
                         <p className="text-xs text-slate-400 mt-1">
                           PNG, JPG, GIF up to 5MB
@@ -202,7 +204,7 @@ const ProductImageModal = ({ isOpen, onClose, product, onUpdate }) => {
                     ) : (
                       <>
                         <Upload size={18} />
-                        Xác nhận tải lên
+                        Confirm Upload
                       </>
                     )}
                   </button>
@@ -212,11 +214,14 @@ const ProductImageModal = ({ isOpen, onClose, product, onUpdate }) => {
 
             {/* Gallery Section */}
             <div className="lg:col-span-2 space-y-4">
-              <h3 className="text-[15px] font-semibold text-slate-900 flex items-center gap-2">
-                Danh sách ảnh ({images.length})
-              </h3>
+              <div className="flex items-center gap-2">
+                <div className="w-1.5 h-6 bg-slate-900 rounded-full"></div>
+                <h3 className="text-lg font-semibold text-slate-900">
+                  Image List ({images.length})
+                </h3>
+              </div>
 
-              <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm min-h-[300px]">
+              <div className="bg-[#DFEBDF] border border-[#DFEBDF]/50 rounded-2xl p-6 shadow-sm min-h-[300px]">
                 {images.length === 0 ? (
                   <div className="h-full flex flex-col items-center justify-center text-slate-400 py-12">
                     <ImageIcon
@@ -225,10 +230,10 @@ const ProductImageModal = ({ isOpen, onClose, product, onUpdate }) => {
                       className="mb-4 opacity-50"
                     />
                     <p className="text-[15px] font-medium text-slate-600">
-                      Chưa có ảnh nào
+                      No images yet
                     </p>
                     <p className="text-sm mt-1">
-                      Hãy tải ảnh lên từ chức năng bên trái
+                      Upload images using the panel on the left
                     </p>
                   </div>
                 ) : (
@@ -247,7 +252,7 @@ const ProductImageModal = ({ isOpen, onClose, product, onUpdate }) => {
                           <button
                             onClick={() => handleDelete(image.id)}
                             className="p-3 bg-red-500 hover:bg-red-600 text-white rounded-xl shadow-lg transform hover:scale-105 transition-all"
-                            title="Xóa ảnh này"
+                            title="Delete this image"
                           >
                             <Trash2 size={20} />
                           </button>

@@ -3,18 +3,19 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useEffect, useRef, useState } from "react";
 import { X, Upload, Image as ImageIcon, ChevronUp } from "lucide-react";
+import { LuPackagePlus } from "react-icons/lu";
 import supplierService from "../services/supplierService";
 import categoryService from "../services/categoryService";
 import { getImageUrl } from "../utils/imageUrl";
 const productSchema = z.object({
-  name: z.string().min(10, "Tên sản phẩm phải có ít nhất 10 ký tự"),
+  name: z.string().min(10, "Product name must be at least 10 characters"),
   brand: z.string().optional(),
-  supplierId: z.coerce.number().min(1, "Nhà cung cấp không được để trống"),
-  sku: z.string().min(1, "Mã SKU bắt buộc"),
-  barcode: z.string().min(1, "Mã vạch bắt buộc"),
-  unit: z.string().min(1, "Đơn vị tính bắt buộc"),
-  importPrice: z.coerce.number().min(0, "Giá nhập phải >= 0"),
-  sellPrice: z.coerce.number().min(0, "Giá bán phải >= 0"),
+  supplierId: z.coerce.number().min(1, "Supplier is required"),
+  sku: z.string().min(1, "SKU code is required"),
+  barcode: z.string().min(1, "Barcode is required"),
+  unit: z.string().min(1, "Unit of measure is required"),
+  importPrice: z.coerce.number().min(0, "Import price must be >= 0"),
+  sellPrice: z.coerce.number().min(0, "Selling price must be >= 0"),
   description: z.string().optional(),
   status: z.enum(["ACTIVE", "INACTIVE", "OUT_OF_STOCK"]),
 });
@@ -61,7 +62,17 @@ const ProductForm = ({ existingProduct, onClose, onSuccess }) => {
   const selectedUnit = watch("unit") || "";
   const selectedSupplier =
     suppliers.find((supplier) => supplier.id === selectedSupplierId) || null;
-  const unitOptions = ["Thùng", "Hộp", "Cái", "Chiếc", "Chai", "Lốc", "Kg"];
+  const unitOptions = [
+    { value: "Thùng", label: "Carton" },
+    { value: "Hộp", label: "Box" },
+    { value: "Cái", label: "Piece" },
+    { value: "Chiếc", label: "Item" },
+    { value: "Chai", label: "Bottle" },
+    { value: "Lốc", label: "Pack" },
+    { value: "Kg", label: "Kg" },
+  ];
+  const selectedUnitOption = unitOptions.find((opt) => opt.value === selectedUnit);
+  const selectedUnitLabel = selectedUnitOption ? selectedUnitOption.label : selectedUnit;
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -222,23 +233,19 @@ const ProductForm = ({ existingProduct, onClose, onSuccess }) => {
 
   return (
     <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-5xl max-h-[95vh] overflow-hidden flex flex-col border border-slate-200 animate-in fade-in zoom-in duration-200">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-5xl max-h-[95vh] overflow-hidden flex flex-col border border-slate-200 animate-in fade-in zoom-in duration-200">
         {/* Header */}
-        <div className="flex justify-between items-center p-8 border-b border-slate-100 bg-white">
-          <div className="flex items-center gap-3">
-            <div>
-              <h2 className="text-2xl font-medium text-slate-900 leading-none">
-                {existingProduct ? "Cập nhật sản phẩm" : "Thêm sản phẩm mới"}
-              </h2>
-              <p className="text-slate-500 text-sm mt-1.5 font-medium">
-                Vui lòng điền chính xác thông tin sản phẩm vào các mục dưới đây
-              </p>
-            </div>
+        <div className="relative flex justify-center items-center p-8 border-b border-slate-100 bg-white">
+          <div className="flex items-center gap-2.5">
+            <LuPackagePlus className="text-green-600" size={26} />
+            <h2 className="text-2xl font-medium text-slate-900 leading-none">
+              {existingProduct ? "Update Product" : "Add New Product"}
+            </h2>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="text-slate-400 hover:text-rose-600 transition-colors"
+            className="absolute right-8 text-slate-400 hover:text-rose-600 transition-colors"
           >
             <X size={28} />
           </button>
@@ -251,28 +258,28 @@ const ProductForm = ({ existingProduct, onClose, onSuccess }) => {
         >
           <div className="grid grid-cols-1 md:grid-cols-12 gap-10">
             <div className="md:col-span-8 flex flex-col gap-8">
-              <section>
-                <div className="flex items-center gap-2 mb-6">
-                  <div className="w-1.5 h-6 bg-green-500 rounded-full"></div>
-                  <h3 className="text-lg font-medium text-slate-900">
-                    Thông tin cơ bản
+              <section className="space-y-4 rounded-2xl border border-[#DFEBDF]/50 bg-[#DFEBDF] p-5 shadow-sm">
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="w-1.5 h-6 bg-slate-900 rounded-full"></div>
+                  <h3 className="text-lg font-semibold text-slate-900">
+                    Basic Information
                   </h3>
                 </div>
 
                 <div className="space-y-5">
                   <div className="group">
-                    <label className="block text-sm font-medium text-slate-900 mb-2 ml-1">
-                      Tên sản phẩm
+                    <label className="block text-[16px] font-medium text-slate-900 mb-2 ml-1">
+                      Product Name
                     </label>
                     <input
                       {...register("name")}
                       readOnly={!!existingProduct}
-                      className={`w-full px-5 py-3.5 border border-slate-200 rounded-2xl focus:outline-none transition-all font-medium text-slate-900 ${
+                      className={`w-full px-5 py-3.5 border border-slate-200 rounded-xl focus:outline-none transition-all font-medium text-slate-900 ${
                         existingProduct
                           ? "bg-slate-100 cursor-not-allowed"
                           : "bg-slate-50 focus:ring-4 focus:ring-green-50 focus:border-green-400 focus:bg-white"
                       }`}
-                      placeholder="Nhập tên sản phẩm"
+                      placeholder="Enter product name"
                     />
                     {errors.name && (
                       <p className="text-rose-500 text-xs mt-2 ml-1 font-medium">
@@ -282,8 +289,8 @@ const ProductForm = ({ existingProduct, onClose, onSuccess }) => {
                   </div>
 
                   <div className="group">
-                    <label className="block text-sm font-medium text-slate-900 mb-2 ml-1">
-                      Nhà cung cấp
+                    <label className="block text-[16px] font-medium text-slate-900 mb-2 ml-1">
+                      Supplier
                     </label>
                     <div className="relative" ref={supplierDropdownRef}>
                       <input type="hidden" {...register("supplierId")} />
@@ -292,11 +299,11 @@ const ProductForm = ({ existingProduct, onClose, onSuccess }) => {
                         onClick={() =>
                           setIsSupplierDropdownOpen((prevOpen) => !prevOpen)
                         }
-                        className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-green-50 focus:border-green-400 focus:bg-white outline-none transition-all font-medium text-slate-900 cursor-pointer appearance-none peer text-left"
+                        className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-green-50 focus:border-green-400 focus:bg-white outline-none transition-all font-medium text-slate-900 cursor-pointer appearance-none peer text-left"
                       >
                         {selectedSupplier
                           ? selectedSupplier.vietnameseName
-                          : "Chọn nhà cung cấp"}
+                          : "Select supplier"}
                       </button>
                       <ChevronUp
                         size={20}
@@ -306,7 +313,7 @@ const ProductForm = ({ existingProduct, onClose, onSuccess }) => {
                       />
 
                       {isSupplierDropdownOpen && (
-                        <div className="absolute left-0 right-0 top-full mt-2 p-2 bg-white border border-slate-200 rounded-2xl shadow-xl z-20 max-h-56 overflow-y-auto">
+                        <div className="absolute left-0 right-0 top-full mt-2 p-2 bg-white border border-slate-200 rounded-xl shadow-xl z-20 max-h-56 overflow-y-auto">
                           <button
                             type="button"
                             onClick={() => {
@@ -318,7 +325,7 @@ const ProductForm = ({ existingProduct, onClose, onSuccess }) => {
                             }}
                             className="w-full text-left px-4 py-2.5 rounded-xl text-sm font-medium text-slate-700 hover:bg-slate-100 transition-colors"
                           >
-                            Chọn nhà cung cấp
+                            Select supplier
                           </button>
 
                           {suppliers.map((supplier) => (
@@ -353,26 +360,26 @@ const ProductForm = ({ existingProduct, onClose, onSuccess }) => {
 
                   <div className="grid grid-cols-2 gap-5">
                     <div>
-                      <label className="block text-sm font-medium text-slate-900 mb-2 ml-1">
-                        Mã SKU
+                      <label className="block text-[16px] font-medium text-slate-900 mb-2 ml-1">
+                        SKU Code
                       </label>
                       <div className="relative">
                         <input
                           {...register("sku")}
                           readOnly={!!existingProduct}
-                          className={`w-full py-3.5 border border-slate-200 rounded-2xl outline-none transition-all font-medium ${
+                          className={`w-full py-3.5 border border-slate-200 rounded-xl outline-none transition-all font-medium ${
                             existingProduct
                               ? "px-5 bg-slate-100 text-slate-700 cursor-not-allowed"
-                              : "pl-5 pr-20 bg-slate-50 focus:ring-4 focus:ring-green-50 focus:border-green-400 focus:bg-white"
+                              : "pl-5 pr-36 bg-slate-50 focus:ring-4 focus:ring-green-50 focus:border-green-400 focus:bg-white"
                           }`}
                         />
                         {!existingProduct && (
                           <button
                             type="button"
                             onClick={generateSkuAndBarcode}
-                            className="absolute right-2 top-1.5 bottom-1.5 px-3 bg-white border border-slate-200 rounded-xl text-[11px] font-medium text-black hover:bg-slate-50 hover:border-slate-200 transition-all"
+                            className="absolute right-2 top-1.5 bottom-1.5 px-3 bg-white border border-slate-200 rounded-xl text-[14px] font-medium text-black hover:bg-slate-50 hover:border-slate-200 transition-all"
                           >
-                            Tạo ngẫu nhiên
+                            Generate SKU
                           </button>
                         )}
                       </div>
@@ -383,14 +390,14 @@ const ProductForm = ({ existingProduct, onClose, onSuccess }) => {
                       )}
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-slate-900 mb-2 ml-1">
-                        Mã barcode
+                      <label className="block text-[16px] font-medium text-slate-900 mb-2 ml-1">
+                        Barcode
                       </label>
                       <input
                         {...register("barcode")}
                         readOnly
-                        className="w-full px-5 py-3.5 bg-slate-100 border border-slate-200 rounded-2xl outline-none transition-all font-medium text-slate-700 cursor-not-allowed"
-                        placeholder="Tự động sinh"
+                        className="w-full px-5 py-3.5 bg-slate-100 border border-slate-200 rounded-xl outline-none transition-all font-medium text-slate-700 cursor-not-allowed"
+                        placeholder="Auto-generated"
                       />
                       {errors.barcode && (
                         <p className="text-rose-500 text-xs mt-2 ml-1 font-medium">
@@ -402,8 +409,8 @@ const ProductForm = ({ existingProduct, onClose, onSuccess }) => {
 
                   <div className="grid grid-cols-2 gap-5">
                     <div>
-                      <label className="block text-sm font-medium text-slate-900 mb-2 ml-1">
-                        Nhãn sản phẩm
+                      <label className="block text-[16px] font-medium text-slate-900 mb-2 ml-1">
+                        Product Labels
                       </label>
                       <div className="relative" ref={labelDropdownRef}>
                         <button
@@ -411,9 +418,9 @@ const ProductForm = ({ existingProduct, onClose, onSuccess }) => {
                           onClick={() =>
                             setIsLabelDropdownOpen((prevOpen) => !prevOpen)
                           }
-                          className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-green-50 focus:border-green-400 focus:bg-white outline-none transition-all font-medium text-slate-900 cursor-pointer appearance-none text-left"
+                          className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-green-50 focus:border-green-400 focus:bg-white outline-none transition-all font-medium text-slate-900 cursor-pointer appearance-none text-left"
                         >
-                          Chọn nhãn sản phẩm
+                          Select product labels
                         </button>
                         <ChevronUp
                           size={20}
@@ -423,7 +430,7 @@ const ProductForm = ({ existingProduct, onClose, onSuccess }) => {
                         />
 
                         {isLabelDropdownOpen && (
-                          <div className="absolute left-0 right-0 top-full mt-2 p-2 bg-white border border-slate-200 rounded-2xl shadow-xl z-20 max-h-56 overflow-y-auto">
+                          <div className="absolute left-0 right-0 top-full mt-2 p-2 bg-white border border-slate-200 rounded-xl shadow-xl z-20 max-h-56 overflow-y-auto">
                             {availableLabels.map((label) => {
                               const isSelected = selectedLabelIds.includes(
                                 label.id,
@@ -451,8 +458,8 @@ const ProductForm = ({ existingProduct, onClose, onSuccess }) => {
                       </div>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-slate-900 mb-2 ml-1">
-                        Đơn vị
+                      <label className="block text-[16px] font-medium text-slate-900 mb-2 ml-1">
+                        Unit
                       </label>
                       <div className="relative" ref={unitDropdownRef}>
                         <input type="hidden" {...register("unit")} />
@@ -461,9 +468,9 @@ const ProductForm = ({ existingProduct, onClose, onSuccess }) => {
                           onClick={() =>
                             setIsUnitDropdownOpen((prevOpen) => !prevOpen)
                           }
-                          className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-green-50 focus:border-green-400 focus:bg-white outline-none transition-all font-medium text-slate-900 cursor-pointer appearance-none text-left"
+                          className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-green-50 focus:border-green-400 focus:bg-white outline-none transition-all font-medium text-slate-900 cursor-pointer appearance-none text-left"
                         >
-                          {selectedUnit || "Chọn đơn vị"}
+                          {selectedUnitLabel || "Select unit"}
                         </button>
                         <ChevronUp
                           size={20}
@@ -473,7 +480,7 @@ const ProductForm = ({ existingProduct, onClose, onSuccess }) => {
                         />
 
                         {isUnitDropdownOpen && (
-                          <div className="absolute left-0 right-0 top-full mt-2 p-2 bg-white border border-slate-200 rounded-2xl shadow-xl z-20 max-h-56 overflow-y-auto">
+                          <div className="absolute left-0 right-0 top-full mt-2 p-2 bg-white border border-slate-200 rounded-xl shadow-xl z-20 max-h-56 overflow-y-auto">
                             <button
                               type="button"
                               onClick={() => {
@@ -485,27 +492,27 @@ const ProductForm = ({ existingProduct, onClose, onSuccess }) => {
                               }}
                               className="w-full text-left px-4 py-2.5 rounded-xl text-sm font-medium text-slate-700 hover:bg-slate-100 transition-colors"
                             >
-                              Chọn đơn vị
+                              Select unit
                             </button>
 
-                            {unitOptions.map((unit) => (
+                            {unitOptions.map((opt) => (
                               <button
-                                key={unit}
+                                key={opt.value}
                                 type="button"
                                 onClick={() => {
-                                  setValue("unit", unit, {
+                                  setValue("unit", opt.value, {
                                     shouldValidate: true,
                                     shouldDirty: true,
                                   });
                                   setIsUnitDropdownOpen(false);
                                 }}
                                 className={`w-full text-left px-4 py-2.5 rounded-xl text-sm font-medium transition-colors ${
-                                  selectedUnit === unit
+                                  selectedUnit === opt.value
                                     ? "bg-green-50 text-green-700"
                                     : "text-slate-700 hover:bg-slate-100"
                                 }`}
                               >
-                                {unit}
+                                {opt.label}
                               </button>
                             ))}
                           </div>
@@ -522,10 +529,10 @@ const ProductForm = ({ existingProduct, onClose, onSuccess }) => {
                   {/* Label Selection Render */}
                   {selectedLabelIds.length > 0 && (
                     <div className="group mt-4">
-                      <label className="block text-[13px] font-medium text-slate-900 mb-2 ml-1 flex items-center gap-2">
-                        Danh sách nhãn
+                      <label className="block text-[16px] font-medium text-slate-900 mb-2 ml-1 flex items-center gap-2">
+                        Labels list
                       </label>
-                      <div className="flex flex-wrap gap-2 p-4 bg-slate-50 rounded-2xl border border-slate-200">
+                      <div className="flex flex-wrap gap-2 p-4 bg-slate-50 rounded-xl border border-slate-200">
                         {selectedLabelIds.map((id) => {
                           const label = availableLabels.find(
                             (l) => l.id === id,
@@ -554,30 +561,30 @@ const ProductForm = ({ existingProduct, onClose, onSuccess }) => {
                 </div>
               </section>
 
-              <section className="flex flex-col flex-1">
-                <div className="flex items-center gap-2 mb-6 pt-2">
-                  <div className="w-1.5 h-6 bg-emerald-500 rounded-full"></div>
-                  <h3 className="text-lg font-medium text-slate-900">
-                    Mô tả chi tiết
+              <section className="flex flex-col flex-1 space-y-4 rounded-2xl border border-[#DFEBDF]/50 bg-[#DFEBDF] p-5 shadow-sm">
+                <div className="flex items-center gap-2 mb-4 pt-2">
+                  <div className="w-1.5 h-6 bg-slate-900 rounded-full"></div>
+                  <h3 className="text-lg font-semibold text-slate-900">
+                    Detailed Description
                   </h3>
                 </div>
                 <textarea
                   {...register("description")}
-                  className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-[2rem] focus:outline-none focus:ring-4 focus:ring-emerald-50 focus:border-emerald-400 focus:bg-white transition-all font-medium text-slate-900 resize-none flex-1 min-h-[200px] [&::-webkit-scrollbar]:hidden"
+                  className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-emerald-50 focus:border-emerald-400 focus:bg-white transition-all font-medium text-slate-900 resize-none flex-1 min-h-[200px] [&::-webkit-scrollbar]:hidden"
                   style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
-                  placeholder="Viết mô tả ngắn gọn về đặc điểm của sản phẩm..."
+                  placeholder="Write a brief description of the product features..."
                 ></textarea>
               </section>
             </div>
             <div className="md:col-span-4 space-y-8">
-              <div className="bg-slate-50 border border-slate-200 rounded-[2.5rem] p-6 text-center">
-                <div className="flex items-center justify-center gap-2 mb-4 text-slate-600">
-                  <span className="text-[13px] font-medium">
-                    Hình ảnh sản phẩm
+              <div className="bg-[#DFEBDF] border border-[#DFEBDF]/50 rounded-2xl p-5 shadow-sm text-center">
+                <div className="flex items-center justify-center gap-2 mb-4">
+                  <span className="text-[16px] font-semibold text-slate-900">
+                    Product Image
                   </span>
                 </div>
 
-                <div className="relative group aspect-square bg-white rounded-[2rem] border-2 border-dashed border-slate-300 hover:border-green-400 transition-all flex items-center justify-center overflow-hidden">
+                <div className="relative group aspect-square bg-white rounded-2xl border-2 border-dashed border-slate-300 hover:border-green-400 transition-all flex items-center justify-center overflow-hidden">
                   {preview ? (
                     <img
                       src={preview}
@@ -587,7 +594,7 @@ const ProductForm = ({ existingProduct, onClose, onSuccess }) => {
                   ) : (
                     <div className="text-slate-400 flex flex-col items-center">
                       <Upload size={36} strokeWidth={1.5} className="mb-2" />
-                      <p className="text-xs font-medium">Tải ảnh lên</p>
+                      <p className="text-xs font-medium">Upload Image</p>
                     </div>
                   )}
                   <input
@@ -600,26 +607,27 @@ const ProductForm = ({ existingProduct, onClose, onSuccess }) => {
                   {preview && (
                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                       <p className="text-white text-xs font-medium">
-                        Thay đổi hình ảnh
+                        Change image
                       </p>
                     </div>
                   )}
                 </div>
                 <p className="text-[10px] text-slate-400 mt-3 font-medium">
-                  Hỗ trợ định dạng: png, jpg, gif
+                  Supported formats: png, jpg, gif
                 </p>
               </div>
-              <div className="bg-white border border-slate-200 rounded-[2.5rem] p-6 shadow-sm space-y-5">
+              <div className="bg-[#DFEBDF] border border-[#DFEBDF]/50 rounded-2xl p-5 shadow-sm space-y-5">
                 <div className="flex items-center gap-2 mb-2 text-slate-900">
-                  <span className="text-[13px] font-medium">
-                    Thanh toán và trạng thái
+                  <div className="w-1.5 h-5 bg-slate-900 rounded-full"></div>
+                  <span className="text-[16px] font-semibold">
+                    Pricing and Status
                   </span>
                 </div>
 
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-slate-900">
-                      Giá nhập
+                    <label className="text-[16px] font-medium text-slate-900">
+                      Import Price
                     </label>
                     <div className="relative">
                       <input
@@ -640,8 +648,8 @@ const ProductForm = ({ existingProduct, onClose, onSuccess }) => {
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-slate-900">
-                      Giá bán
+                    <label className="text-[16px] font-medium text-slate-900">
+                      Selling Price
                     </label>
                     <div className="relative">
                       <input
@@ -656,16 +664,16 @@ const ProductForm = ({ existingProduct, onClose, onSuccess }) => {
                     </div>
                   </div>
                   <div>
-                    <label className="block text-[12px] font-medium text-slate-900 mb-1.5 ml-1">
-                      Trạng thái hiện tại
+                    <label className="block text-[16px] font-medium text-slate-900 mb-1.5 ml-1">
+                      Current Status
                     </label>
                     <select
                       {...register("status")}
                       className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl font-medium text-slate-700 outline-none cursor-pointer focus:bg-white focus:border-green-400"
                     >
-                      <option value="ACTIVE">Đang kinh doanh</option>
-                      <option value="INACTIVE">Ngừng kinh doanh</option>
-                      <option value="OUT_OF_STOCK">Hết hàng trong kho</option>
+                      <option value="ACTIVE">In Business</option>
+                      <option value="INACTIVE">Discontinued</option>
+                      <option value="OUT_OF_STOCK">Out of Stock</option>
                     </select>
                   </div>
                 </div>
@@ -675,9 +683,9 @@ const ProductForm = ({ existingProduct, onClose, onSuccess }) => {
           <div className="pt-8 flex justify-end">
             <button
               type="submit"
-              className="px-10 py-3 bg-green-600 text-white rounded-2xl hover:bg-green-600 transition-all font-medium text-sm shadow-lg shadow-green-100 active:scale-95"
+              className="px-10 py-3 bg-green-600 text-white rounded-full hover:bg-green-600 transition-all font-medium text-sm shadow-lg shadow-green-100 active:scale-95"
             >
-              Lưu dữ liệu sản phẩm
+              Save Product Data
             </button>
           </div>
         </form>

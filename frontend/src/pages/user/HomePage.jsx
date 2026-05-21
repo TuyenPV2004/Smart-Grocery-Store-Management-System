@@ -13,6 +13,8 @@ import {
   FiTruck,
 } from "react-icons/fi";
 import productService from "../../services/productService";
+import categoryService from "../../services/categoryService";
+import { fetchStockLookup, hydrateProductsStock } from "../../services/stockAvailabilityService";
 import ProductCard from "../../components/common/ProductCard";
 
 const HERO_FEATURES = [
@@ -33,23 +35,23 @@ const HERO_FEATURES = [
 const HOME_INFO_STRIP = [
   {
     icon: FiTruck,
-    title: "Miễn phí giao hàng",
-    desc: "Cho đơn từ 500k",
+    title: "Free Delivery",
+    desc: "For orders over 500k",
   },
   {
     icon: FiAward,
-    title: "Tươi mới mỗi ngày",
-    desc: "Nhập hàng theo ca",
+    title: "Fresh Every Day",
+    desc: "Restocked by shift",
   },
   {
     icon: FiCreditCard,
-    title: "Thanh toán an toàn",
-    desc: "Hỗ trợ nhiều phương thức",
+    title: "Secure Payment",
+    desc: "Multiple payment options",
   },
   {
     icon: FiHeadphones,
-    title: "Hỗ trợ 24/7",
-    desc: "Tư vấn nhanh khi cần",
+    title: "24/7 Support",
+    desc: "Fast assistance when needed",
   },
 ];
 
@@ -57,6 +59,7 @@ const CATEGORY_PRESETS = [
   {
     key: "vegetables",
     title: "Vegetables",
+    categoryName: "Rau củ quả",
     match: ["rau", "cu", "nam", "trai cay", "hoa qua", "vegetable"],
     color: "#DDEFD8",
     imageSrc: "/category-images/vegetables.png",
@@ -66,11 +69,12 @@ const CATEGORY_PRESETS = [
     title: "Frozen",
     match: ["dong lanh", "frozen", "ice cream", "yogurt", "kem"],
     color: "#F8DCE6",
-    imageSrc: "/category-images/meat.png",
+    imageSrc: "/category-images/neapolitan-ice-cream.png",
   },
   {
     key: "bakery",
     title: "Bakery",
+    categoryName: "Mì gói",
     match: ["bakery", "bread", "banh", "cake", "pastry"],
     color: "#F3E6C8",
     imageSrc: "/category-images/noodles.png",
@@ -105,17 +109,50 @@ const RELATED_POST_URLS = [
   "https://www.avakids.com/me-va-be/cach-lam-kem-sua-chua-1508028",
 ];
 
+const normalizeText = (value = "") =>
+  String(value)
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+
+const flattenCategories = (categories = []) =>
+  categories.flatMap((category) => [
+    category,
+    ...flattenCategories(category.children || []),
+  ]);
+
+const findPresetCategory = (preset, categories) => {
+  const categoryList = flattenCategories(categories);
+  const exactName = normalizeText(preset.categoryName);
+  if (exactName) {
+    const exactMatch = categoryList.find((category) => normalizeText(category.name) === exactName);
+    if (exactMatch) return exactMatch;
+  }
+
+  const matchTerms = [preset.title, ...(preset.match || [])].map(normalizeText);
+
+  return categoryList.find((category) => {
+    const categoryName = normalizeText(category.name);
+    return matchTerms.some((term) => categoryName.includes(term) || term.includes(categoryName));
+  });
+};
+
 const HomePage = () => {
   const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const popularCategories = CATEGORY_PRESETS.map((preset) => ({
-    id: `preset-${preset.key}`,
-    name: preset.title,
-    color: preset.color,
-    imageSrc: preset.imageSrc,
-    link: "/products",
-  }));
+  const popularCategories = CATEGORY_PRESETS.map((preset) => {
+    const matchedCategory = findPresetCategory(preset, categories);
+
+    return {
+      id: matchedCategory?.id || `preset-${preset.key}`,
+      name: preset.title,
+      color: preset.color,
+      imageSrc: preset.imageSrc,
+      link: matchedCategory?.id ? `/products?category=${matchedCategory.id}` : "/products",
+    };
+  });
 
   const relatedPosts = popularCategories.slice(0, 4).map((category, index) => ({
     id: `post-${category.id}-${index}`,
@@ -135,8 +172,12 @@ const HomePage = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const productsRes = await productService.getAll({ pageSize: 15 });
-        setProducts(productsRes.data?.content || productsRes.data || []);
+        const [productsRes, stockLookup] = await Promise.all([
+          productService.getAll({ pageSize: 15 }),
+          fetchStockLookup(),
+        ]);
+        const productList = productsRes.data?.content || productsRes.data || [];
+        setProducts(Array.isArray(productList) ? hydrateProductsStock(productList, stockLookup) : []);
       } catch (error) {
         console.error("Error fetching home data:", error);
       } finally {
@@ -147,6 +188,19 @@ const HomePage = () => {
     fetchData();
   }, []);
 
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await categoryService.getTree();
+        setCategories(Array.isArray(response.data) ? response.data : []);
+      } catch (error) {
+        console.error("Error fetching categories:", error);
+      }
+    };
+
+    fetchCategories();
+  }, []);
+
   return (
     <div className="font-poppins min-h-screen app-page-bg">
       <section className="px-4 pt-10 sm:px-6 lg:px-10 lg:pt-12">
@@ -154,12 +208,12 @@ const HomePage = () => {
           <aside className="grid gap-5 lg:grid-rows-[300px_repeat(3,1fr)]">
             <Link
               to="/products"
-              className="group relative min-h-[210px] overflow-hidden rounded-[2rem] bg-white shadow-[0_20px_60px_rgba(15,23,42,0.10)]"
+              className="group relative min-h-[210px] overflow-hidden rounded-2xl bg-white shadow-[0_20px_60px_rgba(15,23,42,0.10)]"
             >
               <img
-                src="/category-images/vegetables.png"
+                src="https://media.gettyimages.com/id/529153289/photo/close-up-of-hand-holding-bundle-of-carrots.jpg?s=612x612&w=0&k=20&c=CTyZZYcATloSZL-B_PDnFETuBnNCMq7jhU5DgGmcgE8="
                 alt="Rau củ tươi"
-                className="absolute inset-0 h-full w-full object-contain p-8 transition-transform duration-500 group-hover:scale-105"
+                className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
               />
               <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950/70 to-transparent p-5 text-white"></div>
             </Link>
@@ -183,7 +237,7 @@ const HomePage = () => {
             })}
           </aside>
 
-          <div className="relative min-h-[620px] overflow-hidden rounded-[2.5rem] bg-slate-900 shadow-[0_28px_80px_rgba(15,23,42,0.18)]">
+          <div className="relative min-h-[620px] overflow-hidden rounded-3xl bg-slate-900 shadow-[0_28px_80px_rgba(15,23,42,0.18)]">
             <img
               src="https://images.unsplash.com/photo-1542838132-92c53300491e?q=80&w=2400&auto=format&fit=crop"
               alt="Khách hàng chọn thực phẩm tươi"
@@ -191,16 +245,12 @@ const HomePage = () => {
             />
             <div className="absolute inset-0 bg-gradient-to-r from-slate-950/70 via-slate-950/18 to-emerald-950/30" />
             <div className="relative z-10 flex h-full min-h-[620px] flex-col justify-between p-6 sm:p-8 lg:p-10 xl:p-12">
-              <div className="max-w-xl pt-4 text-white">
-                <p className="mb-5 inline-flex rounded-full bg-white/15 px-4 py-2 text-sm font-semibold backdrop-blur-md">
-                  Grocery Store Fresh Market
-                </p>
+              <div className="max-w-xl pt-0 text-white">
                 <h1 className="text-4xl font-medium leading-tight tracking-tight sm:text-5xl xl:text-6xl">
-                  Thực phẩm tươi cho căn bếp hiện đại
+                  Fresh food for the modern kitchen
                 </h1>
                 <p className="mt-5 max-w-lg text-base leading-8 text-white/82 sm:text-lg">
-                  Mua rau củ, thịt cá, sữa và đồ dùng hằng ngày trong một giỏ
-                  hàng gọn gàng, giao nhanh đúng khung giờ bạn chọn.
+                  Buy vegetables, meat, fish, milk, and daily essentials in one neat basket, delivered fast at your chosen time slot.
                 </p>
                 <div className="mt-8 flex flex-wrap gap-3">
                   <Link
@@ -301,14 +351,14 @@ const HomePage = () => {
                   </Link>
                 </div>
 
-                <div className="mt-auto rounded-[1.5rem] border border-white/35 bg-white/86 p-5 text-center text-slate-900 shadow-xl">
-                  <FiClock className="mx-auto text-emerald-700" size={26} />
-                  <h2 className="mt-3 text-xl font-medium leading-snug">
-                    Đặt trước bữa tối trong 60 giây
+                <div className="mt-auto rounded-[1.5rem] border border-white/20 bg-emerald-900/80 p-5 text-center text-white shadow-xl backdrop-blur-md">
+                  <FiClock className="mx-auto text-emerald-300" size={26} />
+                  <h2 className="mt-3 text-xl font-medium leading-snug text-white">
+                    Pre-order dinner in 60 seconds
                   </h2>
                   <Link
                     to="/products"
-                    className="mt-5 inline-flex w-full items-center justify-center rounded-2xl bg-emerald-700 px-5 py-3 text-sm font-medium text-white transition-colors hover:bg-emerald-800"
+                    className="mt-5 inline-flex w-full items-center justify-center rounded-2xl bg-white px-5 py-3 text-sm font-medium text-emerald-900 transition-colors hover:bg-emerald-50"
                   >
                     Tạo giỏ hàng
                   </Link>
@@ -412,9 +462,13 @@ const HomePage = () => {
               </div>
               <Link
                 to="/products"
-                className="text-green-600 font-medium hover:text-green-700 flex items-center gap-1 group"
+                className="shrink-0 text-green-600 font-semibold hover:text-green-700 flex items-center gap-1.5 group"
               >
                 View All
+                <FiArrowRight
+                  size={18}
+                  className="transition-transform duration-300 group-hover:translate-x-1"
+                />
               </Link>
             </div>
 
@@ -447,21 +501,16 @@ const HomePage = () => {
               {/* Left - Cinematic Hero (~70%) */}
               <div className="lg:col-span-9 lg:-ml-12">
                 <div className="relative h-[520px] rounded-[28px] overflow-hidden shadow-xl">
-                  <img
-                    src="https://images.unsplash.com/photo-1501004318641-b39e6451bec6?q=80&w=1600&auto=format&fit=crop"
-                    alt="Tractor on farmland at golden hour"
+                  <video
+                    src="https://www.pexels.com/download/video/30792582/"
+                    autoPlay
+                    loop
+                    muted
+                    playsInline
                     className="absolute inset-0 w-full h-full object-cover"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
-                  <button
-                    type="button"
-                    aria-label="Play video"
-                    className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-20 flex h-20 w-20 items-center justify-center rounded-full bg-white/20 backdrop-blur border border-white/30 text-white hover:scale-105 transition-transform"
-                  >
-                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" className="ml-1">
-                      <path d="M8 5v14l11-7L8 5z" fill="currentColor" />
-                    </svg>
-                  </button>
+
                   <h2 className="absolute left-6 bottom-6 z-20 max-w-[70%] text-white text-2xl sm:text-3xl md:text-4xl font-semibold">
                     See how we naturally produce our products
                   </h2>
@@ -472,7 +521,7 @@ const HomePage = () => {
               <div className="lg:col-span-3 flex lg:-mr-12">
                 <div className="relative w-full rounded-[28px] overflow-hidden shadow-lg h-[520px]">
                   <img
-                    src="/category-images/vegetables.png"
+                    src="https://media.gettyimages.com/id/870915532/photo/man-holding-crate-ob-fresh-vegetables.jpg?s=612x612&w=0&k=20&c=k2dXOI-wxUy7lX77Pm90vU6TJXmAAv5VtK60ZZHIyCA="
                     alt="Harvest imagery"
                     className="absolute inset-0 w-full h-full object-cover"
                   />
@@ -510,17 +559,14 @@ const HomePage = () => {
           <div className="flex items-end justify-between gap-6 mb-8">
             <div>
               <h2 className="text-3xl font-medium text-slate-900 mb-2">
-                Bài viết liên quan
+                Related Posts
               </h2>
-              <p className="text-slate-500 font-medium">
-                Các bài viết gợi ý phù hợp với bạn
-              </p>
             </div>
             <Link
               to="/products"
               className="shrink-0 text-green-600 font-semibold hover:text-green-700 flex items-center gap-1.5 group"
             >
-              Xem sản phẩm
+              View All
               <FiArrowRight
                 size={18}
                 className="transition-transform duration-300 group-hover:translate-x-1"

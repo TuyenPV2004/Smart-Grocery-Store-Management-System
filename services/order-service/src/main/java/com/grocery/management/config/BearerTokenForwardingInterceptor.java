@@ -17,11 +17,13 @@ import java.io.IOException;
 
 @Component
 public class BearerTokenForwardingInterceptor implements ClientHttpRequestInterceptor {
+    private static final String INTERNAL_SERVICE_TOKEN_HEADER = "X-Internal-Service-Token";
 
     @Override
     public ClientHttpResponse intercept(HttpRequest request, byte[] body, ClientHttpRequestExecution execution)
             throws IOException {
-        if (!request.getHeaders().containsKey(HttpHeaders.AUTHORIZATION)) {
+        if (!request.getHeaders().containsKey(HttpHeaders.AUTHORIZATION)
+                && !request.getHeaders().containsKey(INTERNAL_SERVICE_TOKEN_HEADER)) {
             String token = currentBearerToken();
             if (token != null) {
                 request.getHeaders().setBearerAuth(token);

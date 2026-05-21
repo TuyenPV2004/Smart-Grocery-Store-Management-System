@@ -100,19 +100,36 @@ export const Button = ({
   );
 };
 
-export const InputField = ({ label, icon: Icon, className = "", inputClassName = "", ...props }) => (
+export const InputField = ({ label, icon: Icon, rightIcon: RightIcon, onRightIconClick, className = "", inputClassName = "", labelClassName = "text-xs font-medium text-slate-600", ...props }) => (
   <label className={cx("block space-y-1.5", className)}>
     {label ? (
-      <span className="block text-xs font-medium text-slate-600">{label}</span>
+      <span className={cx("block", labelClassName)}>{label}</span>
     ) : null}
     <span className="relative block">
       {Icon ? (
         <Icon className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-emerald-600" />
       ) : null}
       <input
-        className={cx("ui-input w-full", Icon ? "pl-11" : "", inputClassName)}
+        className={cx("ui-input w-full", Icon ? "pl-11" : "", RightIcon ? "pr-11" : "", inputClassName)}
         {...props}
       />
+      {RightIcon ? (
+        onRightIconClick ? (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onRightIconClick();
+            }}
+            className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors p-1"
+          >
+            <RightIcon className="h-4 w-4" />
+          </button>
+        ) : (
+          <RightIcon className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+        )
+      ) : null}
     </span>
   </label>
 );

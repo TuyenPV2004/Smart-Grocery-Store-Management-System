@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
-import { FiArrowLeft, FiArrowRight, FiCalendar, FiEye, FiLoader, FiShoppingBag } from "react-icons/fi";
+import { FiCalendar, FiEye, FiLoader, FiShoppingBag } from "react-icons/fi";
+import { FaHome } from "react-icons/fa";
+import AppPagination from "../../components/common/AppPagination";
 import {
   Button,
   EmptyState,
@@ -139,6 +141,11 @@ const OrderHistoryPage = () => {
   const getStatusMeta = (status) =>
     STATUS_META[status] || { label: status || "Unknown", tone: "slate" };
 
+  const handlePageChange = (page) => {
+    setCurrentPage(page + 1);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   const handleCancelOrder = async (orderId) => {
     setCancellingOrderId(orderId);
     try {
@@ -163,7 +170,10 @@ const OrderHistoryPage = () => {
     <PageShell className="py-8">
       <PageContainer className="max-w-6xl">
         <div className="mb-4 flex items-center gap-2 text-sm font-medium text-slate-500">
-          <Link to="/" className="text-black hover:text-slate-900">Home</Link>
+          <Link to="/" className="flex items-center gap-1.5 text-black hover:text-slate-900">
+            <FaHome className="text-emerald-700" size={16} />
+            Home
+          </Link>
           <span className="font-semibold text-black">&gt;</span>
           <span className="text-emerald-700">Orders</span>
         </div>
@@ -232,15 +242,15 @@ const OrderHistoryPage = () => {
             <>
               <div className="hidden overflow-x-auto md:block">
                 <table className="w-full text-left text-sm">
-                  <thead className="border-b border-slate-100 bg-slate-50 text-slate-500">
+                  <thead className="border-b border-slate-100 bg-[#647368] text-white">
                     <tr>
-                      <th className="px-4 py-3 text-center text-base font-medium text-slate-900">No</th>
-                      <th className="px-4 py-3 text-base font-medium text-slate-900">Order code</th>
-                      <th className="px-4 py-3 text-base font-medium text-slate-900">Created at</th>
-                      <th className="px-4 py-3 text-base font-medium text-slate-900">Items</th>
-                      <th className="px-4 py-3 text-base font-medium text-slate-900">Status</th>
-                      <th className="px-4 py-3 text-right text-base font-medium text-slate-900">Total</th>
-                      <th className="px-4 py-3 text-center text-base font-medium text-slate-900">Action</th>
+                      <th className="px-4 py-3 text-center text-base font-medium text-white">No</th>
+                      <th className="px-4 py-3 text-base font-medium text-white">Order code</th>
+                      <th className="px-4 py-3 text-base font-medium text-white">Created at</th>
+                      <th className="px-4 py-3 text-base font-medium text-white">Items</th>
+                      <th className="px-4 py-3 text-base font-medium text-white">Status</th>
+                      <th className="px-4 py-3 text-right text-base font-medium text-white">Total</th>
+                      <th className="px-4 py-3 text-center text-base font-medium text-white">Action</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
@@ -327,10 +337,12 @@ const OrderHistoryPage = () => {
               </div>
 
               {filteredOrders.length > pageSize ? (
-                <Pagination
-                  currentPage={currentPage}
-                  totalPages={totalPages}
-                  onPageChange={setCurrentPage}
+                <AppPagination
+                  currentPage={currentPage - 1}
+                  pageCount={totalPages}
+                  onPageChange={handlePageChange}
+                  pageRangeDisplayed={4}
+                  marginPagesDisplayed={1}
                 />
               ) : null}
             </>
@@ -348,72 +360,6 @@ const OrderHistoryPage = () => {
         ) : null}
       </PageContainer>
     </PageShell>
-  );
-};
-
-const Pagination = ({ currentPage, totalPages, onPageChange }) => {
-  const pageNumbers = [];
-
-  if (totalPages <= 4) {
-    for (let page = 1; page <= totalPages; page += 1) pageNumbers.push(page);
-  } else if (currentPage === 1) {
-    pageNumbers.push(1, 2, "ellipsis", totalPages);
-  } else if (currentPage === 2) {
-    pageNumbers.push(1, 2, 3, "ellipsis", totalPages);
-  } else if (currentPage === totalPages || currentPage === totalPages - 1) {
-    pageNumbers.push(1, "ellipsis", totalPages - 2, totalPages - 1, totalPages);
-  } else {
-    pageNumbers.push(1, "ellipsis", currentPage, "ellipsis", totalPages);
-  }
-
-  return (
-    <div className="mt-8 flex flex-wrap items-center justify-between gap-3">
-      <p className="text-sm font-medium text-slate-500">
-        Page {currentPage}/{totalPages}
-      </p>
-      <div className="flex flex-wrap items-center gap-1">
-        <button
-          type="button"
-          onClick={() => onPageChange((prev) => Math.max(1, prev - 1))}
-          disabled={currentPage === 1}
-          className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
-          aria-label="Previous page"
-        >
-          <FiArrowLeft size={16} />
-        </button>
-
-        {pageNumbers.map((page, index) =>
-          page === "ellipsis" ? (
-            <span key={`ellipsis-${index}`} className="px-2 text-sm font-medium text-slate-400">
-              ...
-            </span>
-          ) : (
-            <button
-              key={page}
-              type="button"
-              onClick={() => onPageChange(page)}
-              className={`flex h-10 min-w-10 items-center justify-center rounded-xl border px-3 text-sm font-medium ${
-                currentPage === page
-                  ? "border-emerald-700 bg-emerald-700 text-white"
-                  : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
-              }`}
-            >
-              {page}
-            </button>
-          ),
-        )}
-
-        <button
-          type="button"
-          onClick={() => onPageChange((prev) => Math.min(totalPages, prev + 1))}
-          disabled={currentPage === totalPages}
-          className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
-          aria-label="Next page"
-        >
-          <FiArrowRight size={16} />
-        </button>
-      </div>
-    </div>
   );
 };
 

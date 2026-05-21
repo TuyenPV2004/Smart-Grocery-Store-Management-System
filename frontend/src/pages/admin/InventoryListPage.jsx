@@ -1,186 +1,212 @@
+import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
-import React, { useEffect, useState } from "react";
-import inventoryService from "../../services/inventoryService";
-import {
-  FiFileText as FileSpreadsheet,
-  FiEye as Eye,
-  FiPackage as Package,
-  FiClipboard as ClipboardList,
-  FiX as X,
-  FiUser as User,
-  FiCalendar as Calendar,
-  FiTrash2 as Trash2,
-  FiSearch as Search,
-} from "react-icons/fi";
 import Swal from "sweetalert2";
+import {
+  FiClipboard,
+  FiEye,
+  FiFileText,
+  FiMoreHorizontal,
+  FiSearch,
+  FiTrash2,
+  FiX,
+} from "react-icons/fi";
+import { FaCalendarAlt, FaUserCheck, FaUser, FaCheckCircle, FaFileAlt } from "react-icons/fa";
+import { PhotoProvider, PhotoView } from "react-photo-view";
+import "react-photo-view/dist/react-photo-view.css";
+import AppPagination from "../../components/common/AppPagination";
+import inventoryService from "../../services/inventoryService";
+import productService from "../../services/productService";
 import { getImageUrl } from "../../utils/imageUrl";
+
+const formatMoney = (value) => `${Number(value || 0).toLocaleString("vi-VN")} VND`;
+
+const formatDateTime = (value) => {
+  if (!value) return "---";
+  return new Date(value).toLocaleString("vi-VN", {
+    hour: "2-digit",
+    minute: "2-digit",
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
+};
+
+const getNoteType = (note) => {
+  if (note?.type) {
+    const normalizedType = String(note.type).toUpperCase();
+    if (normalizedType.includes("EXP") || normalizedType.includes("EXPORT")) return "EXP";
+    if (normalizedType.includes("IMP") || normalizedType.includes("IMPORT")) return "IMP";
+  }
+
+  return String(note?.code || "").toUpperCase().startsWith("EXP") ? "EXP" : "IMP";
+};
+
+const getDetailThumbnail = (detail) =>
+  detail?.productThumbnail ||
+  detail?.product_thumbnail ||
+  detail?.productThumbnailUrl ||
+  detail?.thumbnailUrl ||
+  detail?.thumbnail ||
+  detail?.imageUrl ||
+  detail?.productImage ||
+  detail?.product?.thumbnail ||
+  detail?.product?.productThumbnail ||
+  detail?.product?.thumbnailUrl ||
+  detail?.product?.imageUrl ||
+  detail?.product?.image ||
+  "";
+
+const getDetailProductId = (detail) =>
+  detail?.productId || detail?.product_id || detail?.product?.id || null;
+
+const getDetailSku = (detail) =>
+  detail?.productSku || detail?.product_sku || detail?.sku || detail?.product?.sku || "";
+
+const getDetailName = (detail) =>
+  detail?.productName || detail?.product_name || detail?.name || detail?.product?.name || "";
+
+const getProductThumbnail = (product) =>
+  product?.thumbnail ||
+  product?.productThumbnail ||
+  product?.thumbnailUrl ||
+  product?.imageUrl ||
+  product?.image ||
+  "";
+
+const normalizeLookupKey = (value) => String(value || "").trim().toLowerCase();
+
+const normalizeProductList = (payload) => {
+  if (Array.isArray(payload)) return payload;
+  if (Array.isArray(payload?.content)) return payload.content;
+  if (Array.isArray(payload?.data)) return payload.data;
+  if (Array.isArray(payload?.data?.content)) return payload.data.content;
+  return [];
+};
+
+const resolveProductForDetail = (detail, lookup) => {
+  const productId = getDetailProductId(detail);
+  const productSku = normalizeLookupKey(getDetailSku(detail));
+  const productName = normalizeLookupKey(getDetailName(detail));
+
+  if (productId && lookup.byId.has(String(productId))) return lookup.byId.get(String(productId));
+  if (productSku && lookup.bySku.has(productSku)) return lookup.bySku.get(productSku);
+  if (productName && lookup.byName.has(productName)) return lookup.byName.get(productName);
+
+  return null;
+};
 
 const DetailModal = ({ isOpen, onClose, note }) => {
   if (!isOpen || !note) return null;
 
   return (
-    <div className="fixed inset-0 bg-slate-900/50 flex justify-center items-center z-[70] backdrop-blur-sm p-4">
-      <div className="bg-white rounded-[2rem] w-full max-w-4xl shadow-2xl border border-white/50 max-h-[90vh] overflow-hidden flex flex-col animate-in fade-in zoom-in duration-200">
-        <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
-          <h3 className="text-lg font-medium text-slate-800 flex items-center gap-2">
-            Chi tiết phiếu nhập: {note.code}
-          </h3>
-          <button
-            onClick={onClose}
-            className="text-slate-400 hover:text-slate-600"
-          >
-            <X size={24} />
-          </button>
-        </div>
-
-        <div
-          className="p-6 overflow-y-auto flex-1 space-y-6 [&::-webkit-scrollbar]:w-0"
-          style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
-        >
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-100">
-            <div>
-              <p className="text-xs text-slate-500 font-medium mb-2">
-                Ngày tạo
-              </p>
-              <div className="flex items-center gap-2 text-slate-700 font-medium">
-                {new Date(note.createdAt).toLocaleString("vi-VN")}
-              </div>
-            </div>
-            <div>
-              <p className="text-xs text-slate-500 font-medium mb-2">
-                Mã nhân viên
-              </p>
-              <p className="font-medium text-slate-700">
-                {note.createdBy?.staffCode}
-              </p>
-            </div>
-            <div>
-              <p className="text-xs text-slate-500 font-medium mb-2">
-                Nhân viên thực hiện
-              </p>
-              <div className="flex items-center gap-2 text-slate-700 font-medium text-sm">
-                <span>{note.createdBy?.fullName}</span>
-              </div>
-            </div>
-
-            <div>
-              <p className="text-xs text-slate-500 font-medium mb-2">
-                Trạng thái
-              </p>
-              <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-emerald-100 text-emerald-700 border border-emerald-200">
-                {note.status || "Hoàn thành"}
-              </span>
-            </div>
-            <div className="col-span-full border-t border-slate-200 pt-3 mt-1">
-              <p className="text-xs text-slate-500 font-medium">Ghi chú</p>
-              <p className="font-medium text-slate-700 italic">
-                {note.note || "Không có ghi chú"}
-              </p>
-            </div>
+    <div className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm">
+      <PhotoProvider>
+        <div className="flex max-h-[90vh] w-full max-w-4xl flex-col overflow-hidden rounded-[2rem] border border-white/50 bg-white shadow-2xl">
+          <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50/50 p-6">
+            <h3 className="text-lg font-medium text-slate-800">
+              Inventory note: {note.code}
+            </h3>
+            <button type="button" onClick={onClose} className="text-slate-400 hover:text-slate-600">
+              <FiX size={24} />
+            </button>
           </div>
 
-          <div className="border border-slate-200 rounded-[1.25rem] overflow-hidden shadow-sm bg-white">
-            <table className="w-full text-sm border-separate border-spacing-0">
-              <thead className="bg-slate-50 text-slate-900">
-                <tr>
-                  <th className="px-4 py-4 font-medium text-left border-b border-slate-100 first:pl-6">
-                    Sản phẩm
-                  </th>
-                  <th className="px-4 py-4 font-medium text-left border-b border-slate-100 whitespace-nowrap">
-                    Mã SKU
-                  </th>
-                  <th className="px-4 py-4 font-medium text-center border-b border-slate-100">
-                    Đơn vị
-                  </th>
-                  <th className="px-4 py-4 font-medium text-center border-b border-slate-100 whitespace-nowrap">
-                    Số lượng
-                  </th>
-                  <th className="px-4 py-4 font-medium text-center border-b border-slate-100 whitespace-nowrap">
-                    Hệ số
-                  </th>
-                  <th className="px-4 py-4 font-medium text-right border-b border-slate-100 whitespace-nowrap">
-                    Đơn giá
-                  </th>
-                  <th className="px-4 py-4 font-medium text-right border-b border-slate-100 whitespace-nowrap first:pr-6">
-                    Thành tiền
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-50">
-                {note.details?.map((d, idx) => (
-                  <tr
-                    key={idx}
-                    className="hover:bg-slate-50/50 transition-colors"
-                  >
-                    <td className="px-4 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-white border border-slate-200 rounded-lg flex-shrink-0 flex items-center justify-center overflow-hidden">
-                          <img
-                            src={
-                              d.product?.thumbnail
-                                ? getImageUrl(d.product.thumbnail)
-                                : "https://via.placeholder.com/40"
-                            }
-                            alt=""
-                            className="w-full h-full object-cover"
-                            onError={(e) =>
-                              (e.target.src = "https://via.placeholder.com/40")
-                            }
-                          />
-                        </div>
-                        <div>
-                          <div className="font-medium text-slate-900 leading-tight">
-                            {d.product?.name}
+          <div className="flex-1 space-y-6 overflow-y-auto scrollbar-hide p-6">
+            <div className="grid grid-cols-2 gap-4 rounded-2xl border border-slate-100 bg-slate-50 p-4 md:grid-cols-4">
+              <InfoTile label="Created at" value={formatDateTime(note.createdAt)} icon={FaCalendarAlt} />
+              <InfoTile label="Staff code" value={note.createdBy?.staffCode || "---"} icon={FaUserCheck} />
+              <InfoTile label="Creator" value={note.createdBy?.fullName || "---"} icon={FaUser} />
+              <InfoTile label="Status" value={note.status || "Completed"} icon={FaCheckCircle} />
+              <div className="col-span-full border-t border-slate-200 pt-3">
+                <p className="text-base font-medium text-slate-500 flex items-center gap-1.5">
+                  <FaFileAlt size={16} className="text-green-600" />
+                  Note
+                </p>
+                <p className="font-medium italic text-slate-700 mt-1">{note.note || "No note"}</p>
+              </div>
+            </div>
+
+            <div className="overflow-hidden rounded-[1.25rem] border border-slate-200 bg-white shadow-sm">
+              <table className="product-inventory-table w-full border-separate border-spacing-0 text-sm">
+                <thead>
+                  <tr>
+                    <th className="px-4 py-4 text-left font-medium first:pl-6">Product</th>
+                    <th className="whitespace-nowrap px-4 py-4 text-left font-medium">SKU</th>
+                    <th className="px-4 py-4 text-center font-medium">Unit</th>
+                    <th className="whitespace-nowrap px-4 py-4 text-center font-medium">Quantity</th>
+                    <th className="whitespace-nowrap px-4 py-4 text-center font-medium">Rate</th>
+                    <th className="whitespace-nowrap px-4 py-4 text-right font-medium">Price</th>
+                    <th className="whitespace-nowrap px-4 py-4 text-right font-medium first:pr-6">Total</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-50">
+                  {(note.details || []).map((detail, index) => (
+                    <tr key={index} className="product-inventory-row transition-colors">
+                      <td className="px-4 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-white">
+                            <PhotoView
+                              src={
+                                getDetailThumbnail(detail)
+                                  ? getImageUrl(getDetailThumbnail(detail))
+                                  : "https://via.placeholder.com/40"
+                              }
+                            >
+                              <img
+                                src={
+                                  getDetailThumbnail(detail)
+                                    ? getImageUrl(getDetailThumbnail(detail))
+                                    : "https://via.placeholder.com/40"
+                                }
+                                alt=""
+                                className="h-full w-full object-cover cursor-pointer hover:scale-110 transition-transform duration-200"
+                                onError={(event) => {
+                                  event.currentTarget.src = "https://via.placeholder.com/40";
+                                }}
+                              />
+                            </PhotoView>
+                          </div>
+                          <div className="font-medium leading-tight text-slate-900">
+                            {detail.product?.name || detail.productName || "---"}
                           </div>
                         </div>
-                      </div>
-                    </td>
-                    <td className="px-4 py-4 text-left">
-                      <span className="text-[13px] font-medium text-slate-900 whitespace-nowrap">
-                        {d.product?.sku || "—"}
-                      </span>
-                    </td>
-                    <td className="px-4 py-4 text-center text-slate-900 font-medium">
-                      {d.importUnit}
-                    </td>
-                    <td className="px-4 py-4 text-center font-medium text-slate-900">
-                      {d.quantityInImportUnit}
-                    </td>
-                    <td className="px-4 py-4 text-center font-medium text-slate-900">
-                      {d.conversionRate || 1}
-                    </td>
-                    <td className="px-4 py-4 text-right font-medium text-slate-900 whitespace-nowrap">
-                      {d.importPrice?.toLocaleString()}
-                    </td>
-                    <td className="px-4 py-4 text-right font-medium text-slate-900 whitespace-nowrap">
-                      {(
-                        d.conversionRate *
-                        d.importPrice *
-                        d.quantityInImportUnit
-                      ).toLocaleString()}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                      </td>
+                      <td className="px-4 py-4 text-left">
+                        <span className="whitespace-nowrap text-[13px] font-medium text-slate-900">
+                          {detail.product?.sku || detail.productSku || "---"}
+                        </span>
+                      </td>
+                      <td className="px-4 py-4 text-center font-medium text-slate-900">{detail.importUnit}</td>
+                      <td className="px-4 py-4 text-center font-medium text-slate-900">{detail.quantityInImportUnit}</td>
+                      <td className="px-4 py-4 text-center font-medium text-slate-900">{detail.conversionRate || 1}</td>
+                      <td className="whitespace-nowrap px-4 py-4 text-right font-medium text-slate-900">
+                        {Number(detail.importPrice || 0).toLocaleString("vi-VN")}
+                      </td>
+                      <td className="whitespace-nowrap px-4 py-4 text-right font-medium text-slate-900">
+                        {Number(
+                          (detail.conversionRate || 1) *
+                            (detail.importPrice || 0) *
+                            (detail.quantityInImportUnit || 0),
+                        ).toLocaleString("vi-VN")}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
 
-        <div className="p-6 border-t border-slate-100 bg-white flex justify-between items-center">
-          <div className="flex items-center gap-2 text-slate-600 font-medium">
-            Tổng sản phẩm:{" "}
-            <span className="text-slate-600 font-medium">
-              {note.details?.length || 0}
-            </span>
-          </div>
-          <div className="flex items-center gap-3">
-            <span className="text-lg text-slate-600 font-medium">Tổng tiền phiếu:</span>
-            <span className="text-lg font-medium text-slate-600">
-              {note.finalAmount?.toLocaleString()} VNĐ
-            </span>
+          <div className="flex items-center justify-between border-t border-slate-100 bg-white p-6">
+            <div className="font-medium text-slate-600">
+              Total products: <span>{note.details?.length || 0}</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <span className="text-lg font-medium text-slate-600">Final amount:</span>
+              <span className="text-lg font-medium text-slate-600">{formatMoney(note.finalAmount)}</span>
+            </div>
           </div>
         </div>
-      </div>
+      </PhotoProvider>
     </div>
   );
 };
@@ -192,33 +218,87 @@ const InventoryListPage = () => {
   const [typeFilter, setTypeFilter] = useState("ALL");
   const [timeFilter, setTimeFilter] = useState("ALL");
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
-
   const [selectedNote, setSelectedNote] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-
-  useEffect(() => {
-    fetchNotes();
-  }, []);
+  const [actionMenu, setActionMenu] = useState(null);
+  const itemsPerPage = 10;
 
   const fetchNotes = async () => {
     try {
-      const res = await inventoryService.getAll();
-      setNotes(res.data);
+      const response = await inventoryService.getAll();
+      setNotes(response.data || []);
     } catch (error) {
-      console.error("Lỗi tải danh sách phiếu:", error);
+      console.error("Failed to load inventory notes:", error);
+      toast.error("Unable to load inventory notes.");
     } finally {
       setLoading(false);
     }
   };
 
+  useEffect(() => {
+    fetchNotes();
+  }, []);
+
+  useEffect(() => {
+    if (!actionMenu) return undefined;
+
+    const closeMenu = () => setActionMenu(null);
+    window.addEventListener("click", closeMenu);
+    window.addEventListener("scroll", closeMenu, true);
+
+    return () => {
+      window.removeEventListener("click", closeMenu);
+      window.removeEventListener("scroll", closeMenu, true);
+    };
+  }, [actionMenu]);
+
   const handleViewDetail = async (id) => {
     try {
-      const res = await inventoryService.getById(id);
-      setSelectedNote(res.data);
+      const response = await inventoryService.getById(id);
+      const note = response.data;
+      const details = note?.details || [];
+
+      if (details.length > 0) {
+        try {
+          const productResponse = await productService.getAll({ pageSize: 1000 });
+          const products = normalizeProductList(productResponse.data);
+          const productLookup = products.reduce(
+            (lookup, product) => {
+              if (product?.id != null) lookup.byId.set(String(product.id), product);
+              if (product?.sku) lookup.bySku.set(normalizeLookupKey(product.sku), product);
+              if (product?.name) lookup.byName.set(normalizeLookupKey(product.name), product);
+              return lookup;
+            },
+            { byId: new Map(), bySku: new Map(), byName: new Map() },
+          );
+
+          note.details = details.map((detail) => {
+            const product = resolveProductForDetail(detail, productLookup);
+            const catalogThumbnail = getProductThumbnail(product);
+            const currentThumbnail = getDetailThumbnail(detail);
+            const thumbnail = catalogThumbnail || currentThumbnail;
+
+            return {
+              ...detail,
+              productThumbnail: thumbnail,
+              product: {
+                ...(detail.product || {}),
+                id: detail.product?.id || product?.id || getDetailProductId(detail),
+                sku: detail.product?.sku || product?.sku || getDetailSku(detail),
+                name: detail.product?.name || product?.name || getDetailName(detail),
+                thumbnail,
+              },
+            };
+          });
+        } catch (error) {
+          console.warn("Unable to hydrate inventory note product thumbnails:", error);
+        }
+      }
+
+      setSelectedNote(note);
       setIsModalOpen(true);
     } catch (error) {
-      toast.error("Lỗi tải chi tiết phiếu: " + error.message);
+      toast.error(`Unable to load note detail: ${error.message}`);
     }
   };
 
@@ -228,83 +308,54 @@ const InventoryListPage = () => {
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement("a");
       link.href = url;
-      const fileName = code ? `${code}.xlsx` : `PhieuNhap_${id}.xlsx`;
-      link.setAttribute("download", fileName);
+      link.setAttribute("download", code ? `${code}.xlsx` : `InventoryNote_${id}.xlsx`);
       document.body.appendChild(link);
       link.click();
       link.remove();
+      window.URL.revokeObjectURL(url);
     } catch (error) {
-      toast.error("Lỗi xuất file: " + error.message);
+      toast.error(`Unable to export file: ${error.message}`);
     }
   };
 
   const handleDelete = async (id) => {
     const result = await Swal.fire({
-      title: "Xác nhận xóa?",
-      text: "Bạn có chắc chắn muốn xóa phiếu nhập này không? Hành động này không thể hoàn tác.",
+      title: "Delete note?",
+      text: "This action cannot be undone.",
       icon: "warning",
       showCancelButton: true,
       confirmButtonColor: "#ef4444",
       cancelButtonColor: "#94a3b8",
-      confirmButtonText: "Xóa",
-      cancelButtonText: "Hủy",
+      confirmButtonText: "Delete",
+      cancelButtonText: "Cancel",
     });
 
-    if (result.isConfirmed) {
-      try {
-        await inventoryService.delete(id);
-        setNotes((prevNotes) => prevNotes.filter((note) => note.id !== id));
-        toast.success("Xóa phiếu thành công!");
-      } catch (error) {
-        toast.error(
-          "Lỗi xóa phiếu: " + (error.response?.data || error.message),
-        );
-      }
-    }
-  };
+    if (!result.isConfirmed) return;
 
-  const getNoteType = (note) => {
-    if (note?.type) {
-      const normalizedType = String(note.type).toUpperCase();
-      if (normalizedType.includes("EXP") || normalizedType.includes("EXPORT")) {
-        return "EXP";
-      }
-      if (normalizedType.includes("IMP") || normalizedType.includes("IMPORT")) {
-        return "IMP";
-      }
+    try {
+      await inventoryService.delete(id);
+      setNotes((prevNotes) => prevNotes.filter((note) => note.id !== id));
+      toast.success("Inventory note deleted.");
+    } catch (error) {
+      toast.error(`Unable to delete note: ${error.response?.data || error.message}`);
     }
-
-    const normalizedCode = String(note?.code || "").toUpperCase();
-    return normalizedCode.startsWith("EXP") ? "EXP" : "IMP";
   };
 
   const filteredNotes = notes.filter((note) => {
     const keyword = searchTerm.trim().toLowerCase();
     const createdAt = note?.createdAt ? new Date(note.createdAt) : null;
-
     const matchesSearch =
       !keyword ||
-      String(note?.code || "")
-        .toLowerCase()
-        .includes(keyword) ||
-      String(note?.createdBy?.staffCode || "")
-        .toLowerCase()
-        .includes(keyword) ||
-      String(note?.createdBy?.fullName || "")
-        .toLowerCase()
-        .includes(keyword);
-
+      String(note?.code || "").toLowerCase().includes(keyword) ||
+      String(note?.createdBy?.staffCode || "").toLowerCase().includes(keyword) ||
+      String(note?.createdBy?.fullName || "").toLowerCase().includes(keyword);
     const noteType = getNoteType(note);
     const matchesType = typeFilter === "ALL" || noteType === typeFilter;
 
     let matchesTime = true;
     if (createdAt && !Number.isNaN(createdAt.getTime())) {
       const now = new Date();
-      const startToday = new Date(
-        now.getFullYear(),
-        now.getMonth(),
-        now.getDate(),
-      );
+      const startToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
       if (timeFilter === "TODAY") {
         matchesTime = createdAt >= startToday;
@@ -328,104 +379,136 @@ const InventoryListPage = () => {
     return matchesSearch && matchesType && matchesTime;
   });
 
-  const totalPages = Math.max(
-    1,
-    Math.ceil(filteredNotes.length / itemsPerPage),
-  );
+  const totalPages = Math.max(1, Math.ceil(filteredNotes.length / itemsPerPage));
 
   useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm, typeFilter, timeFilter]);
 
   useEffect(() => {
-    if (currentPage > totalPages) {
-      setCurrentPage(totalPages);
-    }
+    if (currentPage > totalPages) setCurrentPage(totalPages);
   }, [currentPage, totalPages]);
 
   const startIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedNotes = filteredNotes.slice(
-    startIndex,
-    startIndex + itemsPerPage,
-  );
+  const paginatedNotes = filteredNotes.slice(startIndex, startIndex + itemsPerPage);
+
+  const getTypeFilterCount = (type) => {
+    if (type === "ALL") return notes.length;
+    return notes.filter((note) => getNoteType(note) === type).length;
+  };
+
+  const openActionMenu = (event, note) => {
+    event.stopPropagation();
+    const rect = event.currentTarget.getBoundingClientRect();
+    const menuEstimatedHeight = 124;
+    const gap = 8;
+    const shouldOpenUpward = rect.bottom + gap + menuEstimatedHeight > window.innerHeight;
+
+    setActionMenu((current) =>
+      current?.note?.id === note.id
+        ? null
+        : {
+            note,
+            x: rect.left + rect.width / 2,
+            y: shouldOpenUpward ? rect.top - gap : rect.bottom + gap,
+            placement: shouldOpenUpward ? "top" : "bottom",
+          },
+    );
+  };
+
+  const runAction = (callback) => {
+    setActionMenu(null);
+    callback();
+  };
 
   return (
     <div className="admin-page-shell min-h-screen p-6 font-poppins text-slate-600">
-      <div className="max-w-[1400px] mx-auto mb-6">
-        <div>
-          <h1 className="text-2xl font-medium text-slate-900 flex items-center">
-            Danh sách phiếu nhập xuất kho
-          </h1>
-          <p className="text-slate-500 text-sm mt-1.5 font-medium">
-            Tạo phiếu nhập, quản lý thông tin phiếu nhập xuất kho
-          </p>
-        </div>
-
-        <div className="mt-4 flex flex-wrap items-center gap-3">
-          <div className="relative w-[420px]">
-            <Search
-              size={16}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-            />
-            <input
-              type="text"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Tìm theo mã phiếu, mã nhân viên, người tạo"
-              className="w-full pl-9 pr-4 py-2.5 border border-slate-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-400"
-            />
-          </div>
-
-          <select
-            value={typeFilter}
-            onChange={(e) => setTypeFilter(e.target.value)}
-            className="px-4 py-2.5 border border-slate-200 rounded-xl bg-white text-slate-700 font-medium outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-400"
-          >
-            <option value="ALL">Tất cả loại phiếu</option>
-            <option value="IMP">Phiếu nhập</option>
-            <option value="EXP">Phiếu xuất</option>
-          </select>
-
-          <select
-            value={timeFilter}
-            onChange={(e) => setTimeFilter(e.target.value)}
-            className="px-4 py-2.5 border border-slate-200 rounded-xl bg-white text-slate-700 font-medium outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-400"
-          >
-            <option value="ALL">Tất cả thời gian</option>
-            <option value="TODAY">Hôm nay</option>
-            <option value="LAST_7_DAYS">7 ngày gần nhất</option>
-            <option value="LAST_30_DAYS">30 ngày gần nhất</option>
-            <option value="THIS_MONTH">Tháng này</option>
-          </select>
-        </div>
+      <div className="mx-auto mb-6 max-w-[1400px]">
+        <h1 className="text-2xl font-medium text-slate-900">Inventory Notes</h1>
+        <p className="mt-1.5 text-sm font-medium text-slate-500">
+          Track import and export inventory notes.
+        </p>
       </div>
 
-      <div className="max-w-[1400px] mx-auto bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+      <div className="mx-auto max-w-[1400px] overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm">
+        <div className="border-b border-slate-100 px-6 py-5">
+          <div>
+            <h3 className="text-lg font-medium text-slate-900">Inventory List</h3>
+          </div>
+
+          <div className="mt-5 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex flex-wrap items-center gap-2">
+              {[
+                { id: "ALL", label: "All" },
+                { id: "IMP", label: "Import" },
+                { id: "EXP", label: "Export" },
+              ].map((item) => {
+                const isActive = typeFilter === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => setTypeFilter(item.id)}
+                    className={`rounded-full px-4 py-2 text-sm font-medium transition-all ${
+                      isActive ? "bg-slate-900 text-white shadow-sm" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                    }`}
+                  >
+                    {item.label} {getTypeFilterCount(item.id)}
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center lg:w-auto">
+              <div className="relative w-full sm:w-[420px]">
+                <FiSearch size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input
+                  type="text"
+                  value={searchTerm}
+                  onChange={(event) => setSearchTerm(event.target.value)}
+                  placeholder="Search..."
+                  className="w-full rounded-full border border-slate-200 bg-slate-100 py-2.5 pl-11 pr-11 font-medium text-slate-700 outline-none transition-all placeholder:text-slate-400 focus:border-slate-300 focus:bg-slate-50"
+                />
+                {searchTerm ? (
+                  <button
+                    type="button"
+                    onClick={() => setSearchTerm("")}
+                    className="absolute right-3 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center text-red-500 transition-colors hover:text-red-700"
+                    aria-label="Clear search"
+                  >
+                    <FiX size={15} />
+                  </button>
+                ) : null}
+              </div>
+
+              <select
+                value={timeFilter}
+                onChange={(event) => setTimeFilter(event.target.value)}
+                className="w-full rounded-full border border-slate-200 bg-slate-100 px-4 py-2.5 text-sm font-medium text-slate-700 outline-none transition-all focus:border-slate-300 focus:bg-slate-50 sm:w-[190px]"
+              >
+                <option value="ALL">All time</option>
+                <option value="TODAY">Today</option>
+                <option value="LAST_7_DAYS">Last 7 days</option>
+                <option value="LAST_30_DAYS">Last 30 days</option>
+                <option value="THIS_MONTH">This month</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
         {loading ? (
-          <div className="p-8 text-center text-slate-500">Đang tải dữ liệu</div>
+          <div className="p-8 text-center text-slate-500">Loading data</div>
         ) : (
           <>
-            <table className="w-full text-left border-collapse">
+            <table className="product-inventory-table w-full border-collapse text-left">
               <thead>
-                <tr className="bg-slate-50/50 border-b border-slate-100">
-                  <th className="px-6 py-4 font-medium text-slate-900 text-sm tracking-wider">
-                    Mã phiếu
-                  </th>
-                  <th className="px-6 py-4 font-medium text-slate-900 text-sm tracking-wider">
-                    Ngày tạo
-                  </th>
-                  <th className="px-6 py-4 font-medium text-slate-900 text-sm tracking-wider">
-                    Mã nhân viên
-                  </th>
-                  <th className="px-6 py-4 font-medium text-slate-900 text-sm tracking-wider">
-                    Người tạo
-                  </th>
-                  <th className="px-6 py-4 font-medium text-slate-900 text-sm tracking-wider text-right">
-                    Tổng tiền
-                  </th>
-                  <th className="px-6 py-4 font-medium text-slate-900 text-center text-sm tracking-wider">
-                    Thao tác
-                  </th>
+                <tr className="border-b border-slate-100 bg-slate-50/50">
+                  <th className="px-6 py-4 text-base font-medium text-slate-900">Code</th>
+                  <th className="px-6 py-4 text-base font-medium text-slate-900">Created at</th>
+                  <th className="px-6 py-4 text-base font-medium text-slate-900">Staff code</th>
+                  <th className="px-6 py-4 text-base font-medium text-slate-900">Creator</th>
+                  <th className="px-6 py-4 text-right text-base font-medium text-slate-900">Final amount</th>
+                  <th className="px-6 py-4 text-center text-base font-medium text-slate-900">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
@@ -433,140 +516,112 @@ const InventoryListPage = () => {
                   const isExport = getNoteType(note) === "EXP";
 
                   return (
-                    <tr
-                      key={note.id}
-                      className="hover:bg-slate-50/50 transition-colors"
-                    >
-                      <td
-                        className={`px-6 py-4 font-medium ${
-                          isExport ? "text-amber-600" : "text-green-600"
-                        }`}
-                      >
+                    <tr key={note.id} className="product-inventory-row transition-colors">
+                      <td className={`px-6 py-4 font-medium ${isExport ? "text-amber-600" : "text-green-600"}`}>
                         {note.code}
                       </td>
-
-                      <td className="px-6 py-4 text-slate-800">
-                        {new Date(note.createdAt).toLocaleString("vi-VN", {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                          day: "2-digit",
-                          month: "2-digit",
-                          year: "numeric",
-                        })}
-                      </td>
-
-                      <td className="px-6 py-4 text-slate-700 font-medium">
-                        {note.createdBy?.staffCode || "---"}
-                      </td>
-                      <td className="px-6 py-4 text-slate-700 font-medium">
-                        {note.createdBy?.fullName || "N/A"}
-                      </td>
-
-                      <td className="px-6 py-4 font-medium text-slate-800 text-right">
-                        {note.finalAmount
-                          ? note.finalAmount.toLocaleString()
-                          : "0"}{" "}
-                        ₫
-                      </td>
-
+                      <td className="px-6 py-4 text-slate-800">{formatDateTime(note.createdAt)}</td>
+                      <td className="px-6 py-4 font-medium text-slate-700">{note.createdBy?.staffCode || "---"}</td>
+                      <td className="px-6 py-4 font-medium text-slate-700">{note.createdBy?.fullName || "---"}</td>
+                      <td className="px-6 py-4 text-right font-medium text-slate-800">{formatMoney(note.finalAmount)}</td>
                       <td className="px-6 py-4 text-center">
-                        <div className="flex justify-center gap-3">
+                        <div className="flex items-center justify-center">
                           <button
-                            onClick={() => handleExport(note.id, note.code)}
-                            className="text-emerald-600 hover:text-emerald-800 transition-colors"
-                            title="Xuất Excel"
+                            type="button"
+                            onClick={(event) => openActionMenu(event, note)}
+                            className="flex h-9 w-9 items-center justify-center rounded-full text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900"
+                            title="Actions"
                           >
-                            <FileSpreadsheet size={18} />
-                          </button>
-
-                          <button
-                            onClick={() => handleViewDetail(note.id)}
-                            className="text-indigo-600 hover:text-indigo-800 transition-colors"
-                            title="Xem chi tiết"
-                          >
-                            <Eye size={18} />
-                          </button>
-
-                          <button
-                            onClick={() => handleDelete(note.id)}
-                            className="text-red-600 hover:text-red-800 transition-colors"
-                            title="Xóa phiếu"
-                          >
-                            <Trash2 size={18} />
+                            <FiMoreHorizontal size={20} />
                           </button>
                         </div>
                       </td>
                     </tr>
                   );
                 })}
-                {filteredNotes.length === 0 && (
-                  <tr>
-                    <td colSpan="6" className="p-8 text-center text-slate-400">
-                      Không có phiếu phù hợp bộ lọc hiện tại.
+                {filteredNotes.length === 0 ? (
+                  <tr className="product-empty-row bg-white">
+                    <td colSpan="6" className="px-6 py-14">
+                      <div className="flex flex-col items-center justify-center text-center">
+                        <FiClipboard className="mb-4 text-slate-950" size={30} />
+                        <h4 className="text-base font-medium text-slate-900">No matching inventory notes</h4>
+                        <p className="mt-2 max-w-md text-sm font-medium text-slate-500">
+                          Try changing the type, time filter, or search keyword.
+                        </p>
+                      </div>
                     </td>
                   </tr>
-                )}
+                ) : null}
               </tbody>
             </table>
 
-            {filteredNotes.length > 0 && (
-              <div className="px-6 py-4 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3 bg-white">
-                <p className="text-sm text-slate-500">
-                  Hiển thị {startIndex + 1}-
-                  {Math.min(startIndex + itemsPerPage, filteredNotes.length)} /{" "}
-                  {filteredNotes.length} phiếu
-                </p>
-
-                <div className="flex items-center gap-1">
-                  <button
-                    onClick={() =>
-                      setCurrentPage((prev) => Math.max(prev - 1, 1))
-                    }
-                    disabled={currentPage === 1}
-                    className="px-3 py-1.5 text-sm rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    Trước
-                  </button>
-
-                  {Array.from({ length: totalPages }, (_, idx) => idx + 1).map(
-                    (page) => (
-                      <button
-                        key={page}
-                        onClick={() => setCurrentPage(page)}
-                        className={`px-3 py-1.5 text-sm rounded-lg border ${
-                          currentPage === page
-                            ? "bg-green-600 text-white border-green-600"
-                            : "border-slate-200 text-slate-600 hover:bg-slate-50"
-                        }`}
-                      >
-                        {page}
-                      </button>
-                    ),
-                  )}
-
-                  <button
-                    onClick={() =>
-                      setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-                    }
-                    disabled={currentPage === totalPages}
-                    className="px-3 py-1.5 text-sm rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    Sau
-                  </button>
-                </div>
-              </div>
-            )}
           </>
         )}
       </div>
 
-      <DetailModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        note={selectedNote}
-      />
+      {totalPages > 1 ? (
+        <div className="mx-auto max-w-[1400px]">
+          <AppPagination
+            currentPage={currentPage - 1}
+            pageCount={totalPages}
+            onPageChange={(page) => {
+              setCurrentPage(page + 1);
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }}
+            pageRangeDisplayed={4}
+            marginPagesDisplayed={1}
+          />
+        </div>
+      ) : null}
+
+      {actionMenu ? (
+        <div
+          className={`fixed z-[80] !w-44 -translate-x-[calc(100%-1.25rem)] rounded-xl border border-slate-200 bg-white p-1 shadow-[0_12px_30px_rgba(100,116,139,0.22)] ring-1 ring-slate-300/45 ${
+            actionMenu.placement === "top" ? "-translate-y-full" : ""
+          }`}
+          style={{ left: actionMenu.x, top: actionMenu.y }}
+          onClick={(event) => event.stopPropagation()}
+        >
+          <button
+            type="button"
+            onClick={() => runAction(() => handleExport(actionMenu.note.id, actionMenu.note.code))}
+            className="flex w-full items-center gap-1.5 rounded-lg px-2 py-2 text-left text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
+          >
+            <FiFileText className="text-emerald-600" size={18} />
+            <span>Export</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => runAction(() => handleViewDetail(actionMenu.note.id))}
+            className="flex w-full items-center gap-1.5 rounded-lg px-2 py-2 text-left text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
+          >
+            <FiEye className="text-blue-500" size={18} />
+            <span>Details</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => runAction(() => handleDelete(actionMenu.note.id))}
+            className="flex w-full items-center gap-1.5 rounded-lg px-2 py-2 text-left text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
+          >
+            <FiTrash2 className="text-red-600" size={18} />
+            <span>Delete</span>
+          </button>
+        </div>
+      ) : null}
+
+      <DetailModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} note={selectedNote} />
     </div>
   );
 };
+
+const InfoTile = ({ label, value, icon: Icon }) => (
+  <div>
+    <p className="mb-2 text-base font-medium text-slate-500 flex items-center gap-1.5">
+      {Icon && <Icon size={16} className="text-green-600" />}
+      {label}
+    </p>
+    <p className="font-medium text-slate-700">{value}</p>
+  </div>
+);
 
 export default InventoryListPage;

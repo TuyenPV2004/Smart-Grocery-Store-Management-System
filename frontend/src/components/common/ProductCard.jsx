@@ -1,7 +1,8 @@
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
-import { FiEye, FiHeart, FiShoppingCart } from "react-icons/fi";
+import { FiEye, FiHeart } from "react-icons/fi";
+import { FaShoppingCart } from "react-icons/fa";
 import { useAuth } from "../../context/useAuth";
 import { useCart } from "../../context/useCart";
 import { getImageUrl } from "../../utils/imageUrl";
@@ -17,7 +18,8 @@ const ProductCard = ({ product }) => {
       currency: "VND",
     }).format(amount || 0);
 
-  const isOutOfStock = product.status === "OUT_OF_STOCK";
+  const stockQuantity = Number(product.stockQuantity || 0);
+  const isOutOfStock = product.status === "OUT_OF_STOCK" || stockQuantity <= 0;
   let discountedPrice = product.sellPrice || 0;
   let hasDiscount = false;
   let discountDisplay = "";
@@ -39,6 +41,10 @@ const ProductCard = ({ product }) => {
     if (!user) {
       toast.warning("Please sign in to add products to your cart.");
       navigate("/login");
+      return;
+    }
+    if (isOutOfStock) {
+      toast.warning("This product is out of stock.");
       return;
     }
     addToCart(product);
@@ -120,16 +126,16 @@ const ProductCard = ({ product }) => {
           <button
             type="button"
             onClick={handleAddToCart}
-            className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl shadow-sm transition-all active:scale-95 ${
+            className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full border transition-all active:scale-95 ${
               isOutOfStock
-                ? "cursor-not-allowed bg-slate-100 text-slate-400"
-                : "bg-emerald-700 text-white shadow-emerald-100 hover:bg-emerald-800"
+                ? "cursor-not-allowed border-slate-100 bg-slate-50 text-slate-400"
+                : "border-slate-200 bg-transparent text-emerald-700 hover:border-emerald-700 hover:bg-emerald-700 hover:text-white"
             }`}
             disabled={isOutOfStock}
             title={isOutOfStock ? "Out of stock" : "Add to cart"}
             aria-label={isOutOfStock ? "Product is out of stock" : "Add to cart"}
           >
-            <FiShoppingCart size={18} />
+            <FaShoppingCart size={18} />
           </button>
         </div>
       </div>

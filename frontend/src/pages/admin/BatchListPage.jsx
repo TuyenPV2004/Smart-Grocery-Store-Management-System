@@ -1,129 +1,301 @@
+import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
-import React, { useEffect, useState } from "react";
-import batchService from "../../services/batchService";
-import {
-  FiEye as Eye,
-  FiX as X,
-  FiSearch as Search,
-  FiAlertCircle as AlertCircle,
-  FiCheckCircle as CheckCircle,
-  FiClock as Clock,
-  FiTrash2 as Trash2,
-} from "react-icons/fi";
 import Swal from "sweetalert2";
-import ReactPaginate from "react-paginate";
+import {
+  FiAlertCircle,
+  FiCheckCircle,
+  FiClock,
+  FiEye,
+  FiMoreHorizontal,
+  FiPackage,
+  FiSearch,
+  FiTrash2,
+  FiX,
+} from "react-icons/fi";
+import { PhotoProvider, PhotoView } from "react-photo-view";
+import "react-photo-view/dist/react-photo-view.css";
+import AppPagination from "../../components/common/AppPagination";
+import batchService from "../../services/batchService";
+import productService from "../../services/productService";
+import supplierService from "../../services/supplierService";
+import { getImageUrl } from "../../utils/imageUrl";
+import { StatusBadge } from "../../components/ui";
+import { FaCheckCircle, FaClock, FaExclamationCircle } from "react-icons/fa";
 
-// Detail Modal Component
+const FILTERS = [
+  { id: "ALL", label: "All" },
+  { id: "good", label: "Good" },
+  { id: "near-expiry", label: "Near Expiry" },
+  { id: "expired", label: "Expired" },
+  { id: "unknown", label: "Unknown" },
+];
+
+const formatMoney = (value) => `${Number(value || 0).toLocaleString("vi-VN")} VND`;
+
+const formatDate = (value) => {
+  if (!value) return "---";
+  return new Date(value).toLocaleDateString("vi-VN", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
+};
+
+const getProductName = (batch) => batch?.product?.name || batch?.productName || "---";
+const getProductSku = (batch) => batch?.product?.sku || batch?.productSku || "---";
+const getProductUnit = (batch) => batch?.product?.unit || batch?.productUnit || "";
+const getProductBrand = (batch) => batch?.product?.brand || batch?.productBrand || "";
+const getProductThumbnail = (batch) =>
+  batch?.product?.thumbnail ||
+  batch?.productThumbnail ||
+  batch?.thumbnail ||
+  batch?.product?.imageUrl ||
+  "";
+
+const UNIT_FIXES = {
+  "Th?ng": "Thùng",
+  "H?p": "Hộp",
+  "C?i": "Cái",
+  "L?c": "Lốc",
+  "?on v?": "đơn vị",
+};
+
+const getImportUnit = (batch) => {
+  const unit = String(batch?.importUnit || "").trim();
+  return UNIT_FIXES[unit] || unit || getProductUnit(batch) || "";
+};
+const getSupplierName = (batch) =>
+  batch?.supplier?.vietnameseName ||
+  batch?.supplier?.englishName ||
+  batch?.supplierName ||
+  "---";
+
+const getConversionRate = (batch) => {
+  const rate = Number(batch?.conversionRate || 1);
+  return rate > 0 ? rate : 1;
+};
+
+const getImportedQuantity = (batch) => {
+  if (batch?.quantityInImportUnit != null) return Number(batch.quantityInImportUnit);
+  if (batch?.initialQuantity != null) return Number(batch.initialQuantity) / getConversionRate(batch);
+  if (batch?.quantity != null) return Number(batch.quantity) / getConversionRate(batch);
+  return 0;
+};
+
+const getAvailableQuantity = (batch) => {
+  if (batch?.quantity != null) return Number(batch.quantity) / getConversionRate(batch);
+  if (batch?.availableQty != null) return Number(batch.availableQty) / getConversionRate(batch);
+  return 0;
+};
+
+const formatQuantity = (value) =>
+  Number(value || 0).toLocaleString("vi-VN", {
+    maximumFractionDigits: 2,
+  });
+
+const getBatchProductId = (batch) => batch?.productId || batch?.product_id || batch?.product?.id || null;
+
+const normalizeLookupKey = (value) => String(value || "").trim().toLowerCase();
+
+const normalizeProductList = (payload) => {
+  if (Array.isArray(payload)) return payload;
+  if (Array.isArray(payload?.content)) return payload.content;
+  if (Array.isArray(payload?.data)) return payload.data;
+  if (Array.isArray(payload?.data?.content)) return payload.data.content;
+  return [];
+};
+
+const buildProductLookup = (products) =>
+  products.reduce(
+    (lookup, product) => {
+      if (product?.id != null) lookup.byId.set(String(product.id), product);
+      if (product?.sku) lookup.bySku.set(normalizeLookupKey(product.sku), product);
+      return lookup;
+    },
+    { byId: new Map(), bySku: new Map() },
+  );
+
+const normalizeSupplierList = (payload) => {
+  if (Array.isArray(payload)) return payload;
+  if (Array.isArray(payload?.content)) return payload.content;
+  if (Array.isArray(payload?.data)) return payload.data;
+  if (Array.isArray(payload?.data?.content)) return payload.data.content;
+  return [];
+};
+
+const buildSupplierLookup = (suppliers) =>
+  suppliers.reduce(
+    (lookup, supplier) => {
+      if (supplier?.id != null) lookup.byId.set(String(supplier.id), supplier);
+      if (supplier?.code) lookup.byCode.set(normalizeLookupKey(supplier.code), supplier);
+      return lookup;
+    },
+    { byId: new Map(), byCode: new Map() },
+  );
+
+const resolveCatalogSupplier = (batch, lookup) => {
+  const supplierId = batch?.supplierId || batch?.supplier_id || batch?.supplier?.id;
+  const supplierCode = normalizeLookupKey(batch?.supplierCode || batch?.supplier_code || batch?.supplier?.code);
+
+  if (supplierId && lookup.byId.has(String(supplierId))) return lookup.byId.get(String(supplierId));
+  if (supplierCode && lookup.byCode.has(supplierCode)) return lookup.byCode.get(supplierCode);
+  return null;
+};
+
+const resolveCatalogProduct = (batch, lookup) => {
+  const productId = getBatchProductId(batch);
+  const productSku = normalizeLookupKey(getProductSku(batch));
+
+  if (productId && lookup.byId.has(String(productId))) return lookup.byId.get(String(productId));
+  if (productSku && lookup.bySku.has(productSku)) return lookup.bySku.get(productSku);
+  return null;
+};
+
+const hydrateBatch = (batch, productLookup, supplierLookup) => {
+  const catalogProduct = resolveCatalogProduct(batch, productLookup);
+  const catalogSupplier = resolveCatalogSupplier(batch, supplierLookup);
+
+  return {
+    ...batch,
+    productId: getBatchProductId(batch) || catalogProduct?.id,
+    productName: catalogProduct?.name || batch.productName,
+    productSku: catalogProduct?.sku || batch.productSku,
+    productUnit: catalogProduct?.unit || batch.productUnit,
+    productBrand: catalogProduct?.brand || batch.productBrand,
+    productThumbnail: catalogProduct?.thumbnail || batch.productThumbnail,
+    supplierId: batch.supplierId || catalogSupplier?.id,
+    supplierCode: catalogSupplier?.code || batch.supplierCode,
+    supplierName: catalogSupplier?.vietnameseName || batch.supplierName,
+    product: {
+      ...(batch.product || {}),
+      id: batch.product?.id || catalogProduct?.id,
+      name: catalogProduct?.name || batch.product?.name,
+      sku: catalogProduct?.sku || batch.product?.sku,
+      unit: catalogProduct?.unit || batch.product?.unit,
+      brand: catalogProduct?.brand || batch.product?.brand,
+      thumbnail: catalogProduct?.thumbnail || batch.product?.thumbnail,
+    },
+    supplier: {
+      ...(batch.supplier || {}),
+      id: batch.supplier?.id || catalogSupplier?.id,
+      code: catalogSupplier?.code || batch.supplier?.code || batch.supplierCode,
+      vietnameseName: catalogSupplier?.vietnameseName || batch.supplier?.vietnameseName || batch.supplierName,
+      englishName: catalogSupplier?.englishName || batch.supplier?.englishName,
+    },
+  };
+};
+
+const getExpiryStatus = (expiryDate) => {
+  if (!expiryDate) {
+    return {
+      status: "unknown",
+      tone: "slate",
+      icon: FaExclamationCircle,
+      text: "Unknown",
+    };
+  }
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const expiry = new Date(expiryDate);
+  expiry.setHours(0, 0, 0, 0);
+  const daysUntilExpiry = Math.ceil((expiry - today) / (1000 * 60 * 60 * 24));
+
+  if (daysUntilExpiry < 0) {
+    return {
+      status: "expired",
+      tone: "rose",
+      icon: FaExclamationCircle,
+      text: "Expired",
+    };
+  }
+
+  if (daysUntilExpiry <= 30) {
+    return {
+      status: "near-expiry",
+      tone: "amber",
+      icon: FaClock,
+      text: "Near expiry",
+    };
+  }
+
+  return {
+    status: "good",
+    tone: "emerald",
+    icon: FaCheckCircle,
+    text: "Good",
+  };
+};
+
 const DetailModal = ({ isOpen, onClose, batch }) => {
   if (!isOpen || !batch) return null;
 
-  return (
-    <div className="fixed inset-0 bg-slate-900/50 flex justify-center items-center z-[70] backdrop-blur-sm p-4">
-      <div className="bg-white rounded-[2rem] w-full max-w-3xl shadow-2xl border border-white/50 max-h-[90vh] overflow-hidden flex flex-col animate-in fade-in zoom-in duration-200">
-        <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
-          <h3 className="text-lg font-medium text-slate-800 flex items-center gap-2">
-            Chi tiết lô hàng: {batch.batchCode}
-          </h3>
-          <button
-            onClick={onClose}
-            className="text-slate-400 hover:text-slate-600 p-1 rounded-md hover:bg-slate-100 transition-colors"
-            title="Đóng"
-          >
-            <X size={22} />
-          </button>
-        </div>
+  const thumbnail = getProductThumbnail(batch);
+  const expiryStatus = getExpiryStatus(batch.expiryDate);
+  const StatusIcon = expiryStatus.icon;
 
-        <div className="p-6 overflow-y-auto flex-1 space-y-6">
-          <div className="grid grid-cols-2 gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-100">
-            <div>
-              <p className="text-xs text-slate-900 font-medium mb-1">
-                Mã phiếu
-              </p>
-              <p className="font-medium text-slate-900">
-                {batch.inventoryNote?.code}
-              </p>
-            </div>
-            <div>
-              <p className="text-xs text-slate-900 font-medium mb-1">
-                Mã lô hàng
-              </p>
-              <p className="font-medium text-slate-900">{batch.batchCode}</p>
-            </div>
-            <div>
-              <p className="text-xs text-slate-900 font-medium mb-1">
-                Sản phẩm
-              </p>
-              <p className="font-medium text-slate-700">
-                {batch.product?.name}
-              </p>
-            </div>
-            <div>
-              <p className="text-xs text-slate-900 font-medium mb-1">Mã SKU</p>
-              <p className="font-medium text-slate-700">{batch.product?.sku}</p>
-            </div>
-            <div>
-              <p className="text-xs text-slate-900 font-medium mb-1">
-                Nhà cung cấp
-              </p>
-              <p className="font-medium text-slate-700">
-                {batch.supplier?.vietnameseName || "---"}
-              </p>
-            </div>
-            <div>
-              <p className="text-xs text-slate-900 font-medium mb-1">
-                Đơn giá nhập
-              </p>
-              <p className="font-medium text-slate-900">
-                {(
-                  (batch.importPrice || 0) * (batch.conversionRate || 1)
-                ).toLocaleString()}{" "}
-                ₫
-              </p>
-            </div>
-            <div>
-              <p className="text-xs text-slate-900 font-medium mb-1">
-                Ngày sản xuất
-              </p>
-              <div className="flex items-center gap-2 text-slate-900 font-medium">
-                {batch.manufacturingDate || "---"}
+  return (
+    <div className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm">
+      <PhotoProvider>
+        <div className="flex max-h-[90vh] w-full max-w-4xl flex-col overflow-hidden rounded-[2rem] border border-white/50 bg-white shadow-2xl">
+          <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50/50 p-6">
+            <h3 className="text-lg font-medium text-slate-800">Batch detail: {batch.batchCode}</h3>
+            <button type="button" onClick={onClose} className="text-slate-400 hover:text-slate-600">
+              <FiX size={24} />
+            </button>
+          </div>
+
+          <div className="flex-1 space-y-6 overflow-y-auto p-6 scrollbar-hide">
+            <div className="flex flex-col gap-4 rounded-2xl border border-slate-100 bg-slate-50 p-4 md:flex-row md:items-center">
+              <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-slate-200 bg-white">
+                <PhotoView src={thumbnail ? getImageUrl(thumbnail) : "https://via.placeholder.com/80"}>
+                  <img
+                    src={thumbnail ? getImageUrl(thumbnail) : "https://via.placeholder.com/80"}
+                    alt=""
+                    className="h-full w-full cursor-pointer object-cover transition-transform duration-200 hover:scale-105"
+                    onError={(event) => {
+                      event.currentTarget.src = "https://via.placeholder.com/80";
+                    }}
+                  />
+                </PhotoView>
               </div>
-            </div>
-            <div>
-              <p className="text-xs text-slate-900 font-medium mb-1">
-                Hạn sử dụng
-              </p>
-              <div className="flex items-center gap-2 text-slate-900 font-medium">
-                {batch.expiryDate || "---"}
+              <div className="min-w-0 flex-1">
+                <p className="text-lg font-medium leading-tight text-slate-900">{getProductName(batch)}</p>
+                <p className="mt-1 text-sm font-medium text-slate-500">{getProductSku(batch)}</p>
               </div>
+              <StatusBadge tone={expiryStatus.tone} className="w-fit gap-1 py-1 shadow-sm">
+                <StatusIcon size={13} />
+                {expiryStatus.text}
+              </StatusBadge>
             </div>
-            <div>
-              <p className="text-xs text-slate-900 font-medium mb-1">
-                Số lượng lô nhập
-              </p>
-              <p className="font-medium text-slate-700">
-                {batch.quantityInImportUnit
-                  ? `${batch.quantityInImportUnit} ${batch.importUnit || "đơn vị"}`
-                  : `${batch.quantity || 0} ${batch.product?.unit || ""}`}
-              </p>
-            </div>
-            <div>
-              <p className="text-xs text-slate-900 font-medium mb-1">
-                Số lượng hàng tồn
-              </p>
-              <p className="font-medium text-slate-700">
-                {batch.stockInImportUnit
-                  ? `${batch.stockInImportUnit} ${batch.importUnit || "đơn vị"}`
-                  : `${batch.product?.stockQuantity || 0} ${batch.product?.unit || ""}`}
-              </p>
+
+            <div className="grid grid-cols-2 gap-4 rounded-2xl border border-slate-100 bg-white p-4 md:grid-cols-4">
+              <InfoTile label="Inventory note" value={batch.inventoryNote?.code || "---"} />
+              <InfoTile label="Supplier" value={getSupplierName(batch)} />
+              <InfoTile
+                label="Unit"
+                value={`${getImportUnit(batch) || "---"}${getConversionRate(batch) > 1 ? ` x ${getConversionRate(batch)}` : ""}`}
+              />
+              <InfoTile label="Manufacturing date" value={formatDate(batch.manufacturingDate)} />
+              <InfoTile label="Expiry date" value={formatDate(batch.expiryDate)} />
+              <InfoTile
+                label="Imported quantity"
+                value={`${formatQuantity(getImportedQuantity(batch))} ${getImportUnit(batch)}`}
+              />
+              <InfoTile
+                label="Available stock"
+                value={`${formatQuantity(getAvailableQuantity(batch))} ${getImportUnit(batch)}`}
+              />
+              <InfoTile label="Conversion rate" value={batch.conversionRate || 1} />
+              <InfoTile label="Import price" value={formatMoney((batch.importPrice || 0) * (batch.conversionRate || 1))} />
             </div>
           </div>
         </div>
-      </div>
+      </PhotoProvider>
     </div>
   );
 };
 
-// Main Component
 const BatchListPage = () => {
   const batchesPerPage = 10;
   const [batches, setBatches] = useState([]);
@@ -134,14 +306,13 @@ const BatchListPage = () => {
   const [selectedBatch, setSelectedBatch] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(0);
-  const [totalPages, setTotalPages] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
   const [totalBatches, setTotalBatches] = useState(0);
+  const [filterCounts, setFilterCounts] = useState({ ALL: 0, good: 0, "near-expiry": 0, expired: 0, unknown: 0 });
+  const [actionMenu, setActionMenu] = useState(null);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearchTerm(searchTerm);
-    }, 300);
-
+    const timer = setTimeout(() => setDebouncedSearchTerm(searchTerm), 300);
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
@@ -150,306 +321,361 @@ const BatchListPage = () => {
   }, [currentPage, debouncedSearchTerm, statusFilter]);
 
   useEffect(() => {
+    fetchFilterCounts();
+  }, [debouncedSearchTerm]);
+
+  useEffect(() => {
     setCurrentPage(0);
-  }, [searchTerm, statusFilter]);
+  }, [debouncedSearchTerm, statusFilter]);
+
+  useEffect(() => {
+    if (!actionMenu) return undefined;
+
+    const closeMenu = () => setActionMenu(null);
+    window.addEventListener("click", closeMenu);
+    window.addEventListener("scroll", closeMenu, true);
+
+    return () => {
+      window.removeEventListener("click", closeMenu);
+      window.removeEventListener("scroll", closeMenu, true);
+    };
+  }, [actionMenu]);
+
+  const normalizeBatchResponse = (data) => {
+    const content = Array.isArray(data) ? data : data?.content || [];
+    return {
+      content,
+      totalElements: data?.totalElements ?? content.length,
+      totalPages: data?.totalPages ?? Math.max(1, Math.ceil(content.length / batchesPerPage)),
+    };
+  };
+
+  const getProductLookup = async () => {
+    try {
+      const response = await productService.getAll({ pageSize: 1000 });
+      return buildProductLookup(normalizeProductList(response.data));
+    } catch (error) {
+      console.warn("Unable to hydrate batches with catalog products:", error);
+      return buildProductLookup([]);
+    }
+  };
+
+  const getSupplierLookup = async () => {
+    try {
+      const response = await supplierService.getAll();
+      return buildSupplierLookup(normalizeSupplierList(response.data));
+    } catch (error) {
+      console.warn("Unable to hydrate batches with catalog suppliers:", error);
+      return buildSupplierLookup([]);
+    }
+  };
 
   const fetchBatches = async () => {
     try {
       setLoading(true);
-      const res = await batchService.getAll(
-        currentPage,
-        batchesPerPage,
-        debouncedSearchTerm,
-        statusFilter,
-      );
-      const dataList = Array.isArray(res.data)
-        ? res.data
-        : res.data.content || [];
-      setBatches(dataList);
-      setTotalPages(res.data.totalPages || 0);
-      setTotalBatches(res.data.totalElements ?? dataList.length);
+      const [response, productLookup, supplierLookup] = await Promise.all([
+        batchService.getAll(currentPage, batchesPerPage, debouncedSearchTerm, statusFilter),
+        getProductLookup(),
+        getSupplierLookup(),
+      ]);
+      const data = normalizeBatchResponse(response.data);
+      setBatches(data.content.map((batch) => hydrateBatch(batch, productLookup, supplierLookup)));
+      setTotalPages(Math.max(1, data.totalPages));
+      setTotalBatches(data.totalElements);
     } catch (error) {
-      console.error("Lỗi tải danh sách lô hàng:", error);
+      console.error("Failed to load batches:", error);
+      toast.error("Unable to load batches.");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleViewDetail = (batch) => {
-    setSelectedBatch(batch);
+  const fetchFilterCounts = async () => {
+    try {
+      const responses = await Promise.all(
+        FILTERS.map(async (filter) => {
+          const response = await batchService.getAll(0, 1, debouncedSearchTerm, filter.id);
+          const data = normalizeBatchResponse(response.data);
+          return [filter.id, data.totalElements];
+        }),
+      );
+      setFilterCounts(Object.fromEntries(responses));
+    } catch (error) {
+      console.warn("Unable to load batch filter counts:", error);
+    }
+  };
+
+  const handleViewDetail = async (batch) => {
+    try {
+      const [response, productLookup, supplierLookup] = await Promise.all([
+        batchService.getById(batch.id),
+        getProductLookup(),
+        getSupplierLookup(),
+      ]);
+      setSelectedBatch(hydrateBatch(response.data || batch, productLookup, supplierLookup));
+    } catch {
+      setSelectedBatch(batch);
+    }
     setIsModalOpen(true);
   };
 
   const handleDeleteBatch = async (batchId) => {
     const result = await Swal.fire({
-      title: "Xác nhận xóa?",
-      text: "Bạn có chắc chắn muốn xóa lô hàng này?",
+      title: "Delete batch?",
+      text: "This action cannot be undone.",
       icon: "warning",
       showCancelButton: true,
       confirmButtonColor: "#ef4444",
       cancelButtonColor: "#94a3b8",
-      confirmButtonText: "Xóa",
-      cancelButtonText: "Hủy",
+      confirmButtonText: "Delete",
+      cancelButtonText: "Cancel",
     });
 
     if (!result.isConfirmed) return;
 
     try {
       await batchService.deleteBatch(batchId);
-      toast.success("Đã xóa lô hàng thành công!");
-      fetchBatches(); // Refresh list
+      toast.success("Batch deleted.");
+      fetchBatches();
+      fetchFilterCounts();
     } catch (error) {
-      toast.error(
-        "Lỗi xóa lô hàng: " + (error.response?.data || error.message),
-      );
+      toast.error(`Unable to delete batch: ${error.response?.data || error.message}`);
     }
   };
 
-  const handlePageClick = (event) => {
-    setCurrentPage(event.selected);
+  const openActionMenu = (event, batch) => {
+    event.stopPropagation();
+    const rect = event.currentTarget.getBoundingClientRect();
+    const menuEstimatedHeight = 88;
+    const gap = 8;
+    const shouldOpenUpward = rect.bottom + gap + menuEstimatedHeight > window.innerHeight;
+
+    setActionMenu((current) =>
+      current?.batch?.id === batch.id
+        ? null
+        : {
+            batch,
+            x: rect.left + rect.width / 2,
+            y: shouldOpenUpward ? rect.top - gap : rect.bottom + gap,
+            placement: shouldOpenUpward ? "top" : "bottom",
+          },
+    );
   };
 
-  const getExpiryStatus = (expiryDate) => {
-    if (!expiryDate)
-      return { status: "unknown", color: "bg-slate-500 text-white" };
-
-    const today = new Date();
-    const expiry = new Date(expiryDate);
-    const daysUntilExpiry = Math.ceil((expiry - today) / (1000 * 60 * 60 * 24));
-
-    if (daysUntilExpiry < 0) {
-      return {
-        status: "expired",
-        color: "bg-red-600 text-white",
-        icon: AlertCircle,
-        text: "Hết hạn",
-      };
-    } else if (daysUntilExpiry <= 30) {
-      return {
-        status: "near-expiry",
-        color: "bg-amber-500 text-white",
-        icon: Clock,
-        text: "Sắp hết hạn",
-      };
-    } else {
-      return {
-        status: "good",
-        color: "bg-emerald-600 text-white",
-        icon: CheckCircle,
-        text: "Còn hạn",
-      };
-    }
+  const runAction = (callback) => {
+    setActionMenu(null);
+    callback();
   };
 
   return (
     <div className="admin-page-shell min-h-screen p-6 font-poppins text-slate-600">
-      {/* Header */}
-      <div className="max-w-[1400px] mx-auto mb-6">
-        <div className="flex justify-between items-center mb-4">
-          <div>
-            <h1 className="text-2xl font-medium text-slate-900 flex items-center">
-              Danh sách lô hàng
-            </h1>
-            <p className="text-sm text-slate-500 mt-1">
-              Quản lý và theo dõi các lô hàng nhập kho
-            </p>
-          </div>
-        </div>
-
-        {/* Search + Filters */}
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="relative w-[420px]">
-            <Search
-              className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400"
-              size={20}
-            />
-            <input
-              type="text"
-              placeholder="Tìm kiếm theo mã lô, tên sản phẩm"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-12 pr-4 py-3 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
-            />
-          </div>
-
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-4 py-3 bg-white border border-slate-200 rounded-xl text-slate-700 font-medium outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-          >
-            <option value="ALL">Tất cả trạng thái</option>
-            <option value="good">Còn hạn</option>
-            <option value="near-expiry">Sắp hết hạn</option>
-            <option value="expired">Hết hạn</option>
-            <option value="unknown">Không rõ</option>
-          </select>
-        </div>
+      <div className="mx-auto mb-6 max-w-[1400px]">
+        <h1 className="text-2xl font-medium text-slate-900">Inventory Batches</h1>
+        <p className="mt-1.5 text-sm font-medium text-slate-500">
+          Track product lots, expiry dates, suppliers, and available stock.
+        </p>
       </div>
 
-      {/* Table */}
-      <div className="max-w-[1400px] mx-auto bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-        {loading ? (
-          <div className="p-8 text-center text-slate-500">
-            Đang tải dữ liệu...
+      <div className="mx-auto max-w-[1400px] overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm">
+        <div className="border-b border-slate-100 px-6 py-5">
+          <h3 className="text-lg font-medium text-slate-900">Batch Inventory</h3>
+
+          <div className="mt-5 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex flex-wrap items-center gap-2">
+              {FILTERS.map((item) => {
+                const isActive = statusFilter === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => setStatusFilter(item.id)}
+                    className={`rounded-full px-4 py-2 text-sm font-medium transition-all ${
+                      isActive ? "bg-slate-900 text-white shadow-sm" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                    }`}
+                  >
+                    {item.label} {filterCounts[item.id] ?? 0}
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="relative w-full lg:w-[420px]">
+              <FiSearch size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(event) => setSearchTerm(event.target.value)}
+                placeholder="Search..."
+                className="w-full rounded-full border border-slate-200 bg-slate-100 py-2.5 pl-11 pr-11 font-medium text-slate-700 outline-none transition-all placeholder:text-slate-400 focus:border-slate-300 focus:bg-slate-50"
+              />
+              {searchTerm ? (
+                <button
+                  type="button"
+                  onClick={() => setSearchTerm("")}
+                  className="absolute right-3 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center text-red-500 transition-colors hover:text-red-700"
+                  aria-label="Clear search"
+                >
+                  <FiX size={15} />
+                </button>
+              ) : null}
+            </div>
           </div>
+        </div>
+
+        {loading ? (
+          <div className="p-8 text-center text-slate-500">Loading data</div>
         ) : (
           <>
             <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="bg-slate-50/50 border-b border-slate-100">
-                    <th className="px-6 py-4 font-medium text-slate-900 text-sm tracking-wider">
-                      Mã phiếu
-                    </th>
-                    <th className="px-6 py-4 w-40 font-medium text-slate-900 text-sm tracking-wider">
-                      Mã lô
-                    </th>
-                    <th className="px-6 py-4 font-medium text-slate-900 text-sm tracking-wider">
-                      Sản phẩm
-                    </th>
-                    <th className="px-6 py-4 font-medium text-slate-900 text-sm tracking-wider">
-                      Nhà cung cấp
-                    </th>
-                    <th className="px-6 py-4 font-medium text-slate-900 text-sm tracking-wider whitespace-nowrap">
-                      Số lượng
-                    </th>
-                    <th className="px-6 py-4 min-w-[140px] font-medium text-slate-900 text-sm tracking-wider">
-                      <div className="flex flex-col items-center ml-auto w-fit">
-                        <span className="block">Giá nhập</span>
-                        <span className="block">đơn vị</span>
-                      </div>
-                    </th>
-                    <th className="px-6 py-4 font-medium text-slate-900 text-sm tracking-wider text-center whitespace-nowrap">
-                      Trạng thái
-                    </th>
-                    <th className="px-6 py-4 font-medium text-slate-900 text-center text-sm tracking-wider whitespace-nowrap">
-                      Thao tác
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-50">
-                  {batches.map((batch) => {
-                    const expiryStatus = getExpiryStatus(batch.expiryDate);
-                    const StatusIcon = expiryStatus.icon;
-
-                    return (
-                      <tr
-                        key={batch.id}
-                        className="hover:bg-slate-50/50 transition-colors"
-                      >
-                        <td className="px-6 py-4 font-medium text-slate-600">
-                          {batch.inventoryNote?.code || "---"}
-                        </td>
-                        <td className="px-6 py-4 font-medium text-slate-600">
-                          {batch.batchCode}
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="font-medium text-slate-900">
-                            {batch.product?.name}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 text-slate-900">
-                          {batch.supplier?.vietnameseName || "---"}
-                        </td>
-                        <td className="px-4 py-4 text-center font-slate-900">
-                          {batch.quantityInImportUnit || 0} {batch.importUnit}
-                        </td>
-                        <td className="px-6 py-4 font-medium text-slate-800 text-right">
-                          {(
-                            (batch.importPrice || 0) *
-                            (batch.conversionRate || 1)
-                          ).toLocaleString()}{" "}
-                          ₫
-                        </td>
-                        <td className="px-6 py-4 text-center">
-                          <span
-                            className={`inline-flex items-center gap-1 px-3 py-1 text-xs font-medium rounded-full shadow-sm min-w-[100px] justify-center ${expiryStatus.color}`}
-                          >
-                            {StatusIcon && <StatusIcon size={12} />}
-                            {expiryStatus.text}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 text-center">
-                          <div className="flex items-center justify-center gap-2">
-                            <button
-                              onClick={() => handleViewDetail(batch)}
-                              className="text-green-600 hover:bg-green-50 p-2 rounded-lg transition-colors"
-                              title="Xem chi tiết"
-                            >
-                              <Eye size={18} />
-                            </button>
-                            <button
-                              onClick={() => handleDeleteBatch(batch.id)}
-                              className="text-rose-600 hover:bg-rose-50 p-2 rounded-lg transition-colors"
-                              title="Xóa lô"
-                            >
-                              <Trash2 size={18} />
-                            </button>
+              <PhotoProvider>
+                <table className="product-inventory-table w-full border-collapse text-left">
+                  <thead>
+                    <tr className="border-b border-slate-100 bg-slate-50/50">
+                      <th className="px-6 py-4 text-base font-medium text-slate-900">Product</th>
+                      <th className="px-6 py-4 text-base font-medium text-slate-900">Inventory Note</th>
+                      <th className="px-6 py-4 text-center text-base font-medium text-slate-900">Quantity</th>
+                      <th className="px-6 py-4 text-right text-base font-medium text-slate-900">Import Price</th>
+                      <th className="px-6 py-4 text-center text-base font-medium text-slate-900">Expiry</th>
+                      <th className="px-6 py-4 text-center text-base font-medium text-slate-900">Status</th>
+                      <th className="px-6 py-4 text-center text-base font-medium text-slate-900">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-50">
+                    {batches.length === 0 ? (
+                      <tr className="product-empty-row bg-white">
+                        <td colSpan="7" className="px-6 py-14">
+                          <div className="flex flex-col items-center justify-center text-center">
+                            <FiPackage className="mb-4 text-slate-950" size={30} />
+                            <h4 className="text-base font-medium text-slate-900">No matching batches</h4>
+                            <p className="mt-2 max-w-md text-sm font-medium text-slate-500">
+                              Try changing the status filter or search keyword.
+                            </p>
                           </div>
                         </td>
                       </tr>
-                    );
-                  })}
-                  {batches.length === 0 && (
-                    <tr>
-                      <td
-                        colSpan="9"
-                        className="p-8 text-center text-slate-400"
-                      >
-                        {searchTerm || statusFilter !== "ALL"
-                          ? "Không tìm thấy lô hàng nào phù hợp."
-                          : "Chưa có lô hàng nào."}
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
+                    ) : (
+                      batches.map((batch) => {
+                        const expiryStatus = getExpiryStatus(batch.expiryDate);
+                        const StatusIcon = expiryStatus.icon;
+                        const thumbnail = getProductThumbnail(batch);
+
+                        return (
+                          <tr key={batch.id} className="product-inventory-row transition-colors">
+                            <td className="px-6 py-4">
+                              <div className="flex min-w-[240px] items-center gap-3">
+                                <PhotoView src={thumbnail ? getImageUrl(thumbnail) : "https://via.placeholder.com/40"}>
+                                  <img
+                                    src={thumbnail ? getImageUrl(thumbnail) : "https://via.placeholder.com/40"}
+                                    alt=""
+                                    className="h-10 w-10 cursor-pointer rounded-lg border border-slate-200 object-cover transition-all hover:opacity-80"
+                                    onError={(event) => {
+                                      event.currentTarget.src = "https://via.placeholder.com/40";
+                                    }}
+                                  />
+                                </PhotoView>
+                                <div className="min-w-0">
+                                  <div className="text-sm font-medium leading-tight text-slate-900">{getProductName(batch)}</div>
+                                  <div className="mt-1 text-sm font-medium text-slate-500">
+                                    {getProductSku(batch)}
+                                  </div>
+                                  {getProductBrand(batch) ? (
+                                    <div className="mt-1 text-xs font-medium text-slate-500">{getProductBrand(batch)}</div>
+                                  ) : null}
+                                </div>
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 font-medium text-slate-700">{batch.inventoryNote?.code || "---"}</td>
+                            <td className="px-6 py-4 text-center font-medium text-slate-900">
+                              <div>{formatQuantity(getImportedQuantity(batch))} {getImportUnit(batch)}</div>
+                              <div className="mt-1 text-xs font-medium text-slate-500">
+                                Stock: {formatQuantity(getAvailableQuantity(batch))} {getImportUnit(batch)}
+                              </div>
+                            </td>
+                            <td className="whitespace-nowrap px-6 py-4 text-right font-medium text-slate-900">
+                              {formatMoney((batch.importPrice || 0) * (batch.conversionRate || 1))}
+                            </td>
+                            <td className="whitespace-nowrap px-6 py-4 text-center font-medium text-slate-800">
+                              {formatDate(batch.expiryDate)}
+                            </td>
+                            <td className="px-6 py-4 text-center">
+                              <StatusBadge tone={expiryStatus.tone} className="min-w-[108px] justify-center gap-1 py-1 shadow-sm">
+                                <StatusIcon size={12} />
+                                {expiryStatus.text}
+                              </StatusBadge>
+                            </td>
+                            <td className="px-6 py-4 text-center">
+                              <div className="flex items-center justify-center">
+                                <button
+                                  type="button"
+                                  onClick={(event) => openActionMenu(event, batch)}
+                                  className="flex h-9 w-9 items-center justify-center rounded-full text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900"
+                                  title="Actions"
+                                >
+                                  <FiMoreHorizontal size={20} />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
+              </PhotoProvider>
             </div>
 
+            {totalBatches > 0 ? (
+              <div className="border-t border-slate-100 bg-white px-6 py-4">
+                <AppPagination
+                  currentPage={currentPage}
+                  pageCount={totalPages}
+                  onPageChange={setCurrentPage}
+                  pageRangeDisplayed={4}
+                  marginPagesDisplayed={1}
+                />
+              </div>
+            ) : null}
           </>
         )}
       </div>
 
-      <div className="max-w-[1400px] mx-auto mt-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 font-medium text-slate-700 shadow-sm">
-          <span>Tổng lô hàng:</span>
-          <span className="text-slate-900">{totalBatches}</span>
+      {actionMenu ? (
+        <div
+          className={`fixed z-[80] !w-44 -translate-x-[calc(100%-1.25rem)] rounded-xl border border-slate-200 bg-white p-1 shadow-[0_12px_30px_rgba(100,116,139,0.22)] ring-1 ring-slate-300/45 ${
+            actionMenu.placement === "top" ? "-translate-y-full" : ""
+          }`}
+          style={{ left: actionMenu.x, top: actionMenu.y }}
+          onClick={(event) => event.stopPropagation()}
+        >
+          <button
+            type="button"
+            onClick={() => runAction(() => handleViewDetail(actionMenu.batch))}
+            className="flex w-full items-center gap-1.5 rounded-lg px-2 py-2 text-left text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
+          >
+            <FiEye className="text-blue-500" size={18} />
+            <span>Details</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => runAction(() => handleDeleteBatch(actionMenu.batch.id))}
+            className="flex w-full items-center gap-1.5 rounded-lg px-2 py-2 text-left text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
+          >
+            <FiTrash2 className="text-red-600" size={18} />
+            <span>Delete</span>
+          </button>
         </div>
+      ) : null}
 
-        {totalPages > 1 && (
-          <ReactPaginate
-            breakLabel="..."
-            nextLabel=">"
-            onPageChange={handlePageClick}
-            pageRangeDisplayed={3}
-            marginPagesDisplayed={1}
-            pageCount={totalPages}
-            previousLabel="<"
-            forcePage={currentPage}
-            renderOnZeroPageCount={null}
-            containerClassName="flex items-center gap-1"
-            pageClassName=""
-            pageLinkClassName="min-w-9 h-9 px-2 flex items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-700 text-sm font-medium hover:bg-slate-50 transition-colors"
-            previousClassName=""
-            previousLinkClassName="min-w-9 h-9 px-2 flex items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-700 text-sm font-medium hover:bg-slate-50 transition-colors"
-            nextClassName=""
-            nextLinkClassName="min-w-9 h-9 px-2 flex items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-700 text-sm font-medium hover:bg-slate-50 transition-colors"
-            breakClassName=""
-            breakLinkClassName="min-w-9 h-9 px-2 flex items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 text-sm font-medium"
-            activeClassName=""
-            activeLinkClassName="!bg-green-600 !text-white !border-green-600"
-            disabledClassName="opacity-40 pointer-events-none"
-          />
-        )}
-      </div>
-
-      <DetailModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        batch={selectedBatch}
-      />
+      <DetailModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} batch={selectedBatch} />
     </div>
   );
 };
+
+const InfoTile = ({ label, value }) => (
+  <div>
+    <p className="mb-2 text-base font-medium text-slate-500">{label}</p>
+    <p className="font-medium text-slate-700">{value}</p>
+  </div>
+);
 
 export default BatchListPage;

@@ -219,7 +219,7 @@ public class ChatService {
                 "system:grocery",
                 "G",
                 "STAFF",
-                "Xin chao quy khach!\nNhan vien cua chung toi se ho tro ban som nhat co the."
+                "Xin ch\u00e0o qu\u00fd kh\u00e1ch!\nNh\u00e2n vi\u00ean c\u1ee7a ch\u00fang t\u00f4i s\u1ebd h\u1ed7 tr\u1ee3 b\u1ea1n s\u1edbn nh\u1ea5t c\u00f3 th\u1ec3."
         );
         updateConversationMetadata(savedConversation, systemMessage.getContent(), systemMessage.getSenderRole());
         return chatConversationRepository.save(savedConversation);

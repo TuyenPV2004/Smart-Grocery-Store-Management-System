@@ -1,10 +1,13 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { FiArrowLeft, FiArrowRight, FiChevronDown, FiChevronRight, FiSearch, FiSliders, FiX } from "react-icons/fi";
+import { FiChevronDown, FiChevronRight, FiSearch, FiSliders, FiX } from "react-icons/fi";
+import { FaHome } from "react-icons/fa";
+import AppPagination from "../../components/common/AppPagination";
 import ProductCard from "../../components/common/ProductCard";
 import { Button, EmptyState, PageContainer, PageShell, SurfaceCard } from "../../components/ui";
 import categoryService from "../../services/categoryService";
 import productService from "../../services/productService";
+import { fetchStockLookup, hydrateProductsStock } from "../../services/stockAvailabilityService";
 
 const PRICE_RANGES = [
   { label: "Under 100,000 VND", min: 0, max: 100000 },
@@ -70,9 +73,12 @@ const CustomerProductPage = () => {
         if (currentSearch) params.keyword = currentSearch;
         if (currentCategory) params.categoryId = currentCategory;
 
-        const res = await productService.getAll(params);
+        const [res, stockLookup] = await Promise.all([
+          productService.getAll(params),
+          fetchStockLookup(),
+        ]);
         const productList = res.data?.content || res.data || [];
-        setProducts(Array.isArray(productList) ? productList : []);
+        setProducts(Array.isArray(productList) ? hydrateProductsStock(productList, stockLookup) : []);
       } catch (error) {
         console.error("Error fetching products:", error);
         setProducts([]);
@@ -175,6 +181,11 @@ const CustomerProductPage = () => {
     handleCategorySelect(null);
   };
 
+  const handlePageChange = (page) => {
+    setCurrentPage(page + 1);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   const renderCategories = (cats) => (
     <ul className="space-y-1">
       {cats.map((cat) => {
@@ -192,7 +203,7 @@ const CustomerProductPage = () => {
                   if (hasChildren) setOpenParentId((prev) => (prev === cat.id ? null : cat.id));
                 }}
                 className={`min-h-10 flex-1 rounded-xl px-3 py-2 text-left text-sm font-medium transition-colors ${
-                  isSelected ? "bg-emerald-50 text-emerald-800" : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                  isSelected ? "bg-emerald-50 text-emerald-800" : "text-slate-600 hover:text-slate-900"
                 }`}
               >
                 {cat.name}
@@ -201,10 +212,10 @@ const CustomerProductPage = () => {
                 <button
                   type="button"
                   onClick={() => setOpenParentId((prev) => (prev === cat.id ? null : cat.id))}
-                  className="flex h-10 w-10 items-center justify-center rounded-xl text-slate-400 hover:bg-slate-50 hover:text-emerald-700"
+                  className="flex h-10 w-10 items-center justify-center rounded-xl text-slate-400 hover:text-emerald-700"
                   aria-label="Toggle subcategories"
                 >
-                  {isOpen ? <FiChevronDown size={16} /> : <FiChevronRight size={16} />}
+                  {isOpen ? <FiChevronDown size={16} strokeWidth={3} /> : <FiChevronRight size={16} strokeWidth={3} />}
                 </button>
               ) : null}
             </div>
@@ -219,7 +230,7 @@ const CustomerProductPage = () => {
                       className={`min-h-9 w-full rounded-xl px-3 py-2 text-left text-sm font-medium transition-colors ${
                         currentCategory === String(child.id)
                           ? "bg-emerald-50 text-emerald-800"
-                          : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
+                          : "text-slate-500 hover:text-slate-900"
                       }`}
                     >
                       {child.name}
@@ -252,7 +263,7 @@ const CustomerProductPage = () => {
             setOpenParentId(null);
           }}
           className={`mb-1 min-h-10 w-full rounded-xl px-3 py-2 text-left text-sm font-medium transition-colors ${
-            !currentCategory ? "bg-emerald-700 text-white" : "text-slate-600 hover:bg-slate-50"
+            !currentCategory ? "bg-emerald-700 text-white" : "text-slate-600 hover:text-slate-900"
           }`}
         >
           All products
@@ -324,7 +335,10 @@ const CustomerProductPage = () => {
     <PageShell className="py-8">
       <PageContainer>
         <div className="mb-4 flex items-center gap-2 text-sm font-medium text-slate-500">
-          <Link to="/" className="text-black hover:text-slate-900">Home</Link>
+          <Link to="/" className="flex items-center gap-1.5 text-black hover:text-slate-900">
+            <FaHome className="text-emerald-700" size={16} />
+            Home
+          </Link>
           <span className="font-semibold text-black">&gt;</span>
           <span className="text-emerald-700">Products</span>
         </div>
@@ -405,66 +419,13 @@ const CustomerProductPage = () => {
                 </div>
 
                 {filteredProducts.length > PRODUCTS_PER_PAGE ? (
-                  <div className="mt-8 flex flex-wrap items-center justify-between gap-3">
-                    <p className="text-sm font-medium text-slate-500">
-                      Page {currentPage}/{totalPages}
-                    </p>
-                    <div className="flex flex-wrap items-center gap-1">
-                      <button
-                        type="button"
-                        onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-                        disabled={currentPage === 1}
-                        className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
-                        aria-label="Previous page"
-                      >
-                        <FiArrowLeft size={16} />
-                      </button>
-
-                      {(() => {
-                        const pageNumbers = [];
-                        if (totalPages <= 3) {
-                          for (let page = 1; page <= totalPages; page += 1) pageNumbers.push(page);
-                        } else if (currentPage === 1) {
-                          pageNumbers.push(1, 2, "ellipsis", totalPages);
-                        } else if (currentPage === 2) {
-                          pageNumbers.push(1, 2, 3, "ellipsis", totalPages);
-                        } else if (currentPage >= totalPages - 1) {
-                          pageNumbers.push(1, "ellipsis", totalPages - 2, totalPages - 1, totalPages);
-                        } else {
-                          pageNumbers.push(1, "ellipsis", currentPage, currentPage + 1, "ellipsis", totalPages);
-                        }
-
-                        return pageNumbers.map((page, index) =>
-                          page === "ellipsis" ? (
-                            <span key={`ellipsis-${index}`} className="px-2 text-sm font-medium text-slate-400">
-                              ...
-                            </span>
-                          ) : (
-                            <button
-                              key={page}
-                              type="button"
-                              onClick={() => setCurrentPage(page)}
-                              className={`flex h-10 min-w-10 items-center justify-center rounded-xl border px-3 text-sm font-medium ${
-                                currentPage === page ? "border-emerald-700 bg-emerald-700 text-white" : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
-                              }`}
-                            >
-                              {page}
-                            </button>
-                          ),
-                        );
-                      })()}
-
-                      <button
-                        type="button"
-                        onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-                        disabled={currentPage === totalPages}
-                        className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
-                        aria-label="Next page"
-                      >
-                        <FiArrowRight size={16} />
-                      </button>
-                    </div>
-                  </div>
+                  <AppPagination
+                    currentPage={currentPage - 1}
+                    pageCount={totalPages}
+                    onPageChange={handlePageChange}
+                    pageRangeDisplayed={4}
+                    marginPagesDisplayed={1}
+                  />
                 ) : null}
               </>
             ) : (

@@ -1,22 +1,21 @@
 import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
-  FiArchive,
   FiBox,
   FiChevronDown,
   FiClipboard,
   FiDatabase,
   FiDownload,
-  FiGrid,
-  FiLayers,
   FiLogOut,
-  FiMessageCircle,
-  FiPackage,
-  FiTag,
-  FiTruck,
   FiUpload,
-  FiUsers,
 } from "react-icons/fi";
+import { BiSolidCategoryAlt } from "react-icons/bi";
+import { PiPackageFill } from "react-icons/pi";
+import { FaTruckFast } from "react-icons/fa6";
+import { MdInventory, MdDiscount } from "react-icons/md";
+import { FaLayerGroup, FaClipboardList } from "react-icons/fa";
+import { IoLogoWechat } from "react-icons/io5";
+import { HiUserGroup, HiTicket } from "react-icons/hi2";
 import { useAuth } from "../context/useAuth";
 
 const navItemBase =
@@ -39,27 +38,27 @@ const Sidebar = ({ isCollapsed, onToggle }) => {
       id: "dashboard",
       path: "/dashboard",
       label: "Dashboard",
-      icon: FiGrid,
+      icon: BiSolidCategoryAlt,
       roles: ["ADMIN", "STAFF"],
     },
     {
       id: "products",
       path: "/admin/products",
       label: "Products",
-      icon: FiPackage,
+      icon: PiPackageFill,
       roles: ["ADMIN", "STAFF"],
     },
     {
       id: "suppliers",
       path: "/suppliers",
       label: "Suppliers",
-      icon: FiTruck,
+      icon: FaTruckFast,
       roles: ["ADMIN", "STAFF"],
     },
     {
       id: "inventory",
       label: "Inventory",
-      icon: FiArchive,
+      icon: MdInventory,
       roles: ["ADMIN", "STAFF"],
       isParent: true,
       isOpen: isInventoryOpen,
@@ -76,42 +75,42 @@ const Sidebar = ({ isCollapsed, onToggle }) => {
       id: "categories",
       path: "/categories",
       label: "Categories",
-      icon: FiLayers,
+      icon: FaLayerGroup,
       roles: ["ADMIN"],
     },
     {
       id: "orders",
       path: "/orders",
       label: "Orders",
-      icon: FiClipboard,
+      icon: FaClipboardList,
       roles: ["ADMIN", "STAFF"],
     },
     {
       id: "chat",
       path: "/support/chat",
       label: "Support Chat",
-      icon: FiMessageCircle,
+      icon: IoLogoWechat,
       roles: ["ADMIN", "STAFF"],
     },
     {
       id: "users",
       path: "/users",
       label: "Users",
-      icon: FiUsers,
+      icon: HiUserGroup,
       roles: ["ADMIN"],
     },
     {
       id: "promotions",
       path: "/promotions",
       label: "Promotions",
-      icon: FiTag,
+      icon: MdDiscount,
       roles: ["ADMIN"],
     },
     {
       id: "vouchers",
       path: "/vouchers",
       label: "Vouchers",
-      icon: FiTag,
+      icon: HiTicket,
       roles: ["ADMIN"],
     },
   ];
@@ -172,8 +171,8 @@ const Sidebar = ({ isCollapsed, onToggle }) => {
           </button>
           {!isCollapsed ? (
             <div className="min-w-0">
-              <h1 className="truncate text-lg font-medium tracking-tight text-slate-950">
-                Grocery Admin
+              <h1 className="truncate text-lg font-bold tracking-tight text-slate-950">
+                Grocery<span className="text-[#047857]">Admin</span>
               </h1>
               <p className="truncate text-xs font-medium text-slate-400">
                 Store operations
@@ -200,7 +199,7 @@ const Sidebar = ({ isCollapsed, onToggle }) => {
                       isCollapsed ? "justify-center px-0" : "px-4"
                     } ${
                       active || openFlyoutIndex === index
-                        ? "bg-emerald-50 text-emerald-800"
+                        ? "text-emerald-800"
                         : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
                     }`}
                     aria-expanded={item.isOpen}
@@ -246,7 +245,7 @@ const Sidebar = ({ isCollapsed, onToggle }) => {
                               onClick={() => handleFlyoutLinkClick(child.path)}
                               className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all ${
                                 isChildActive(child.path)
-                                  ? "bg-emerald-50 text-emerald-800"
+                                  ? "text-emerald-800"
                                   : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
                               }`}
                             >
@@ -271,7 +270,7 @@ const Sidebar = ({ isCollapsed, onToggle }) => {
                             onClick={() => navigate(child.path)}
                             className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all ${
                               activeChild
-                                ? "bg-emerald-50 text-emerald-800"
+                                ? "text-emerald-800"
                                 : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
                             }`}
                           >
@@ -296,7 +295,7 @@ const Sidebar = ({ isCollapsed, onToggle }) => {
                 title={isCollapsed ? item.label : undefined}
                 className={`${navItemBase} ${isCollapsed ? "justify-center px-0" : "px-4"} ${
                   active
-                    ? "bg-emerald-50 text-emerald-800"
+                    ? "text-emerald-800"
                     : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
                 }`}
               >

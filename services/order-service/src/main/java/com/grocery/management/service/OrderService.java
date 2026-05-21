@@ -5,6 +5,7 @@ import com.grocery.management.dto.InventoryReservationRequest;
 import com.grocery.management.dto.OrderCreatedEvent;
 import com.grocery.management.dto.OrderRequest;
 import com.grocery.management.dto.ProductSnapshotResponse;
+import com.grocery.management.dto.StockSummaryDTO;
 import com.grocery.management.dto.VoucherValidationResponse;
 import com.grocery.management.entity.Order;
 import com.grocery.management.entity.OrderDetail;
@@ -31,7 +32,9 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -98,33 +101,42 @@ public class OrderService {
         order.setVoucherCode(normalizeVoucherCode(request.getVoucherCode()));
         order.setFinalAmount(totalAmount.subtract(discount));
 
+        validateStockAvailability(details);
+
         InventoryReservationRequest reservationRequest = new InventoryReservationRequest(
                 order.getCode(),
                 details.stream()
                         .map(detail -> new InventoryReservationRequest.Item(detail.getProductId(), detail.getQuantity()))
                         .toList());
 
-        inventoryClient.reserve(order.getCode(), reservationRequest);
-        Order savedOrder;
+        boolean inventoryReservationAttempted = false;
         try {
-            savedOrder = orderRepository.save(order);
+            inventoryReservationAttempted = true;
+            inventoryClient.reserve(order.getCode(), reservationRequest);
+            Order savedOrder = orderRepository.save(order);
+            orderEventPublisher.publishOrderCreated(new OrderCreatedEvent(
+                    savedOrder.getId(),
+                    savedOrder.getCode(),
+                    currentUser.getId(),
+                    currentUser.getUsername(),
+                    savedOrder.getCustomerName(),
+                    savedOrder.getCustomerPhone(),
+                    currentUser.getEmail(),
+                    savedOrder.getFinalAmount(),
+                    savedOrder.getPaymentMethod(),
+                    savedOrder.getVoucherCode(),
+                    savedOrder.getCreatedAt()));
+            return savedOrder;
         } catch (RuntimeException ex) {
-            inventoryClient.release(order.getCode());
+            if (inventoryReservationAttempted) {
+                try {
+                    inventoryClient.release(order.getCode());
+                } catch (RuntimeException releaseEx) {
+                    ex.addSuppressed(releaseEx);
+                }
+            }
             throw ex;
         }
-        orderEventPublisher.publishOrderCreated(new OrderCreatedEvent(
-                savedOrder.getId(),
-                savedOrder.getCode(),
-                currentUser.getId(),
-                currentUser.getUsername(),
-                savedOrder.getCustomerName(),
-                savedOrder.getCustomerPhone(),
-                currentUser.getEmail(),
-                savedOrder.getFinalAmount(),
-                savedOrder.getPaymentMethod(),
-                savedOrder.getVoucherCode(),
-                savedOrder.getCreatedAt()));
-        return savedOrder;
     }
 
     @Transactional(readOnly = true)
@@ -398,6 +410,25 @@ public class OrderService {
             discount = discountValue;
         }
         return discount.compareTo(totalAmount) > 0 ? totalAmount : discount;
+    }
+
+    private void validateStockAvailability(List<OrderDetail> details) {
+        List<StockSummaryDTO> stockSummary = inventoryClient.getStockSummary();
+        Map<Long, Integer> availableByProductId = new HashMap<>();
+        for (StockSummaryDTO stock : stockSummary) {
+            if (stock.getProductId() != null) {
+                availableByProductId.put(stock.getProductId(), stock.getTotalQuantity() != null ? stock.getTotalQuantity() : 0);
+            }
+        }
+
+        for (OrderDetail detail : details) {
+            int available = availableByProductId.getOrDefault(detail.getProductId(), 0);
+            if (detail.getQuantity() > available) {
+                throw new RuntimeException("San pham " + safeString(detail.getProductName())
+                        + " (ID " + detail.getProductId() + ") khong du ton kho. Yeu cau: "
+                        + detail.getQuantity() + ", ton kha dung: " + available);
+            }
+        }
     }
 
     private void commitInventoryIfNeeded(Order order) {

@@ -3,11 +3,10 @@ import {
   FiArrowDown as ArrowDown,
   FiArrowUp as ArrowUp,
   FiArrowUpRight as ArrowUpRight,
-  FiTrendingUp as TrendingUp,
-  FiShoppingCart as ShoppingCart,
-  FiXCircle as XCircle,
-  FiTarget as Target,
 } from "react-icons/fi";
+import { GiReceiveMoney } from "react-icons/gi";
+import { IoBagCheck, IoAnalytics } from "react-icons/io5";
+import { MdCancel } from "react-icons/md";
 import {
   AreaChart,
   Area,
@@ -29,10 +28,12 @@ import { getImageUrl } from "../../utils/imageUrl";
 import productService from "../../services/productService";
 
 const TIME_OPTIONS = [
-  { value: 7, label: "Weekly" },
-  { value: 30, label: "Monthly" },
-  { value: 365, label: "Year" },
+  { value: 7, label: "This week" },
+  { value: 30, label: "This month" },
+  { value: 365, label: "This year" },
 ];
+
+const DEFAULT_DASHBOARD_DAYS = 365;
 
 const COLORS = {
   revenue: "#10b981",
@@ -79,23 +80,23 @@ const shortDate = (value) => {
 
 const metricTone = {
   emerald: {
-    accent: "bg-emerald-50 text-emerald-600",
+    accent: "text-emerald-600",
     border: "border-emerald-100",
   },
-  blue: { accent: "bg-blue-50 text-blue-600", border: "border-blue-100" },
+  blue: { accent: "text-blue-600", border: "border-blue-100" },
   indigo: {
-    accent: "bg-indigo-50 text-indigo-600",
+    accent: "text-indigo-600",
     border: "border-indigo-100",
   },
-  amber: { accent: "bg-amber-50 text-amber-600", border: "border-amber-100" },
-  rose: { accent: "bg-rose-50 text-rose-600", border: "border-rose-100" },
+  amber: { accent: "text-amber-600", border: "border-amber-100" },
+  rose: { accent: "text-rose-600", border: "border-rose-100" },
   orange: {
-    accent: "bg-orange-50 text-orange-600",
+    accent: "text-orange-600",
     border: "border-orange-100",
   },
-  sky: { accent: "bg-sky-50 text-sky-600", border: "border-sky-100" },
+  sky: { accent: "text-sky-600", border: "border-sky-100" },
   violet: {
-    accent: "bg-violet-50 text-violet-600",
+    accent: "text-violet-600",
     border: "border-violet-100",
   },
 };
@@ -113,11 +114,11 @@ const MetricCard = ({ title, value, icon, tone, changePercent, sparklineData }) 
       <div className="mb-5 flex items-center justify-between gap-3">
         <div className="flex min-w-0 items-center gap-3">
           <div
-            className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full ${metricTone[tone].accent}`}
+            className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full ${metricTone[tone].accent}`}
           >
-            <Icon size={21} />
+            <Icon size={32} />
           </div>
-          <p className="truncate text-sm font-medium text-slate-500">{title}</p>
+          <p className="truncate text-base font-medium text-slate-500">{title}</p>
         </div>
         <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-50 text-slate-500">
           <ArrowUpRight size={18} />
@@ -389,10 +390,10 @@ const DashboardPage = () => {
   const [categoryItems, setCategoryItems] = useState([]);
   const [productsByName, setProductsByName] = useState({});
   const [cardData, setCardData] = useState(null);
-  const [revenueDays, setRevenueDays] = useState(7);
-  const [orderDays, setOrderDays] = useState(7);
-  const [topProductDays, setTopProductDays] = useState(7);
-  const [categoryDays, setCategoryDays] = useState(30);
+  const [revenueDays, setRevenueDays] = useState(DEFAULT_DASHBOARD_DAYS);
+  const [orderDays, setOrderDays] = useState(DEFAULT_DASHBOARD_DAYS);
+  const [topProductDays, setTopProductDays] = useState(DEFAULT_DASHBOARD_DAYS);
+  const [categoryDays, setCategoryDays] = useState(DEFAULT_DASHBOARD_DAYS);
   const [error, setError] = useState("");
 
   const loadRevenueStats = async (days = revenueDays) => {
@@ -544,7 +545,7 @@ const DashboardPage = () => {
           <MetricCard
             title="Total Revenue"
             value={currency(cardMetrics.totalRevenue.value)}
-            icon={TrendingUp}
+            icon={GiReceiveMoney}
             tone="emerald"
             changePercent={cardMetrics.totalRevenue.change}
             sparklineData={cardMetrics.totalRevenue.sparkline}
@@ -552,7 +553,7 @@ const DashboardPage = () => {
           <MetricCard
             title="Completed Orders"
             value={cardMetrics.totalOrders.value}
-            icon={ShoppingCart}
+            icon={IoBagCheck}
             tone="blue"
             changePercent={cardMetrics.totalOrders.change}
             sparklineData={cardMetrics.totalOrders.sparkline}
@@ -560,7 +561,7 @@ const DashboardPage = () => {
           <MetricCard
             title="Average Order Value"
             value={currency(cardMetrics.averageOrderValue.value)}
-            icon={Target}
+            icon={IoAnalytics}
             tone="emerald"
             changePercent={cardMetrics.averageOrderValue.change}
             sparklineData={cardMetrics.averageOrderValue.sparkline}
@@ -568,7 +569,7 @@ const DashboardPage = () => {
           <MetricCard
             title="Cancellation Rate"
             value={percent(cardMetrics.cancellationRate.value)}
-            icon={XCircle}
+            icon={MdCancel}
             tone="rose"
             changePercent={cardMetrics.cancellationRate.change}
             sparklineData={cardMetrics.cancellationRate.sparkline}

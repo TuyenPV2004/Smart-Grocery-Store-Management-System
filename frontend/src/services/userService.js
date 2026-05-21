@@ -92,6 +92,17 @@ const userService = {
     },
 
     /**
+     * Upload ảnh nền người dùng
+     */
+    uploadBanner: (formData) => {
+        return axiosClient.post('/users/profile/banner', formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data'
+            }
+        });
+    },
+
+    /**
      * Đăng ký tài khoản khách hàng mới
      */
     register: (data) => {

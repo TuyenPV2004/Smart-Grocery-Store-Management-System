@@ -1,3 +1,3 @@
 catalog:
   service:
-    base-url: ${CATALOG_SERVICE_URL:http://catalog-service}
+    base-url: ${CATALOG_SERVICE_URL:http://catalog-service:8082}

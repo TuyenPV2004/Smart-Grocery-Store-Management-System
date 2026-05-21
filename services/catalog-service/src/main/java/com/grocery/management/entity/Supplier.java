@@ -32,6 +32,9 @@ public class Supplier {
 
     private String email;
     private String address;
+
+    @Column(name = "logo_url")
+    private String logoUrl;
     
     @Column(name = "tax_code")
     private String taxCode;

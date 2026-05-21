@@ -5,20 +5,16 @@ import {
   FiCalendar,
   FiEye,
   FiFileText,
-  FiFilter,
+  FiMoreHorizontal,
+  FiSearch,
   FiX,
 } from "react-icons/fi";
 import orderService from "../../services/orderService";
 import {
-  AdminHeader,
   AdminIconButton,
   AdminPage,
-  AdminSearchInput,
-  AdminSelect,
-  AdminTableCard,
-  Button,
-  SurfaceCard,
 } from "../../components/admin/AdminUi";
+import AdminTopbar from "../../components/admin/AdminTopbar";
 import { StatusBadge } from "../../components/ui";
 
 const statusOptions = [
@@ -27,6 +23,15 @@ const statusOptions = [
   { value: "SHIPPING", label: "Shipping" },
   { value: "COMPLETED", label: "Completed" },
   { value: "CANCELLED", label: "Cancelled" },
+];
+
+const dateFilterOptions = [
+  { value: "ALL", label: "All time" },
+  { value: "TODAY", label: "Today" },
+  { value: "YESTERDAY", label: "Yesterday" },
+  { value: "LAST_7_DAYS", label: "Last 7 days" },
+  { value: "LAST_30_DAYS", label: "Last 30 days" },
+  { value: "THIS_MONTH", label: "This month" },
 ];
 
 const currency = (value) =>
@@ -64,6 +69,41 @@ const getPaymentMethodLabel = (method) => {
       return "Cash on delivery";
     default:
       return method || "---";
+  }
+};
+
+const getDateRangeFromPreset = (preset) => {
+  if (preset === "ALL") return null;
+
+  const now = new Date();
+  const start = new Date(now);
+  const end = new Date(now);
+
+  start.setHours(0, 0, 0, 0);
+  end.setHours(23, 59, 59, 999);
+
+  switch (preset) {
+    case "TODAY":
+      return { start, end };
+    case "YESTERDAY": {
+      const yesterday = new Date(now);
+      yesterday.setDate(yesterday.getDate() - 1);
+      yesterday.setHours(0, 0, 0, 0);
+      const yesterdayEnd = new Date(yesterday);
+      yesterdayEnd.setHours(23, 59, 59, 999);
+      return { start: yesterday, end: yesterdayEnd };
+    }
+    case "LAST_7_DAYS":
+      start.setDate(start.getDate() - 6);
+      return { start, end };
+    case "LAST_30_DAYS":
+      start.setDate(start.getDate() - 29);
+      return { start, end };
+    case "THIS_MONTH":
+      start.setDate(1);
+      return { start, end };
+    default:
+      return null;
   }
 };
 
@@ -119,7 +159,9 @@ const OrderManagementPage = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
+  const [dateFilter, setDateFilter] = useState("ALL");
   const [selectedOrder, setSelectedOrder] = useState(null);
+  const [actionMenu, setActionMenu] = useState(null);
 
   const fetchOrders = async () => {
     try {
@@ -137,15 +179,43 @@ const OrderManagementPage = () => {
     fetchOrders();
   }, []);
 
+  useEffect(() => {
+    if (!actionMenu) return undefined;
+
+    const closeMenu = () => setActionMenu(null);
+    window.addEventListener("click", closeMenu);
+    window.addEventListener("scroll", closeMenu, true);
+
+    return () => {
+      window.removeEventListener("click", closeMenu);
+      window.removeEventListener("scroll", closeMenu, true);
+    };
+  }, [actionMenu]);
+
   const filteredOrders = orders.filter((order) => {
     const keyword = searchTerm.toLowerCase();
     const matchesKeyword =
+      !keyword ||
       order.code?.toLowerCase().includes(keyword) ||
       order.customerName?.toLowerCase().includes(keyword) ||
       order.customerPhone?.includes(searchTerm);
     const matchesStatus = statusFilter === "ALL" || order.status === statusFilter;
-    return matchesKeyword && matchesStatus;
+    const dateRange = getDateRangeFromPreset(dateFilter);
+    const createdAt = order.createdAt ? new Date(order.createdAt) : null;
+    const matchesDate =
+      !dateRange ||
+      (createdAt &&
+        !Number.isNaN(createdAt.getTime()) &&
+        createdAt >= dateRange.start &&
+        createdAt <= dateRange.end);
+
+    return matchesKeyword && matchesStatus && matchesDate;
   });
+
+  const getOrderStatusCount = (status) => {
+    if (status === "ALL") return orders.length;
+    return orders.filter((order) => order.status === status).length;
+  };
 
   const detailPricing = getOrderDetailPricing(selectedOrder);
   const showDetailDiscountColumn =
@@ -172,136 +242,249 @@ const OrderManagementPage = () => {
     }
   };
 
+  const openActionMenu = (event, order) => {
+    event.stopPropagation();
+    const rect = event.currentTarget.getBoundingClientRect();
+    const menuEstimatedHeight = 88;
+    const gap = 8;
+    const shouldOpenUpward =
+      rect.bottom + gap + menuEstimatedHeight > window.innerHeight;
+
+    setActionMenu((current) =>
+      current?.order?.id === order.id
+        ? null
+        : {
+            order,
+            x: rect.left + rect.width / 2,
+            y: shouldOpenUpward ? rect.top - gap : rect.bottom + gap,
+            placement: shouldOpenUpward ? "top" : "bottom",
+          },
+    );
+  };
+
+  const runAction = (callback) => {
+    setActionMenu(null);
+    callback();
+  };
+
   return (
     <AdminPage>
-      <AdminHeader
-        title="Order Management"
-        description="Track customer orders, payment details, fulfillment status, and exports."
-        actions={
-          <Button variant="secondary" className="hidden">
-            <FiFileText size={18} />
-            Export
-          </Button>
-        }
-      />
+      <div className="mx-auto mb-6 flex max-w-[1400px] flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div>
+          <h2 className="text-2xl font-medium text-slate-900">
+            Order Catalog
+          </h2>
+          <p className="mt-1.5 text-sm font-medium text-slate-500">
+            Search orders by code, customer name, or phone
+          </p>
+        </div>
+        <AdminTopbar />
+      </div>
 
-      <SurfaceCard className="flex flex-col gap-3 p-4 lg:flex-row lg:items-center lg:justify-between">
-        <div className="flex flex-1 flex-col gap-3 md:flex-row md:items-center">
-          <AdminSearchInput
-            value={searchTerm}
-            onChange={(event) => setSearchTerm(event.target.value)}
-            placeholder="Search by order code, customer, or phone"
-            className="md:max-w-xl"
-          />
-          <div className="flex items-center gap-2">
-            <FiFilter size={16} className="text-emerald-700" />
-            <AdminSelect
-              value={statusFilter}
-              onChange={(event) => setStatusFilter(event.target.value)}
-            >
-              {statusOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </AdminSelect>
+      <div className="mx-auto max-w-[1400px] overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm">
+        <div className="border-b border-slate-100 px-6 py-5">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <h3 className="text-lg font-medium text-slate-900">
+                Order Management
+              </h3>
+            </div>
+          </div>
+
+          <div className="mt-5 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex flex-wrap items-center gap-2">
+              {statusOptions.map((option) => {
+                const isActive = statusFilter === option.value;
+                return (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => setStatusFilter(option.value)}
+                    className={`rounded-full px-4 py-2 text-sm font-medium transition-all ${
+                      isActive
+                        ? "bg-slate-900 text-white shadow-sm"
+                        : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                    }`}
+                  >
+                    {option.label} {getOrderStatusCount(option.value)}
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center lg:w-auto">
+              <div className="relative w-full sm:w-[360px]">
+                <FiSearch
+                  className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+                  size={18}
+                />
+                <input
+                  type="text"
+                  value={searchTerm}
+                  placeholder="Search..."
+                  className="w-full rounded-full border border-slate-200 bg-slate-100 py-2.5 pl-11 pr-11 font-medium text-slate-700 outline-none transition-all placeholder:text-slate-400 focus:border-slate-300 focus:bg-slate-50"
+                  onChange={(event) => setSearchTerm(event.target.value)}
+                />
+                {searchTerm ? (
+                  <button
+                    type="button"
+                    onClick={() => setSearchTerm("")}
+                    className="absolute right-3 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center text-red-500 transition-colors hover:text-red-700"
+                    aria-label="Clear search"
+                  >
+                    <FiX size={15} />
+                  </button>
+                ) : null}
+              </div>
+              <div className="relative w-full sm:w-[180px]">
+                <FiCalendar
+                  className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+                  size={16}
+                />
+                <select
+                  value={dateFilter}
+                  onChange={(event) => setDateFilter(event.target.value)}
+                  className="w-full appearance-none rounded-full border border-slate-200 bg-slate-100 py-2.5 pl-10 pr-4 text-sm font-medium text-slate-700 outline-none transition-all focus:border-slate-300 focus:bg-slate-50"
+                >
+                  {dateFilterOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
           </div>
         </div>
-        <div className="hidden items-center rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-600">
-          <FiCalendar size={16} className="mr-2 text-slate-400" />
-          Today
-        </div>
-      </SurfaceCard>
 
-      <AdminTableCard>
-        <table>
-          <thead>
-            <tr>
-              <th className="px-6 py-4 text-left">Order</th>
-              <th className="px-6 py-4 text-left">Customer</th>
-              <th className="px-6 py-4 text-left">Total</th>
-              <th className="px-6 py-4 text-left">Staff</th>
-              <th className="px-6 py-4 text-left">Payment</th>
-              <th className="px-6 py-4 text-left">Status</th>
-              <th className="px-6 py-4 text-left">Date</th>
-              <th className="px-6 py-4 text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100">
-            {loading ? (
-              <tr>
-                <td colSpan="8" className="py-10 text-center text-sm font-medium text-slate-500">
-                  Loading orders
-                </td>
+        <div className="overflow-x-auto">
+          <table className="product-inventory-table w-full border-collapse text-left">
+            <thead>
+              <tr className="border-b border-slate-100 bg-slate-50/50">
+                <th className="px-6 py-4 text-base font-medium text-slate-900">Order</th>
+                <th className="px-6 py-4 text-base font-medium text-slate-900">Customer</th>
+                <th className="px-6 py-4 text-base font-medium text-slate-900">Total</th>
+                <th className="px-6 py-4 text-base font-medium text-slate-900">Staff</th>
+                <th className="px-6 py-4 text-base font-medium text-slate-900">Payment</th>
+                <th className="px-6 py-4 text-base font-medium text-slate-900">Status</th>
+                <th className="px-6 py-4 text-base font-medium text-slate-900">Date</th>
+                <th className="px-6 py-4 text-right text-base font-medium text-slate-900">Actions</th>
               </tr>
-            ) : filteredOrders.length === 0 ? (
-              <tr>
-                <td colSpan="8" className="py-10 text-center text-sm font-medium text-slate-500">
-                  No orders found.
-                </td>
-              </tr>
-            ) : (
-              filteredOrders.map((order) => (
-                <tr key={order.id}>
-                  <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-slate-950">
-                    {order.code}
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="text-sm font-medium text-slate-900">
-                      {order.customerName || "---"}
+            </thead>
+            <tbody className="divide-y divide-slate-50">
+              {loading ? (
+                <tr className="product-empty-row bg-white">
+                  <td colSpan="8" className="px-6 py-14">
+                    <div className="flex flex-col items-center justify-center text-center">
+                      <FiFileText className="mb-4 text-slate-950" size={30} />
+                      <h4 className="text-base font-medium text-slate-900">
+                        Loading orders
+                      </h4>
                     </div>
-                    <div className="text-xs font-medium text-slate-500">
-                      {order.customerPhone || "---"}
-                    </div>
-                  </td>
-                  <td className="whitespace-nowrap px-6 py-4">
-                    <div className="text-sm font-medium tabular-nums text-slate-900">
-                      {currency(order.finalAmount)}
-                    </div>
-                    {Number(order.discount || 0) > 0 ? (
-                      <div className="text-xs font-medium tabular-nums text-emerald-700">
-                        - {currency(order.discount)}
-                      </div>
-                    ) : null}
-                  </td>
-                  <td className="whitespace-nowrap px-6 py-4 text-sm text-slate-700">
-                    {order.user?.fullName || order.username || (order.userId ? `#${order.userId}` : "---")}
-                  </td>
-                  <td className="whitespace-nowrap px-6 py-4 text-sm text-slate-600">
-                    {getPaymentMethodLabel(order.paymentMethod)}
-                  </td>
-                  <td className="whitespace-nowrap px-6 py-4">
-                    <StatusBadge tone={getStatusTone(order.status)}>
-                      {order.status || "---"}
-                    </StatusBadge>
-                  </td>
-                  <td className="whitespace-nowrap px-6 py-4 text-sm text-slate-500">
-                    {formatOrderDate(order.createdAt)}
-                  </td>
-                  <td className="whitespace-nowrap px-6 py-4 text-right">
-                    <AdminIconButton
-                      onClick={() => handleExportExcel(order)}
-                      tone="emerald"
-                      title="Export"
-                      aria-label="Export order"
-                    >
-                      <FiFileText size={18} />
-                    </AdminIconButton>
-                    <AdminIconButton
-                      onClick={() => setSelectedOrder(order)}
-                      tone="blue"
-                      title="View details"
-                      aria-label="View order details"
-                    >
-                      <FiEye size={18} />
-                    </AdminIconButton>
                   </td>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </AdminTableCard>
+              ) : filteredOrders.length === 0 ? (
+                <tr className="product-empty-row bg-white">
+                  <td colSpan="8" className="px-6 py-14">
+                    <div className="flex flex-col items-center justify-center text-center">
+                      <FiFileText className="mb-4 text-slate-950" size={30} />
+                      <h4 className="text-base font-medium text-slate-900">
+                        No matching orders
+                      </h4>
+                      <p className="mt-2 max-w-md text-sm font-medium text-slate-500">
+                        Try changing the status filter or search keyword.
+                      </p>
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                filteredOrders.map((order) => (
+                  <tr key={order.id} className="product-inventory-row transition-colors">
+                    <td className="whitespace-nowrap px-6 py-4">
+                      <div className="text-sm font-medium text-slate-950">
+                        {order.code}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="text-sm font-medium text-slate-900">
+                        {order.customerName || "---"}
+                      </div>
+                      <div className="text-xs font-medium text-slate-500">
+                        {order.customerPhone || "---"}
+                      </div>
+                    </td>
+                    <td className="whitespace-nowrap px-6 py-4">
+                      <div className="text-sm font-medium tabular-nums text-slate-900">
+                        {currency(order.finalAmount)}
+                      </div>
+                      {Number(order.discount || 0) > 0 ? (
+                        <div className="text-xs font-medium tabular-nums text-emerald-700">
+                          - {currency(order.discount)}
+                        </div>
+                      ) : null}
+                    </td>
+                    <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-slate-700">
+                      {order.user?.fullName || order.username || (order.userId ? `#${order.userId}` : "---")}
+                    </td>
+                    <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-slate-600">
+                      {getPaymentMethodLabel(order.paymentMethod)}
+                    </td>
+                    <td className="whitespace-nowrap px-6 py-4">
+                      <StatusBadge tone={getStatusTone(order.status)}>
+                        {order.status || "---"}
+                      </StatusBadge>
+                    </td>
+                    <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-slate-500">
+                      {formatOrderDate(order.createdAt)}
+                    </td>
+                    <td className="whitespace-nowrap px-6 py-4 text-right">
+                      <div className="flex items-center justify-end">
+                        <button
+                          type="button"
+                          onClick={(event) => openActionMenu(event, order)}
+                          className="flex h-9 w-9 items-center justify-center rounded-full text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900"
+                          title="Actions"
+                        >
+                          <FiMoreHorizontal size={20} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {actionMenu ? (
+        <div
+          className={`fixed z-[80] !w-44 -translate-x-[calc(100%-1.25rem)] rounded-xl border border-slate-200 bg-white p-1 shadow-[0_12px_30px_rgba(100,116,139,0.22)] ring-1 ring-slate-300/45 ${
+            actionMenu.placement === "top" ? "-translate-y-full" : ""
+          }`}
+          style={{ left: actionMenu.x, top: actionMenu.y }}
+          onClick={(event) => event.stopPropagation()}
+        >
+          <button
+            type="button"
+            onClick={() => runAction(() => setSelectedOrder(actionMenu.order))}
+            className="flex w-full items-center gap-1.5 rounded-lg px-2 py-2 text-left text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
+            title="View details"
+          >
+            <FiEye className="text-blue-500" size={18} />
+            <span>Details</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => runAction(() => handleExportExcel(actionMenu.order))}
+            className="flex w-full items-center gap-1.5 rounded-lg px-2 py-2 text-left text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
+            title="Export"
+          >
+            <FiFileText className="text-emerald-600" size={18} />
+            <span>Export</span>
+          </button>
+        </div>
+      ) : null}
 
       {selectedOrder
         ? createPortal(
@@ -314,9 +497,11 @@ const OrderManagementPage = () => {
               />
               <div className="relative flex max-h-[90vh] w-full max-w-4xl flex-col overflow-hidden rounded-[1.75rem] border border-white/75 bg-white shadow-2xl">
                 <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50/80 px-6 py-4">
-                  <div>
+                  <div className="flex items-center gap-2">
                     <h2 className="text-xl font-medium text-slate-900">Order Details</h2>
-                    <p className="text-sm font-medium text-slate-500">{selectedOrder.code}</p>
+                    <span className="text-xl font-medium text-slate-600">
+                      {selectedOrder.code}
+                    </span>
                   </div>
                   <AdminIconButton
                     onClick={() => setSelectedOrder(null)}

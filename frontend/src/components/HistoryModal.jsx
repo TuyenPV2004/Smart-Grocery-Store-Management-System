@@ -1,10 +1,17 @@
 import { X, Clock, User, Tag, Shield, History } from "lucide-react";
+import { FaHistory } from "react-icons/fa";
 
 const HistoryModal = ({ history, onClose }) => {
   // Format ngày giờ: HH:mm:ss dd/MM/yyyy
   const formatDate = (dateString) => {
     const date = new Date(dateString);
-    return date.toLocaleString("vi-VN", { hour12: false });
+    const hours = String(date.getHours()).padStart(2, "0");
+    const minutes = String(date.getMinutes()).padStart(2, "0");
+    const seconds = String(date.getSeconds()).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const year = date.getFullYear();
+    return `${hours}:${minutes}:${seconds} ${day}/${month}/${year}`;
   };
 
   // Helper để lấy màu sắc theo hành động (nhẹ nhàng hơn)
@@ -19,22 +26,38 @@ const HistoryModal = ({ history, onClose }) => {
     }
   };
 
+  const getActionLabel = (action) => {
+    switch (action) {
+      case "THÊM MỚI":
+        return "Create";
+      case "XÓA":
+        return "Delete";
+      case "CẬP NHẬT":
+        return "Update";
+      default:
+        return action;
+    }
+  };
+
   return (
     <div className="fixed inset-0 bg-slate-900/60 z-[100] flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in duration-300">
       <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-2xl max-h-[85vh] flex flex-col overflow-hidden border border-slate-200">
         {/* Header Section */}
-        <div className="flex justify-between items-center p-8 border-b border-slate-100 bg-white">
-          <div>
-            <h3 className="text-2xl font-medium text-slate-900 flex items-center gap-3">
-              Lịch sử hoạt động
-            </h3>
-            <p className="text-sm text-slate-500 mt-1 font-medium">
-              Chi tiết các thay đổi đã được ghi lại trong hệ thống
-            </p>
+        <div className="flex justify-between items-start p-8 border-b border-slate-100 bg-white">
+          <div className="flex items-center gap-4">
+            <FaHistory className="text-indigo-600 shrink-0" size={28} />
+            <div>
+              <h3 className="text-2xl font-medium text-slate-900">
+                Activity History
+              </h3>
+              <p className="text-sm text-slate-500 mt-1 font-medium">
+                Detailed changes recorded in the system
+              </p>
+            </div>
           </div>
           <button
             onClick={onClose}
-            className="text-slate-400 hover:text-rose-600 transition-colors"
+            className="text-slate-400 hover:text-rose-600 transition-colors mt-1"
           >
             <X size={28} />
           </button>
@@ -48,7 +71,7 @@ const HistoryModal = ({ history, onClose }) => {
                 <Clock size={40} className="text-slate-300" />
               </div>
               <p className="text-slate-400 font-medium text-[15px]">
-                Chưa có dữ liệu lịch sử cho mục này
+                No history data available for this item
               </p>
             </div>
           ) : (
@@ -67,7 +90,7 @@ const HistoryModal = ({ history, onClose }) => {
                           item.action
                         )}`}
                       >
-                        {item.action.toLowerCase()}
+                        {getActionLabel(item.action)}
                       </span>
                       <div className="flex items-center gap-1.5 text-slate-900 font-medium text-xs">
                         <Clock size={14} />
@@ -78,9 +101,9 @@ const HistoryModal = ({ history, onClose }) => {
                     {/* Performed By Card */}
                     <div className="mb-4 flex items-center gap-3 p-3 bg-slate-50/80 rounded-xl border border-slate-100/50">
                       <div className="text-sm font-medium">
-                        <span className="text-slate-500">Người thực hiện:</span>
+                        <span className="text-slate-500">Performed by:</span>
                         <span className="ml-2 text-slate-900">
-                          {item.performedBy || "không xác định"}
+                          {item.performedBy || "Unknown"}
                           {item.role && (
                             <span className="ml-2 text-slate-900">
                               - {item.role.replace("ROLE_", "").toLowerCase()}
@@ -98,14 +121,14 @@ const HistoryModal = ({ history, onClose }) => {
                       <div className="text-[14px] font-medium text-slate-600">
                         {item.categoryName ? (
                           <p>
-                            Danh mục:{" "}
+                            Category:{" "}
                             <span className="text-slate-900">
                               {item.categoryName}
                             </span>
                           </p>
                         ) : (
                           <p>
-                            Sản phẩm:{" "}
+                            Product:{" "}
                             <span className="text-slate-900">
                               {item.productName}
                             </span>

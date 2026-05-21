@@ -2,15 +2,29 @@ import React, { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
-import { FiCreditCard, FiLoader, FiShield, FiUser } from "react-icons/fi";
+import { FiLoader } from "react-icons/fi";
+import { FaUserCheck, FaHome } from "react-icons/fa";
+import { MdVerifiedUser } from "react-icons/md";
+import { IoReceiptSharp } from "react-icons/io5";
+import { BsPaypal } from "react-icons/bs";
 import { Button, PageContainer, PageShell, SurfaceCard } from "../../components/ui";
 import { useAuth } from "../../context/useAuth";
 import { useCart } from "../../context/useCart";
 import orderService from "../../services/orderService";
 import paymentService from "../../services/paymentService";
+import { fetchStockLookup, getAvailableStock } from "../../services/stockAvailabilityService";
+
+const extractApiErrorMessage = (error, fallback) => {
+  const data = error?.response?.data;
+  if (!data) return fallback;
+  if (typeof data === "string") return data;
+  if (typeof data.message === "string") return data.message;
+  if (typeof data.error === "string") return data.error;
+  return fallback;
+};
 
 const CheckoutPage = () => {
-  const { cartItems, getProductPrice, cartTotal } = useCart();
+  const { cartItems, getProductPrice } = useCart();
   const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -18,7 +32,12 @@ const CheckoutPage = () => {
 
   const appliedVoucher = location.state?.appliedVoucher || null;
   const cartDiscount = location.state?.cartDiscount || 0;
-  const finalTotal = cartTotal - cartDiscount;
+  const checkoutItems = location.state?.checkoutItems || cartItems;
+  const checkoutTotal = checkoutItems.reduce(
+    (total, item) => total + getProductPrice(item.product) * item.quantity,
+    0,
+  );
+  const finalTotal = checkoutTotal - cartDiscount;
 
   const formatCurrency = (amount) =>
     new Intl.NumberFormat("vi-VN", {
@@ -33,8 +52,30 @@ const CheckoutPage = () => {
       return;
     }
 
-    if (cartItems.length === 0) {
+    if (checkoutItems.length === 0) {
       toast.warning("Your cart is empty.");
+      navigate("/cart");
+      return;
+    }
+
+    let stockLookup;
+    try {
+      stockLookup = await fetchStockLookup();
+    } catch (error) {
+      console.error("Failed to verify stock availability:", error);
+      toast.error("Could not verify stock availability. Please try again.");
+      return;
+    }
+
+    const invalidItem = checkoutItems.find((item) => item.quantity > getAvailableStock(item.product, stockLookup));
+    if (invalidItem) {
+      toast.warning(`${invalidItem.product.name} does not have enough stock.`);
+      navigate("/cart");
+      return;
+    }
+
+    if (appliedVoucher?.minOrderValue && checkoutTotal < Number(appliedVoucher.minOrderValue)) {
+      toast.warning(`Order minimum for this voucher is ${formatCurrency(appliedVoucher.minOrderValue)}.`);
       navigate("/cart");
       return;
     }
@@ -47,7 +88,7 @@ const CheckoutPage = () => {
       paymentMethod: "CHUYEN_KHOAN",
       discount: cartDiscount,
       voucherCode: appliedVoucher ? appliedVoucher.code : "",
-      items: cartItems.map((item) => ({
+      items: checkoutItems.map((item) => ({
         productId: item.product.id,
         quantity: item.quantity,
         price: getProductPrice(item.product),
@@ -71,12 +112,12 @@ const CheckoutPage = () => {
     } catch (error) {
       localStorage.removeItem("pendingVnpayOrderCode");
       console.error("Checkout error:", error);
-      toast.error(error.response?.data || "Could not create the order. Please try again.");
+      toast.error(extractApiErrorMessage(error, "Could not create the order. Please try again."));
       setIsProcessing(false);
     }
   };
 
-  if (!user || cartItems.length === 0) {
+  if (!user || checkoutItems.length === 0) {
     return (
       <PageShell className="flex items-center justify-center p-4">
         <div className="text-center">
@@ -91,7 +132,10 @@ const CheckoutPage = () => {
     <PageShell className="py-8">
       <PageContainer className="max-w-6xl">
         <div className="mb-4 flex items-center gap-2 text-sm font-medium text-slate-500">
-          <Link to="/" className="text-black hover:text-slate-900">Home</Link>
+          <Link to="/" className="flex items-center gap-1.5 text-black hover:text-slate-900">
+            <FaHome className="text-emerald-700" size={16} />
+            Home
+          </Link>
           <span className="font-semibold text-black">&gt;</span>
           <Link to="/cart" className="text-black hover:text-slate-900">Cart</Link>
           <span className="font-semibold text-black">&gt;</span>
@@ -102,9 +146,7 @@ const CheckoutPage = () => {
           <div className="space-y-6 lg:col-span-7">
             <SurfaceCard>
               <div className="mb-5 flex items-center gap-3 border-b border-slate-100 pb-4">
-                <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-700">
-                  <FiUser size={20} />
-                </span>
+                <FaUserCheck size={24} className="text-emerald-700" />
                 <div>
                   <h2 className="text-lg font-medium text-slate-900">Buyer information</h2>
                   <p className="text-sm text-slate-500">Pulled from your account profile.</p>
@@ -119,7 +161,7 @@ const CheckoutPage = () => {
 
             <SurfaceCard className="border-emerald-100 bg-emerald-50/60">
               <div className="mb-3 flex items-center gap-2 font-medium text-emerald-800">
-                <FiShield size={20} />
+                <MdVerifiedUser size={20} />
                 Payment instructions
               </div>
               <p className="text-sm leading-7 text-slate-600">
@@ -133,10 +175,13 @@ const CheckoutPage = () => {
           </div>
 
           <SurfaceCard className="h-fit lg:col-span-5 lg:sticky lg:top-28">
-            <h2 className="mb-4 text-lg font-medium text-slate-900">Order summary</h2>
+            <h2 className="mb-4 flex items-center gap-2 text-lg font-medium text-slate-900">
+              <IoReceiptSharp size={20} className="text-emerald-700" />
+              Order summary
+            </h2>
 
             <div className="mb-6 max-h-[280px] space-y-3 overflow-y-auto pr-2">
-              {cartItems.map((item) => (
+              {checkoutItems.map((item) => (
                 <div key={item.product.id} className="flex items-start justify-between gap-4 text-sm">
                   <div className="min-w-0">
                     <p className="line-clamp-2 font-medium leading-snug text-slate-800">
@@ -152,8 +197,8 @@ const CheckoutPage = () => {
             </div>
 
             <div className="mb-6 space-y-3 border-t border-slate-100 pt-4">
-              <SummaryRow label="Total items" value={cartItems.reduce((acc, item) => acc + item.quantity, 0)} />
-              <SummaryRow label="Total" value={formatCurrency(cartTotal)} />
+              <SummaryRow label="Total items" value={checkoutItems.reduce((acc, item) => acc + item.quantity, 0)} />
+              <SummaryRow label="Total" value={formatCurrency(checkoutTotal)} />
               {cartDiscount > 0 ? (
                 <SummaryRow
                   label={`Discount ${appliedVoucher ? `(${appliedVoucher.code})` : ""}`}
@@ -176,7 +221,7 @@ const CheckoutPage = () => {
               disabled={isProcessing}
               className="w-full py-4"
             >
-              {isProcessing ? <FiLoader className="h-5 w-5 animate-spin" /> : <FiCreditCard className="h-5 w-5" />}
+              {isProcessing ? <FiLoader className="h-5 w-5 animate-spin" /> : <BsPaypal className="h-5 w-5" />}
               {isProcessing ? "Initializing payment" : "Pay with VNPAY"}
             </Button>
           </SurfaceCard>

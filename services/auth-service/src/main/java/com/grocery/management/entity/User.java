@@ -43,6 +43,9 @@ public class User implements UserDetails {
 
     @Column(name = "avatar_url")
     private String avatarUrl;
+
+    @Column(name = "banner_url")
+    private String bannerUrl;
     
     @Column(name = "verification_code")
     @JsonIgnore

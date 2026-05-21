@@ -2,25 +2,22 @@ import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import {
   FiCamera,
-  FiChevronRight,
-  FiEdit,
   FiLock,
-  FiMail,
-  FiMapPin,
-  FiPhone,
-  FiSave,
-  FiShield,
   FiUser,
-  FiX,
 } from "react-icons/fi";
+import { FaUserAlt, FaMapMarkedAlt, FaHome } from "react-icons/fa";
+import { MdEmail, MdOpenInNew } from "react-icons/md";
+import { FaPhone } from "react-icons/fa6";
 import { Button, InputField, ModalShell, PageContainer, PageShell, SurfaceCard, StatusBadge } from "../../components/ui";
 import { useAuth } from "../../context/useAuth";
 import userService from "../../services/userService";
 
+const MAX_PROFILE_IMAGE_SIZE = 10 * 1024 * 1024;
+
 const ProfilePage = () => {
   const [profile, setProfile] = useState({});
   const { updateUser } = useAuth();
-  const [isEditing, setIsEditing] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [passData, setPassData] = useState({
     currentPassword: "",
@@ -28,6 +25,12 @@ const ProfilePage = () => {
     confirmPassword: "",
   });
   const [formData, setFormData] = useState({
+    fullName: "",
+    email: "",
+    phone: "",
+    address: "",
+  });
+  const [modalFormData, setModalFormData] = useState({
     fullName: "",
     email: "",
     phone: "",
@@ -41,6 +44,14 @@ const ProfilePage = () => {
       ? avatarPath
       : `${backendUrl}${avatarPath}`
     : null;
+
+  const bannerPath = profile?.bannerUrl || profile?.banner_url || profile?.banner;
+  const bannerUrl = bannerPath
+    ? bannerPath.startsWith("http")
+      ? bannerPath
+      : `${backendUrl}${bannerPath}`
+    : "https://media.gettyimages.com/id/642438552/photo/feeding-the-world-one-seedling-at-a-time.jpg?s=612x612&w=0&k=20&c=DNe8g3G_0lUwrNrpvhsWy_M4Xl_o4dEqt_TtND9GfYY=";
+
   const isAdminShell = profile?.role === "ADMIN" || profile?.role === "STAFF";
 
   useEffect(() => {
@@ -64,14 +75,24 @@ const ProfilePage = () => {
     fetchProfile();
   }, [updateUser]);
 
-  const updateField = (field) => (event) => {
-    if (!isEditing) return;
-    setFormData((prev) => ({ ...prev, [field]: event.target.value }));
+  const handleOpenEditModal = () => {
+    setModalFormData({
+      fullName: profile.fullName || "",
+      email: profile.email || "",
+      phone: profile.phone || "",
+      address: profile.address || "",
+    });
+    setShowEditModal(true);
   };
 
   const handleFileChange = async (event) => {
     const file = event.target.files[0];
     if (!file) return;
+    if (file.size > MAX_PROFILE_IMAGE_SIZE) {
+      toast.error("Avatar image must be 10MB or smaller.");
+      event.target.value = "";
+      return;
+    }
 
     const payload = new FormData();
     payload.append("image", file);
@@ -86,13 +107,41 @@ const ProfilePage = () => {
     }
   };
 
-  const handleUpdateProfile = async (event) => {
+  const handleBannerFileChange = async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+    if (file.size > MAX_PROFILE_IMAGE_SIZE) {
+      toast.error("Banner image must be 10MB or smaller.");
+      event.target.value = "";
+      return;
+    }
+
+    const payload = new FormData();
+    payload.append("image", file);
+    try {
+      const res = await userService.uploadBanner(payload);
+      const updatedUser = { ...profile, bannerUrl: res.data };
+      setProfile(updatedUser);
+      updateUser(updatedUser);
+      toast.success("Banner updated successfully.");
+    } catch {
+      toast.error("Could not upload banner.");
+    }
+  };
+
+  const handleModalSubmit = async (event) => {
     event.preventDefault();
     try {
-      const res = await userService.updateProfile(formData);
+      const res = await userService.updateProfile(modalFormData);
       setProfile(res.data);
       updateUser(res.data);
-      setIsEditing(false);
+      setFormData({
+        fullName: res.data.fullName || "",
+        email: res.data.email || "",
+        phone: res.data.phone || "",
+        address: res.data.address || "",
+      });
+      setShowEditModal(false);
       toast.success("Profile updated successfully.");
     } catch {
       toast.error("Could not update profile.");
@@ -124,101 +173,80 @@ const ProfilePage = () => {
     <PageShell admin={isAdminShell} className="py-8">
       <PageContainer className="max-w-6xl">
         <div className="mb-6 flex items-center gap-2 text-sm font-medium">
-          <a href="/" className="text-black transition-colors hover:text-slate-700">
+          <a href="/" className="flex items-center gap-1.5 text-black transition-colors hover:text-slate-700">
+            <FaHome className="text-emerald-700" size={16} />
             Home
           </a>
           <span className="text-black">&gt;</span>
           <span className="text-emerald-700">Profile</span>
         </div>
 
-        <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
-          <div className="space-y-6 lg:col-span-4">
+        <div>
+          <div className="w-full">
             <SurfaceCard className="overflow-hidden p-0">
-              <div className="h-28 bg-gradient-to-r from-emerald-800 to-[#7a9c5c]" />
-              <div className="-mt-14 px-6 pb-7 text-center">
-                <div className="relative inline-block">
-                  <div className="flex h-28 w-28 items-center justify-center overflow-hidden rounded-full border-4 border-white bg-slate-100 shadow-lg sm:h-32 sm:w-32">
+              <div className="relative h-72 w-full group/banner">
+                <img
+                  src={bannerUrl}
+                  alt="Banner"
+                  className="h-full w-full object-cover"
+                />
+                <label className="absolute top-4 right-4 flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-black/40 text-white opacity-0 transition-opacity duration-200 hover:bg-black/60 group-hover/banner:opacity-100 shadow-md">
+                  <FiCamera size={18} />
+                  <input type="file" className="hidden" accept="image/*" onChange={handleBannerFileChange} />
+                </label>
+              </div>
+              <div className="-mt-20 px-6 pb-7 text-center">
+                <div className="relative inline-block group">
+                  <div className="flex h-36 w-36 items-center justify-center overflow-hidden rounded-full border-4 border-white bg-slate-100 shadow-lg sm:h-40 sm:w-40">
                     {avatarUrl ? (
                       <img src={avatarUrl} alt={profile?.fullName || "Profile"} className="h-full w-full object-cover" />
                     ) : (
-                      <FiUser size={48} className="text-slate-400" />
+                      <FiUser size={64} className="text-slate-400" />
                     )}
                   </div>
-                  <label className="absolute bottom-1 right-1 flex h-10 w-10 cursor-pointer items-center justify-center rounded-2xl border border-white bg-emerald-700 text-white shadow-lg transition-colors hover:bg-emerald-800">
-                    <FiCamera size={18} />
+                  <label className="absolute inset-0 flex cursor-pointer items-center justify-center rounded-full bg-black/35 text-white opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+                    <FiCamera size={28} />
                     <input type="file" className="hidden" accept="image/*" onChange={handleFileChange} />
                   </label>
+                  <span className="absolute bottom-2 right-2 block h-6 w-6 rounded-full border-2 border-white bg-emerald-500 shadow-md sm:bottom-2.5 sm:right-2.5" />
                 </div>
 
                 <h2 className="mt-5 text-xl font-medium text-slate-900">
                   {profile.fullName || profile.username || "User"}
                 </h2>
-                <p className="mt-1 text-sm font-medium text-emerald-700">
-                  @{profile.username || "account"}
-                </p>
                 <div className="mt-4">
                   <StatusBadge tone={profile.role === "ADMIN" ? "rose" : "emerald"}>
                     {profile.role || "CUSTOMER"}
                   </StatusBadge>
                 </div>
-              </div>
-            </SurfaceCard>
 
-            <SurfaceCard>
-              <div className="mb-4 flex items-center gap-2 text-sm font-medium text-slate-600">
-                <FiShield className="text-emerald-700" size={18} />
-                Account security
+                <div className="mt-7 space-y-6 border-t border-slate-100 pt-6 text-left">
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                      <h2 className="text-2xl font-medium text-slate-900">Contact details</h2>
+                      <p className="mt-1 text-sm text-slate-500">Keep this information up to date for delivery and support.</p>
+                    </div>
+                    <div className="shrink-0">
+                      <Button type="button" onClick={() => setShowPasswordModal(true)}>
+                        <FiLock size={17} />
+                        Change password
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                    <InputField label="Full name" icon={FaUserAlt} rightIcon={MdOpenInNew} onRightIconClick={handleOpenEditModal} labelClassName="text-base font-medium text-slate-600" inputClassName="!rounded-lg cursor-pointer" value={formData.fullName} readOnly onClick={handleOpenEditModal} />
+                    <InputField label="Email address" icon={MdEmail} rightIcon={MdOpenInNew} onRightIconClick={handleOpenEditModal} labelClassName="text-base font-medium text-slate-600" inputClassName="!rounded-lg cursor-pointer" type="email" value={formData.email} readOnly onClick={handleOpenEditModal} />
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                    <InputField label="Phone number" icon={FaPhone} rightIcon={MdOpenInNew} onRightIconClick={handleOpenEditModal} labelClassName="text-base font-medium text-slate-600" inputClassName="!rounded-lg cursor-pointer" value={formData.phone} readOnly onClick={handleOpenEditModal} />
+                    <InputField label="Address" icon={FaMapMarkedAlt} rightIcon={MdOpenInNew} onRightIconClick={handleOpenEditModal} labelClassName="text-base font-medium text-slate-600" inputClassName="!rounded-lg cursor-pointer" value={formData.address} readOnly onClick={handleOpenEditModal} />
+                  </div>
+                </div>
               </div>
-              <button
-                type="button"
-                onClick={() => setShowPasswordModal(true)}
-                className="flex w-full items-center justify-between rounded-2xl bg-slate-950 p-4 text-white transition-colors hover:bg-slate-800"
-              >
-                <span className="font-medium">Change password</span>
-                <FiChevronRight size={20} />
-              </button>
             </SurfaceCard>
           </div>
-
-          <SurfaceCard className="lg:col-span-8">
-            <form onSubmit={handleUpdateProfile} className="space-y-6">
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <h2 className="text-2xl font-medium text-slate-900">Contact details</h2>
-                  <p className="mt-1 text-sm text-slate-500">Keep this information up to date for delivery and support.</p>
-                </div>
-                <div className="shrink-0">
-                  {!isEditing ? (
-                    <Button type="button" onClick={() => setIsEditing(true)}>
-                      <FiEdit size={17} />
-                      Edit profile
-                    </Button>
-                  ) : (
-                    <Button type="button" variant="danger" onClick={() => setIsEditing(false)}>
-                      <FiX size={17} />
-                      Cancel
-                    </Button>
-                  )}
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-                <InputField label="Full name" icon={FiUser} value={formData.fullName} onChange={updateField("fullName")} disabled={!isEditing} />
-                <InputField label="Email address" icon={FiMail} type="email" value={formData.email} onChange={updateField("email")} disabled={!isEditing} />
-                <InputField label="Phone number" icon={FiPhone} value={formData.phone} onChange={updateField("phone")} disabled={!isEditing} />
-                <InputField label="Address" icon={FiMapPin} value={formData.address} onChange={updateField("address")} disabled={!isEditing} />
-              </div>
-
-              {isEditing ? (
-                <div className="flex justify-end">
-                  <Button type="submit">
-                    <FiSave size={17} />
-                    Save changes
-                  </Button>
-                </div>
-              ) : null}
-            </form>
-          </SurfaceCard>
         </div>
 
         {showPasswordModal ? (
@@ -260,6 +288,55 @@ const ProfilePage = () => {
                 required
                 value={passData.confirmPassword}
                 onChange={(event) => setPassData((prev) => ({ ...prev, confirmPassword: event.target.value }))}
+              />
+            </form>
+          </ModalShell>
+        ) : null}
+
+        {showEditModal ? (
+          <ModalShell
+            title="Edit profile"
+            onClose={() => setShowEditModal(false)}
+            footer={
+              <>
+                <Button type="button" variant="muted" onClick={() => setShowEditModal(false)}>
+                  Cancel
+                </Button>
+                <Button type="submit" form="editProfileForm">
+                  Save changes
+                </Button>
+              </>
+            }
+          >
+            <form id="editProfileForm" onSubmit={handleModalSubmit} className="space-y-4">
+              <InputField
+                label="Full name"
+                icon={FaUserAlt}
+                required
+                value={modalFormData.fullName}
+                onChange={(event) => setModalFormData((prev) => ({ ...prev, fullName: event.target.value }))}
+              />
+              <InputField
+                label="Email address"
+                icon={MdEmail}
+                type="email"
+                required
+                value={modalFormData.email}
+                onChange={(event) => setModalFormData((prev) => ({ ...prev, email: event.target.value }))}
+              />
+              <InputField
+                label="Phone number"
+                icon={FaPhone}
+                required
+                value={modalFormData.phone}
+                onChange={(event) => setModalFormData((prev) => ({ ...prev, phone: event.target.value }))}
+              />
+              <InputField
+                label="Address"
+                icon={FaMapMarkedAlt}
+                required
+                value={modalFormData.address}
+                onChange={(event) => setModalFormData((prev) => ({ ...prev, address: event.target.value }))}
               />
             </form>
           </ModalShell>

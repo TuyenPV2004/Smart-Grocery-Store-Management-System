@@ -1,4 +1,5 @@
 import React from "react";
+import { createPortal } from "react-dom";
 import {
   FiAlertCircle,
   FiBox,
@@ -124,30 +125,52 @@ export const AdminErrorState = ({ title = "Something went wrong", description, a
   <EmptyState icon={FiAlertCircle} title={title} description={description} action={action} />
 );
 
-export const AdminModal = ({ title, children, footer, onClose, className = "" }) => (
-  <div className="fixed inset-0 z-[150] flex items-center justify-center bg-slate-950/55 p-4 backdrop-blur-sm">
-    <div
-      className={cx(
-        "flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-[1.75rem] border border-white/70 bg-white shadow-2xl",
-        className,
-      )}
-    >
-      <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
-        <h2 className="text-lg font-medium text-slate-900">{title}</h2>
-        {onClose ? (
-          <AdminIconButton onClick={onClose} aria-label="Close modal">
-            <FiX size={18} />
-          </AdminIconButton>
+export const AdminModal = ({ title, children, footer, onClose, className = "" }) => {
+  const hasMaxWidth = className.includes("max-w-");
+  const modalContent = (
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/65 p-4 backdrop-blur-sm animate-in fade-in duration-200">
+      <div
+        className={cx(
+          "flex max-h-[90vh] w-full flex-col overflow-hidden rounded-[1.75rem] border border-white/70 bg-white shadow-2xl animate-in zoom-in-95 duration-200",
+          !hasMaxWidth && "max-w-2xl",
+          className,
+        )}
+      >
+        <div className="flex items-start justify-between border-b border-slate-100 bg-white rounded-t-[1.75rem] px-6 py-5">
+          <div className="flex-1">
+            {typeof title === "string" ? (
+              <h2 className="text-lg font-medium text-slate-900">{title}</h2>
+            ) : (
+              title
+            )}
+          </div>
+          {onClose ? (
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label="Close modal"
+              className="ml-4 shrink-0 text-slate-400 hover:text-rose-600 transition-colors mt-1"
+            >
+              <FiX size={28} />
+            </button>
+          ) : null}
+        </div>
+        <div
+          className="flex-1 overflow-y-auto p-5 [&::-webkit-scrollbar]:hidden"
+          style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+        >
+          {children}
+        </div>
+        {footer ? (
+          <div className="flex flex-wrap items-center justify-end gap-3 border-t border-slate-100 bg-slate-50/70 px-5 py-4">
+            {footer}
+          </div>
         ) : null}
       </div>
-      <div className="flex-1 overflow-y-auto p-5">{children}</div>
-      {footer ? (
-        <div className="flex flex-wrap items-center justify-end gap-3 border-t border-slate-100 bg-slate-50/70 px-5 py-4">
-          {footer}
-        </div>
-      ) : null}
     </div>
-  </div>
-);
+  );
+
+  return createPortal(modalContent, document.body);
+};
 
 export { Button, SurfaceCard };

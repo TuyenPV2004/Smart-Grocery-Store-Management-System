@@ -3,6 +3,8 @@ package com.grocery.management.service;
 import com.grocery.management.dto.InventoryReservationRequest;
 import com.grocery.management.dto.BatchExpiryDTO;
 import com.grocery.management.dto.StockSummaryDTO;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.beans.factory.annotation.Value;
@@ -11,6 +13,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
@@ -19,6 +22,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class InventoryClient {
     private final RestTemplate restTemplate;
+    private final ObjectMapper objectMapper;
 
     @Value("${inventory.service.base-url}")
     private String inventoryServiceBaseUrl;
@@ -27,13 +31,19 @@ public class InventoryClient {
     private String internalServiceToken;
 
     public void reserve(String orderCode, InventoryReservationRequest request) {
-        ResponseEntity<String> response = restTemplate.exchange(
-                inventoryServiceBaseUrl + "/api/inventory/reservations",
-                HttpMethod.POST,
-                new HttpEntity<>(request, internalHeaders()),
-                String.class);
-        if (!response.getStatusCode().is2xxSuccessful()) {
-            throw new RuntimeException("Khong the reserve ton kho cho don hang: " + orderCode);
+        try {
+            ResponseEntity<String> response = restTemplate.exchange(
+                    inventoryServiceBaseUrl + "/api/inventory/reservations",
+                    HttpMethod.POST,
+                    new HttpEntity<>(request, internalHeaders()),
+                    String.class);
+            if (!response.getStatusCode().is2xxSuccessful()) {
+                throw new RuntimeException(extractErrorMessage(response.getBody(),
+                        "Khong the reserve ton kho cho don hang: " + orderCode));
+            }
+        } catch (HttpStatusCodeException ex) {
+            throw new RuntimeException(extractErrorMessage(ex.getResponseBodyAsString(),
+                    "Khong the reserve ton kho cho don hang: " + orderCode), ex);
         }
     }
 
@@ -80,5 +90,25 @@ public class InventoryClient {
         HttpHeaders headers = new HttpHeaders();
         headers.set("X-Internal-Service-Token", internalServiceToken);
         return headers;
+    }
+
+    private String extractErrorMessage(String responseBody, String fallback) {
+        if (responseBody == null || responseBody.isBlank()) {
+            return fallback;
+        }
+        try {
+            JsonNode root = objectMapper.readTree(responseBody);
+            JsonNode message = root.get("message");
+            if (message != null && message.isTextual() && !message.asText().isBlank()) {
+                return message.asText();
+            }
+            JsonNode error = root.get("error");
+            if (error != null && error.isTextual() && !error.asText().isBlank()) {
+                return error.asText();
+            }
+        } catch (Exception ignored) {
+            // Fall back to the raw response below.
+        }
+        return responseBody;
     }
 }

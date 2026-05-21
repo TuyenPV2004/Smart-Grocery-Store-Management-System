@@ -8,9 +8,10 @@ import {
   FiMinus,
   FiPlus,
   FiShoppingBag,
-  FiTrash2,
   FiUser,
 } from "react-icons/fi";
+import { MdDelete } from "react-icons/md";
+import { FaHome } from "react-icons/fa";
 import {
   Button,
   EmptyState,
@@ -24,6 +25,7 @@ import { useAuth } from "../../context/useAuth";
 import { useCart } from "../../context/useCart";
 import orderService from "../../services/orderService";
 import voucherService from "../../services/voucherService";
+import { fetchStockLookup, getAvailableStock } from "../../services/stockAvailabilityService";
 import { getImageUrl } from "../../utils/imageUrl";
 
 const CartPage = () => {
@@ -48,14 +50,17 @@ const CartPage = () => {
   const [selectedVoucherOption, setSelectedVoucherOption] = useState(null);
   const [voucherConditionTarget, setVoucherConditionTarget] = useState(null);
   const [selectedCartItems, setSelectedCartItems] = useState([]);
+  const [stockLookup, setStockLookup] = useState(null);
 
   const selectedCartCount = selectedCartItems.length;
+  const selectedItems = useMemo(
+    () => cartItems.filter((item) => selectedCartItems.includes(item.product.id)),
+    [cartItems, selectedCartItems],
+  );
   const selectedCartTotal = useMemo(
     () =>
-      cartItems
-        .filter((item) => selectedCartItems.includes(item.product.id))
-        .reduce((sum, item) => sum + getProductPrice(item.product) * item.quantity, 0),
-    [cartItems, getProductPrice, selectedCartItems],
+      selectedItems.reduce((sum, item) => sum + getProductPrice(item.product) * item.quantity, 0),
+    [getProductPrice, selectedItems],
   );
 
   useEffect(() => {
@@ -86,6 +91,24 @@ const CartPage = () => {
     reconcilePendingPayment();
   }, [clearCart, user]);
 
+  useEffect(() => {
+    if (cartItems.length > 0 && selectedCartItems.length === 0) {
+      setSelectedCartItems(cartItems.map((item) => item.product.id));
+    }
+  }, [cartItems]);
+
+  useEffect(() => {
+    const loadStockAvailability = async () => {
+      try {
+        setStockLookup(await fetchStockLookup());
+      } catch (error) {
+        console.error("Failed to load stock availability:", error);
+      }
+    };
+
+    if (cartItems.length > 0) loadStockAvailability();
+  }, [cartItems.length]);
+
   const formatCurrency = (amount) =>
     new Intl.NumberFormat("vi-VN", {
       style: "currency",
@@ -109,7 +132,7 @@ const CartPage = () => {
 
     let discount = 0;
     if (appliedVoucher.discountType === "PERCENTAGE") {
-      discount = (cartTotal * appliedVoucher.discountValue) / 100;
+      discount = (selectedCartTotal * appliedVoucher.discountValue) / 100;
       if (
         appliedVoucher.maxDiscountAmount &&
         discount > appliedVoucher.maxDiscountAmount
@@ -120,7 +143,7 @@ const CartPage = () => {
       discount = appliedVoucher.discountValue;
     }
 
-    return discount > cartTotal ? cartTotal : discount;
+    return discount > selectedCartTotal ? selectedCartTotal : discount;
   };
 
   const applyVoucherByCode = async (code) => {
@@ -134,7 +157,12 @@ const CartPage = () => {
       const res = await voucherService.validate(code.trim());
       const voucher = res.data;
 
-      if (voucher.minOrderValue && cartTotal < voucher.minOrderValue) {
+      if (selectedCartCount === 0) {
+        setVoucherError("Please select at least one product before applying a voucher.");
+        return false;
+      }
+
+      if (voucher.minOrderValue && selectedCartTotal < voucher.minOrderValue) {
         setVoucherError(`Order minimum is ${formatCurrency(voucher.minOrderValue)}.`);
         return false;
       }
@@ -198,12 +226,13 @@ const CartPage = () => {
       return;
     }
 
-    const success = await applyVoucherByCode(selectedVoucherOption);
-    if (success) setShowVoucherModal(false);
+    setVoucherCode(selectedVoucherOption);
+    setShowVoucherModal(false);
+    await applyVoucherByCode(selectedVoucherOption);
   };
 
   const cartDiscount = calculateDiscount();
-  const finalTotal = cartTotal - cartDiscount;
+  const finalTotal = selectedCartTotal - cartDiscount;
 
   if (!user) {
     return (
@@ -244,7 +273,10 @@ const CartPage = () => {
     <PageShell className="py-8">
       <PageContainer className="max-w-6xl">
         <div className="mb-4 flex items-center gap-2 text-sm font-medium text-slate-500">
-          <Link to="/" className="text-black hover:text-slate-900">Home</Link>
+          <Link to="/" className="flex items-center gap-1.5 text-black hover:text-slate-900">
+            <FaHome className="text-emerald-700" size={16} />
+            Home
+          </Link>
           <span className="font-semibold text-black">&gt;</span>
           <span className="text-emerald-700">Cart</span>
         </div>
@@ -271,6 +303,8 @@ const CartPage = () => {
 
             {cartItems.map((item) => {
               const isSelected = selectedCartItems.includes(item.product.id);
+              const availableStock = getAvailableStock(item.product, stockLookup);
+              const isUnavailable = availableStock <= 0;
               return (
               <SurfaceCard key={item.product.id} className={`flex gap-4 p-4 sm:items-center ${isSelected ? "ring-2 ring-emerald-500" : ""}`}>
                 <button
@@ -301,6 +335,9 @@ const CartPage = () => {
                       <p className="mt-1 text-sm text-slate-500">
                         Unit: {item.product.unit || "item"}
                       </p>
+                      <p className={`mt-1 text-sm font-medium ${isUnavailable ? "text-rose-600" : "text-slate-500"}`}>
+                        Available: {availableStock}
+                      </p>
                     </div>
                     <button
                       type="button"
@@ -308,7 +345,7 @@ const CartPage = () => {
                       className="flex h-10 w-10 shrink-0 items-center justify-center text-rose-600 transition-colors hover:text-rose-700"
                       aria-label="Remove item"
                     >
-                      <FiTrash2 size={17} />
+                      <MdDelete size={19} />
                     </button>
                   </div>
 
@@ -330,6 +367,7 @@ const CartPage = () => {
                         type="button"
                         onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
                         className="flex h-9 w-9 items-center justify-center text-slate-600 transition-colors hover:text-emerald-700"
+                        disabled={item.quantity >= availableStock}
                         aria-label="Increase quantity"
                       >
                         <FiPlus size={14} />
@@ -419,10 +457,22 @@ const CartPage = () => {
                 type="button"
                 className="w-full"
                 onClick={() => {
+                  if (selectedItems.length === 0) {
+                    toast.warning("Please select at least one product to checkout.");
+                    return;
+                  }
+                  const invalidItem = selectedItems.find(
+                    (item) => item.quantity > getAvailableStock(item.product, stockLookup),
+                  );
+                  if (invalidItem) {
+                    toast.warning(`${invalidItem.product.name} does not have enough stock.`);
+                    return;
+                  }
                   navigate("/checkout", {
                     state: {
                       appliedVoucher,
                       cartDiscount,
+                      checkoutItems: selectedItems,
                     },
                   });
                 }}
@@ -439,14 +489,9 @@ const CartPage = () => {
           title="Choose a voucher"
           onClose={() => setShowVoucherModal(false)}
           footer={
-            <>
-              <Button type="button" variant="muted" onClick={() => setShowVoucherModal(false)}>
-                Cancel
-              </Button>
-              <Button type="button" onClick={handleConfirmVoucherSelection} disabled={isApplyingVoucher}>
-                {isApplyingVoucher ? "Applying..." : "Confirm"}
-              </Button>
-            </>
+            <Button type="button" onClick={handleConfirmVoucherSelection} disabled={isApplyingVoucher}>
+              {isApplyingVoucher ? "Applying..." : "Confirm"}
+            </Button>
           }
         >
           {isLoadingVouchers ? (
@@ -478,17 +523,30 @@ const CartPage = () => {
                     }`}
                   >
                     <div className="flex items-start justify-between gap-4">
-                      <div>
+                      <div className="flex-1 min-w-0">
                         <p className="font-medium text-slate-900">{voucher.code}</p>
                         <p className="mt-1 text-sm text-slate-500">
                           {formatVoucherDiscount(voucher)}
                         </p>
-                        <p className="mt-2 text-xs text-slate-500">
-                          Expires: {formatVoucherExpiry(voucher.endDate)}
-                        </p>
+                        <div className="mt-2 flex flex-wrap items-center justify-between gap-4 text-xs">
+                          <span className="text-slate-500">
+                            Expires: {formatVoucherExpiry(voucher.endDate)}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              setVoucherConditionTarget(voucher);
+                            }}
+                            className="inline-flex items-center gap-1 font-medium text-emerald-700 hover:text-emerald-900 translate-x-8"
+                          >
+                            <FiInfo size={13} />
+                            View conditions
+                          </button>
+                        </div>
                       </div>
                       <span
-                        className={`flex h-6 w-6 items-center justify-center rounded-full border ${
+                        className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border ${
                           isSelected
                             ? "border-emerald-700 bg-emerald-700 text-white"
                             : "border-slate-300 bg-white text-transparent"
@@ -497,17 +555,6 @@ const CartPage = () => {
                         <FiCheck size={14} />
                       </span>
                     </div>
-                    <button
-                      type="button"
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        setVoucherConditionTarget(voucher);
-                      }}
-                      className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-emerald-700 hover:text-emerald-900"
-                    >
-                      <FiInfo size={13} />
-                      View conditions
-                    </button>
                   </button>
                 );
               })}

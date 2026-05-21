@@ -7,7 +7,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.lang.NonNull;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 
 @Service
@@ -15,6 +17,7 @@ import java.util.List;
 public class SupplierService {
     private final SupplierRepository supplierRepository;
     private final ProductRepository productRepository;
+    private final CloudinaryImageService cloudinaryImageService;
 
     /**
      * Lấy danh sách tất cả nhà cung cấp
@@ -36,6 +39,11 @@ public class SupplierService {
      */
     @Transactional
     public Supplier createSupplier(Supplier supplier) {
+        return createSupplier(supplier, null);
+    }
+
+    @Transactional
+    public Supplier createSupplier(Supplier supplier, MultipartFile logoFile) {
         // 1. Check trùng lặp SĐT và Email
         if (supplierRepository.existsByPhone(supplier.getPhone())) {
             throw new RuntimeException("Số điện thoại này đã tồn tại!");
@@ -50,6 +58,7 @@ public class SupplierService {
         supplier.setCode(generateNextCode(lastCode));
 
         supplier.setActive(true);
+        uploadLogoIfPresent(supplier, logoFile);
         return supplierRepository.save(supplier);
     }
 
@@ -58,6 +67,11 @@ public class SupplierService {
      */
     @Transactional
     public Supplier updateSupplier(@NonNull Long id, Supplier request) {
+        return updateSupplier(id, request, null);
+    }
+
+    @Transactional
+    public Supplier updateSupplier(@NonNull Long id, Supplier request, MultipartFile logoFile) {
         Supplier existing = getSupplierById(id);
 
         // Check trùng SĐT nếu thay đổi
@@ -75,10 +89,29 @@ public class SupplierService {
         existing.setPhone(request.getPhone());
         existing.setEmail(request.getEmail());
         existing.setAddress(request.getAddress());
+        if (request.getLogoUrl() != null) {
+            existing.setLogoUrl(request.getLogoUrl());
+        }
         existing.setTaxCode(request.getTaxCode());
         existing.setNote(request.getNote());
+        uploadLogoIfPresent(existing, logoFile);
 
         return supplierRepository.save(existing);
+    }
+
+    private void uploadLogoIfPresent(Supplier supplier, MultipartFile logoFile) {
+        if (logoFile == null || logoFile.isEmpty()) {
+            return;
+        }
+
+        try {
+            if (supplier.getLogoUrl() != null && !supplier.getLogoUrl().isBlank()) {
+                cloudinaryImageService.deleteImageByUrl(supplier.getLogoUrl());
+            }
+            supplier.setLogoUrl(cloudinaryImageService.uploadSupplierLogo(logoFile));
+        } catch (IOException e) {
+            throw new RuntimeException("Khong the upload logo nha cung cap: " + e.getMessage());
+        }
     }
 
     /**

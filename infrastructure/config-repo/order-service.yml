@@ -1,12 +1,13 @@
 auth:
   service:
-    base-url: ${AUTH_SERVICE_URL:http://auth-service}
+    base-url: ${AUTH_SERVICE_URL:http://auth-service:8081}
 catalog:
   service:
-    base-url: ${CATALOG_SERVICE_URL:http://catalog-service}
+    base-url: ${CATALOG_SERVICE_URL:http://catalog-service:8082}
 inventory:
   service:
-    base-url: ${INVENTORY_SERVICE_URL:http://inventory-service}
+    base-url: ${INVENTORY_SERVICE_URL:http://inventory-service:8085}
+    internal-token: ${INVENTORY_INTERNAL_SERVICE_TOKEN:dev-internal-inventory-token}
 voucher:
   service:
-    base-url: ${VOUCHER_SERVICE_URL:http://promotion-service}
+    base-url: ${VOUCHER_SERVICE_URL:http://promotion-service:8086}

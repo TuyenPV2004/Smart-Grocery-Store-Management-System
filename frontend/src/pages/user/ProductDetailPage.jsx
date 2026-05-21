@@ -9,9 +9,9 @@ import {
   FiPlus,
   FiRefreshCw,
   FiShield,
-  FiShoppingCart,
   FiTruck,
 } from "react-icons/fi";
+import { FaHome, FaShoppingCart } from "react-icons/fa";
 import ImageGallery from "react-image-gallery";
 import "react-image-gallery/styles/image-gallery.css";
 import ProductCard from "../../components/common/ProductCard";
@@ -19,6 +19,7 @@ import { Button, EmptyState, PageContainer, PageHeader, PageShell, StatusBadge, 
 import { useAuth } from "../../context/useAuth";
 import { useCart } from "../../context/useCart";
 import productService from "../../services/productService";
+import { fetchStockLookup, hydrateProductStock, hydrateProductsStock } from "../../services/stockAvailabilityService";
 import { getImageUrl } from "../../utils/imageUrl";
 
 const ARTICLE_CARDS = [
@@ -66,14 +67,15 @@ const ProductDetailPage = () => {
   useEffect(() => {
     const fetchProduct = async () => {
       try {
-        const [productRes, productsRes] = await Promise.all([
+        const [productRes, productsRes, stockLookup] = await Promise.all([
           productService.get(id),
           productService.getAll({ status: "ACTIVE", pageSize: 1000 }),
+          fetchStockLookup(),
         ]);
 
-        setProduct(productRes.data);
+        setProduct(hydrateProductStock(productRes.data, stockLookup));
         const productList = productsRes.data?.content || productsRes.data || [];
-        setAllProducts(Array.isArray(productList) ? productList : []);
+        setAllProducts(Array.isArray(productList) ? hydrateProductsStock(productList, stockLookup) : []);
       } catch (error) {
         console.error("Error fetching product details:", error);
       } finally {
@@ -119,10 +121,23 @@ const ProductDetailPage = () => {
     return (scored.length ? scored : allProducts.filter((candidate) => Number(candidate.id) !== currentId)).slice(0, 10);
   }, [product, allProducts]);
 
+  const stockQuantity = Number(product?.stockQuantity || 0);
+  const isOutOfStock = product?.status === "OUT_OF_STOCK" || stockQuantity <= 0;
+
   const handleAddToCart = () => {
     if (!user) {
       toast.warning("Please sign in to add products to your cart.");
       navigate("/login");
+      return;
+    }
+
+    if (isOutOfStock) {
+      toast.warning("This product is out of stock.");
+      return;
+    }
+
+    if (quantity > stockQuantity) {
+      toast.warning(`Only ${stockQuantity} item(s) available.`);
       return;
     }
 
@@ -162,13 +177,14 @@ const ProductDetailPage = () => {
     );
   }
 
-  const isOutOfStock = product.status === "OUT_OF_STOCK";
-
   return (
     <PageShell className="py-8">
       <PageContainer>
         <div className="mb-4 flex items-center gap-2 text-sm font-medium text-slate-500">
-          <Link to="/" className="text-black hover:text-slate-900">Home</Link>
+          <Link to="/" className="flex items-center gap-1.5 text-black hover:text-slate-900">
+            <FaHome className="text-emerald-700" size={16} />
+            Home
+          </Link>
           <span className="font-semibold text-black">&gt;</span>
           <Link to="/products" className="text-black hover:text-slate-900">Products</Link>
           <span className="font-semibold text-black">&gt;</span>
@@ -262,6 +278,7 @@ const ProductDetailPage = () => {
                   type="button"
                   onClick={() => setQuantity((prev) => prev + 1)}
                   className="flex h-12 w-12 items-center justify-center text-slate-600 transition-colors hover:text-emerald-700"
+                  disabled={isOutOfStock || quantity >= stockQuantity}
                   aria-label="Increase quantity"
                 >
                   <FiPlus size={18} />
@@ -274,7 +291,7 @@ const ProductDetailPage = () => {
                 disabled={isOutOfStock}
                 className="flex-1 py-4 text-base"
               >
-                <FiShoppingCart size={21} />
+                <FaShoppingCart size={21} />
                 Add to cart
               </Button>
 

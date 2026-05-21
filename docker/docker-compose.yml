@@ -5,7 +5,7 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: "${DB_PASSWORD}"
     ports:
-      - "3306:3306"
+      - "${MYSQL_HOST_PORT:-3307}:3306"
     volumes:
       - mysql_data:/var/lib/mysql
       - ../database/init-scripts/init-dbs.sql:/docker-entrypoint-initdb.d/01-init-databases.sql:ro
@@ -136,6 +136,8 @@ services:
       - AUTH_DB_URL=jdbc:mysql://mysql:3306/grocery_auth_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
       - AUTH_DB_USERNAME=${DB_USERNAME}
       - AUTH_DB_PASSWORD=${DB_PASSWORD}
+      - AUTH_MULTIPART_MAX_FILE_SIZE=10MB
+      - AUTH_MULTIPART_MAX_REQUEST_SIZE=10MB
       - KEYCLOAK_ISSUER_URI=${KEYCLOAK_PUBLIC_ISSUER_URI}
       - KEYCLOAK_JWK_SET_URI=${KEYCLOAK_JWK_SET_URI}
       - MAIL_HOST=${MAIL_HOST}
@@ -198,11 +200,11 @@ services:
       - ORDER_DB_PASSWORD=${DB_PASSWORD}
       - KEYCLOAK_ISSUER_URI=${KEYCLOAK_PUBLIC_ISSUER_URI}
       - KEYCLOAK_JWK_SET_URI=${KEYCLOAK_JWK_SET_URI}
-      - AUTH_SERVICE_URL=http://auth-service
-      - CATALOG_SERVICE_URL=http://catalog-service
-      - INVENTORY_SERVICE_URL=http://inventory-service
+      - AUTH_SERVICE_URL=http://auth-service:8081
+      - CATALOG_SERVICE_URL=http://catalog-service:8082
+      - INVENTORY_SERVICE_URL=http://inventory-service:8085
       - INVENTORY_INTERNAL_SERVICE_TOKEN=${INVENTORY_INTERNAL_SERVICE_TOKEN:-dev-internal-inventory-token}
-      - VOUCHER_SERVICE_URL=http://promotion-service
+      - VOUCHER_SERVICE_URL=http://promotion-service:8086
       - RABBITMQ_HOST=rabbitmq
       - RABBITMQ_PORT=5672
       - RABBITMQ_USERNAME=guest
@@ -273,7 +275,7 @@ services:
       - INVENTORY_DB_PASSWORD=${DB_PASSWORD}
       - KEYCLOAK_ISSUER_URI=${KEYCLOAK_PUBLIC_ISSUER_URI}
       - KEYCLOAK_JWK_SET_URI=${KEYCLOAK_JWK_SET_URI}
-      - CATALOG_SERVICE_URL=http://catalog-service
+      - CATALOG_SERVICE_URL=http://catalog-service:8082
       - AUTH_SERVICE_URL=http://auth-service
       - RABBITMQ_HOST=rabbitmq
       - RABBITMQ_PORT=5672
@@ -320,7 +322,7 @@ services:
       - PROMOTION_DB_PASSWORD=${DB_PASSWORD}
       - KEYCLOAK_ISSUER_URI=${KEYCLOAK_PUBLIC_ISSUER_URI}
       - KEYCLOAK_JWK_SET_URI=${KEYCLOAK_JWK_SET_URI}
-      - CATALOG_SERVICE_URL=http://catalog-service
+      - CATALOG_SERVICE_URL=http://catalog-service:8082
     depends_on:
       config-server:
         condition: service_started

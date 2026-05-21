@@ -10,6 +10,7 @@ import {
   FiTrash2 as Trash2,
   FiUserCheck as UserCheck,
 } from "react-icons/fi";
+import Swal from "sweetalert2";
 import { toast } from "react-toastify";
 import { useAuth } from "../../context/useAuth";
 import chatService from "../../services/chatService";
@@ -123,7 +124,7 @@ const upsertConversation = (conversations, summary) => {
 const TypingIndicator = () => (
   <div className="flex justify-start">
     <div className="inline-flex items-center gap-2 rounded-2xl bg-white px-4 py-3 text-sm text-slate-500 shadow-sm">
-      <span>Đang nhập tin nhắn</span>
+      <span>Typing...</span>
       <div className="flex items-center gap-1">
         {[0, 1, 2].map((index) => (
           <span
@@ -141,7 +142,7 @@ const ConversationBadge = ({ conversation, currentStaffKey }) => {
   if (conversation.resolved) {
     return (
       <span className="rounded-full bg-slate-200 px-2.5 py-1 text-[11px] font-medium text-slate-700">
-        Đã đóng
+        Closed
       </span>
     );
   }
@@ -149,7 +150,7 @@ const ConversationBadge = ({ conversation, currentStaffKey }) => {
   if (!conversation.assignedStaffKey) {
     return (
       <span className="rounded-full bg-amber-100 px-2.5 py-1 text-[11px] font-medium text-amber-700">
-        Chưa nhận
+        Unassigned
       </span>
     );
   }
@@ -157,14 +158,14 @@ const ConversationBadge = ({ conversation, currentStaffKey }) => {
   if (conversation.assignedStaffKey === currentStaffKey) {
     return (
       <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-medium text-emerald-700">
-        Bạn đang xử lý
+        Assigned to you
       </span>
     );
   }
 
   return (
     <span className="rounded-full bg-indigo-100 px-2.5 py-1 text-[11px] font-medium text-indigo-700">
-      {conversation.assignedStaffDisplayName || "Đã nhận xử lý"}
+      {conversation.assignedStaffDisplayName || "Claimed"}
     </span>
   );
 };
@@ -189,10 +190,15 @@ const CustomerChatPage = () => {
   const typingTimeoutRef = useRef(null);
   const typingSentRef = useRef(false);
   const filtersRef = useRef({ keyword: "", scope: "ALL", staffKey: "" });
+  const selectedConversationIdRef = useRef(null);
 
   useEffect(() => {
     filtersRef.current = { keyword, scope, staffKey: currentStaffKey };
   }, [keyword, scope, currentStaffKey]);
+
+  useEffect(() => {
+    selectedConversationIdRef.current = selectedConversationId;
+  }, [selectedConversationId]);
 
   const selectedConversation = useMemo(
     () =>
@@ -239,7 +245,7 @@ const CustomerChatPage = () => {
       setConversations(nextConversations);
       syncSelection(nextConversations);
     } catch {
-      toast.error("Không thể tải danh sách cuộc trò chuyện");
+      toast.error("Could not load conversations");
     }
   };
 
@@ -276,17 +282,34 @@ const CustomerChatPage = () => {
             }
 
             if (data.type === "MESSAGE") {
+              const incomingMessage = data.payload;
               setMessageMap((prev) => ({
                 ...prev,
-                [data.payload.conversationId]: mergeMessages(
-                  prev[data.payload.conversationId] || [],
-                  [data.payload],
+                [incomingMessage.conversationId]: mergeMessages(
+                  prev[incomingMessage.conversationId] || [],
+                  [incomingMessage],
                 ),
               }));
               setTypingMap((prev) => ({
                 ...prev,
-                [data.payload.conversationId]: false,
+                [incomingMessage.conversationId]: false,
               }));
+
+              const isCustomerMessage =
+                incomingMessage.senderRole === "CUSTOMER" ||
+                incomingMessage.senderRole === "GUEST";
+              const isCurrentConversation =
+                incomingMessage.conversationId === selectedConversationIdRef.current;
+
+              if (isCustomerMessage && !isCurrentConversation) {
+                toast.info(
+                  `${incomingMessage.senderDisplayName || "Customer"}: ${incomingMessage.content}`,
+                  {
+                    toastId: `chat-message-${incomingMessage.id}`,
+                    autoClose: 5000,
+                  },
+                );
+              }
             }
 
             if (data.type === "CONVERSATION_STATE") {
@@ -364,7 +387,7 @@ const CustomerChatPage = () => {
           ),
         }));
       } catch {
-        toast.error("Không thể tải tin nhắn");
+        toast.error("Could not load messages");
       } finally {
         setLoadingMessages(false);
       }
@@ -441,7 +464,7 @@ const CustomerChatPage = () => {
     if (!draft.trim() || !selectedConversationId) return;
 
     if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
-      toast.error("Kết nối chat đang gián đoạn");
+      toast.error("Chat connection interrupted");
       return;
     }
 
@@ -481,7 +504,7 @@ const CustomerChatPage = () => {
       );
       toast.success(successMessage);
     } catch (error) {
-      toast.error(error.response?.data?.message || error.response?.data || "Không thể cập nhật cuộc trò chuyện");
+      toast.error(error.response?.data?.message || error.response?.data || "Could not update conversation");
     } finally {
       setActionLoading(false);
     }
@@ -500,13 +523,13 @@ const CustomerChatPage = () => {
     const fileName = `${sanitizeFileName(customerName)}_${sanitizeFileName(adminName)}_${exportedAt.file}.txt`;
 
     const content = [
-      "LICH SU HOI THOAI",
-      `Khach hang: ${customerName}`,
-      `Nhan vien: ${adminName}`,
-      `Thoi gian xuat: ${exportedAt.label}`,
+      "CHAT HISTORY",
+      `Customer: ${customerName}`,
+      `Staff: ${adminName}`,
+      `Exported time: ${exportedAt.label}`,
       "",
       ...currentMessages.map((message) => {
-        const senderName = message.senderDisplayName || "An danh";
+        const senderName = message.senderDisplayName || "Anonymous";
         const sentAt = formatExportMessageTime(message.createdAt);
         return `[${sentAt}] ${senderName}: ${message.content}`;
       }),
@@ -526,8 +549,18 @@ const CustomerChatPage = () => {
   const handleDeleteConversation = async () => {
     if (!selectedConversationId) return;
 
-    const confirmed = window.confirm("Bạn có chắc muốn xóa cuộc trò chuyện này?");
-    if (!confirmed) return;
+    const result = await Swal.fire({
+      title: "Delete conversation?",
+      text: "This action cannot be undone.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#ef4444",
+      cancelButtonColor: "#94a3b8",
+      confirmButtonText: "Delete",
+      cancelButtonText: "Cancel",
+    });
+
+    if (!result.isConfirmed) return;
 
     try {
       await chatService.deleteConversation(selectedConversationId);
@@ -549,9 +582,9 @@ const CustomerChatPage = () => {
       setSelectedConversationId(nextConversations[0]?.conversationId || null);
       setDraft("");
       typingSentRef.current = false;
-      toast.success("Đã xóa cuộc trò chuyện");
+      toast.success("Conversation deleted successfully");
     } catch {
-      toast.error("Không thể xóa cuộc trò chuyện");
+      toast.error("Could not delete conversation");
     }
   };
 
@@ -561,10 +594,10 @@ const CustomerChatPage = () => {
         <div className="w-[360px] rounded-[2rem] border border-slate-100 bg-white/95 p-4 shadow-sm backdrop-blur-sm">
           <div className="mb-4">
             <h1 className="text-xl font-semibold text-slate-900">
-              Chat khách hàng
+              Customer Chat
             </h1>
             <p className="mt-1 text-sm text-slate-500">
-              Theo dõi, nhận xử lý và phản hồi khách hàng theo thời gian thực
+              Monitor, claim, and respond to customers in real-time
             </p>
           </div>
 
@@ -578,7 +611,7 @@ const CustomerChatPage = () => {
                 type="text"
                 value={keyword}
                 onChange={(event) => setKeyword(event.target.value)}
-                placeholder="Tìm theo khách hàng hoặc nhân viên phụ trách"
+                placeholder="Search by customer or staff member..."
                 className="w-full rounded-2xl border border-slate-200 bg-slate-50 py-2.5 pl-10 pr-4 text-sm text-slate-700 outline-none transition-all focus:border-green-400 focus:bg-white"
               />
             </div>
@@ -588,18 +621,18 @@ const CustomerChatPage = () => {
               onChange={(event) => setScope(event.target.value)}
               className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-slate-700 outline-none transition-all focus:border-green-400 focus:bg-white"
             >
-              <option value="ALL">Tất cả cuộc trò chuyện</option>
-              <option value="UNASSIGNED">Chưa nhận xử lý</option>
-              <option value="MINE">Cuộc trò chuyện của tôi</option>
-              <option value="ACTIVE">Đang hoạt động</option>
-              <option value="RESOLVED">Đã đóng</option>
+              <option value="ALL">All conversations</option>
+              <option value="UNASSIGNED">Unassigned</option>
+              <option value="MINE">My conversations</option>
+              <option value="ACTIVE">Active</option>
+              <option value="RESOLVED">Closed</option>
             </select>
           </div>
 
           <div className="space-y-3">
             {conversations.length === 0 ? (
               <div className="rounded-2xl border border-dashed border-slate-200 px-4 py-8 text-center text-sm text-slate-500">
-                Chưa có cuộc trò chuyện phù hợp
+                No matching conversations
               </div>
             ) : (
               conversations.map((conversation) => {
@@ -645,7 +678,7 @@ const CustomerChatPage = () => {
 
                     {conversation.assignedStaffDisplayName && (
                       <p className="mt-2 text-xs text-slate-500">
-                        Phụ trách: {conversation.assignedStaffDisplayName}
+                        Assigned: {conversation.assignedStaffDisplayName}
                       </p>
                     )}
 
@@ -663,7 +696,7 @@ const CustomerChatPage = () => {
           <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4">
             <div>
               <h2 className="text-lg font-semibold text-slate-900">
-                {selectedConversation?.customerDisplayName || "Khách hàng"}
+                {selectedConversation?.customerDisplayName || "Customer"}
               </h2>
               <div className="mt-1 flex items-center gap-2">
                 <span
@@ -685,7 +718,7 @@ const CustomerChatPage = () => {
               </div>
               {selectedConversation?.assignedStaffDisplayName && (
                 <p className="mt-2 text-xs text-slate-500">
-                  Nhân viên phụ trách: {selectedConversation.assignedStaffDisplayName}
+                  Assigned staff: {selectedConversation.assignedStaffDisplayName}
                 </p>
               )}
             </div>
@@ -698,14 +731,14 @@ const CustomerChatPage = () => {
                     onClick={() =>
                       handleConversationAction(
                         chatService.claimConversation,
-                        "Đã nhận xử lý cuộc trò chuyện",
+                        "Claimed conversation successfully",
                       )
                     }
                     disabled={actionLoading}
                     className="inline-flex items-center gap-2 rounded-2xl border border-green-200 bg-green-50 px-4 py-2 text-sm font-medium text-green-700 transition-all hover:bg-green-100 disabled:opacity-60"
                   >
                     <UserCheck size={16} />
-                    Nhận xử lý
+                    Claim
                   </button>
                 )}
 
@@ -715,14 +748,14 @@ const CustomerChatPage = () => {
                     onClick={() =>
                       handleConversationAction(
                         chatService.releaseConversation,
-                        "Đã nhả cuộc trò chuyện",
+                        "Released conversation successfully",
                       )
                     }
                     disabled={actionLoading}
                     className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition-all hover:bg-slate-50 disabled:opacity-60"
                   >
                     <LockOpen size={16} />
-                    Nhả xử lý
+                    Release
                   </button>
                 )}
 
@@ -732,14 +765,14 @@ const CustomerChatPage = () => {
                     onClick={() =>
                       handleConversationAction(
                         chatService.resolveConversation,
-                        "Đã đóng cuộc trò chuyện",
+                        "Closed conversation successfully",
                       )
                     }
                     disabled={actionLoading}
                     className="inline-flex items-center gap-2 rounded-2xl border border-indigo-200 bg-indigo-50 px-4 py-2 text-sm font-medium text-indigo-700 transition-all hover:bg-indigo-100 disabled:opacity-60"
                   >
                     <CheckCheck size={16} />
-                    Đóng hội thoại
+                    Close conversation
                   </button>
                 )}
 
@@ -749,14 +782,14 @@ const CustomerChatPage = () => {
                     onClick={() =>
                       handleConversationAction(
                         chatService.reopenConversation,
-                        "Đã mở lại cuộc trò chuyện",
+                        "Reopened conversation successfully",
                       )
                     }
                     disabled={actionLoading}
                     className="inline-flex items-center gap-2 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-2 text-sm font-medium text-amber-700 transition-all hover:bg-amber-100 disabled:opacity-60"
                   >
                     <LockOpen size={16} />
-                    Mở lại
+                    Reopen
                   </button>
                 )}
 
@@ -764,7 +797,7 @@ const CustomerChatPage = () => {
                   type="button"
                   onClick={handleExportConversation}
                   className="flex h-10 w-10 items-center justify-center text-slate-600 transition-all hover:text-green-700"
-                  aria-label="Xuất hội thoại dạng text"
+                  aria-label="Export chat history"
                 >
                   <Download size={16} />
                 </button>
@@ -772,7 +805,7 @@ const CustomerChatPage = () => {
                   type="button"
                   onClick={handleDeleteConversation}
                   className="flex h-10 w-10 items-center justify-center text-slate-500 transition-all hover:text-red-600"
-                  aria-label="Xóa cuộc trò chuyện"
+                  aria-label="Delete conversation"
                 >
                   <Trash2 size={16} />
                 </button>
@@ -782,13 +815,13 @@ const CustomerChatPage = () => {
 
           {!canReply && selectedConversationId && (
             <div className="border-b border-amber-100 bg-amber-50 px-6 py-3 text-sm text-amber-700">
-              Cuộc trò chuyện này đang được {selectedConversation?.assignedStaffDisplayName} xử lý. Bạn chỉ có thể xem cho đến khi được nhả hoặc được admin nhận lại.
+              This conversation is being handled by {selectedConversation?.assignedStaffDisplayName}. You can only view it until it is released or claimed.
             </div>
           )}
 
           {selectedConversation?.resolved && (
             <div className="border-b border-slate-100 bg-slate-50 px-6 py-3 text-sm text-slate-600">
-              Hội thoại đang ở trạng thái đã đóng. Nhắn tin mới hoặc bấm "Mở lại" để tiếp tục xử lý.
+              This conversation is closed. Send a new message or click "Reopen" to continue.
             </div>
           )}
 
@@ -799,12 +832,12 @@ const CustomerChatPage = () => {
             {!selectedConversationId ? (
               <div className="flex h-full flex-col items-center justify-center text-center text-slate-500">
                 <MessageCircle size={34} className="mb-3 text-slate-300" />
-                Chọn một cuộc trò chuyện để bắt đầu phản hồi khách hàng
+                Select a conversation to start chatting
               </div>
             ) : loadingMessages ? (
               <div className="flex h-full items-center justify-center gap-2 text-slate-500">
                 <Loader2 size={18} className="animate-spin" />
-                Đang tải tin nhắn...
+                Loading messages...
               </div>
             ) : (
               currentMessages.map((message) => {
@@ -853,7 +886,7 @@ const CustomerChatPage = () => {
                 value={draft}
                 onChange={(event) => setDraft(event.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="Nhập phản hồi cho khách hàng..."
+                placeholder="Type a message..."
                 disabled={!selectedConversationId || !canReply}
                 className="min-h-[48px] flex-1 resize-none rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 outline-none transition-all focus:border-green-400 focus:bg-white disabled:cursor-not-allowed disabled:opacity-60"
               />

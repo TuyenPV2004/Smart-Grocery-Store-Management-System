@@ -1,5 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import { FaUserAlt } from "react-icons/fa";
 
 const AuthShell = ({ title, subtitle, children, maxWidth = "max-w-[430px]" }) => {
   const navigate = useNavigate();
@@ -23,12 +24,10 @@ const AuthShell = ({ title, subtitle, children, maxWidth = "max-w-[430px]" }) =>
           className={`my-8 w-full ${maxWidth} overflow-hidden rounded-[1.75rem] border border-white/70 bg-white/94 shadow-[0_28px_90px_rgba(15,23,42,0.24)] backdrop-blur`}
         >
           <div className="border-b border-emerald-100 bg-gradient-to-br from-emerald-800 to-[#7a9c5c] p-6 text-center">
-            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-white/15 text-xl font-bold text-white">
-              G
-            </div>
+            <FaUserAlt className="mx-auto mb-3 text-white" size={32} />
             <h1 className="text-xl font-medium tracking-tight text-white">{title}</h1>
             {subtitle ? (
-              <p className="mt-1 text-sm font-medium text-emerald-50/82">
+              <p className="mt-1 text-sm font-medium text-white">
                 {subtitle}
               </p>
             ) : null}

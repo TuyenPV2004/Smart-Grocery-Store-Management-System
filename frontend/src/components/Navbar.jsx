@@ -2,16 +2,15 @@ import React, { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   FiChevronDown,
-  FiGrid,
   FiLogOut,
   FiMenu,
-  FiPackage,
   FiSearch,
-  FiShoppingBag,
-  FiShoppingCart,
   FiUser,
   FiX,
+  FiMapPin,
 } from "react-icons/fi";
+import { FaBagShopping, FaCircleUser } from "react-icons/fa6";
+import { FaShoppingCart, FaUser, FaShopify, FaThLarge } from "react-icons/fa";
 import { useAuth } from "../context/useAuth";
 import { useCart } from "../context/useCart";
 import productService from "../services/productService";
@@ -111,13 +110,6 @@ const Navbar = () => {
     setSearchSuggestions([]);
     setIsOpen(false);
   };
-
-  const handleAddToCartFromSuggestion = (event, product) => {
-    event.preventDefault();
-    event.stopPropagation();
-    addToCart(product, 1);
-  };
-
   const rawAvatarUrl = user?.avatarUrl || user?.avatar_url || user?.avatar;
   const avatarUrl = rawAvatarUrl
     ? rawAvatarUrl.startsWith("http")
@@ -139,37 +131,46 @@ const Navbar = () => {
         {isSuggestionsLoading ? (
           <div className="px-4 py-3 text-sm text-slate-500">Searching products...</div>
         ) : searchSuggestions.length > 0 ? (
-          <ul className="divide-y divide-slate-100">
-            {searchSuggestions.map((product) => (
-              <li key={product.id}>
-                <Link
-                  to={`/products/${product.id}`}
-                  onClick={() => setIsSearchOpen(false)}
-                  className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-emerald-50/50"
-                >
-                  <img
-                    src={getImageUrl(product.thumbnail)}
-                    alt={product.name}
-                    className="h-12 w-12 rounded-xl border border-slate-100 object-cover"
-                  />
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium text-slate-800">{product.name}</p>
-                    <p className="mt-0.5 text-sm font-medium tabular-nums text-emerald-700">
-                      {formatCurrency(getProductPrice(product))}
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={(event) => handleAddToCartFromSuggestion(event, product)}
-                    className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-700 text-white transition-colors hover:bg-emerald-800"
-                    aria-label="Add to cart"
+          <>
+            <ul className="divide-y divide-slate-100">
+              {searchSuggestions.map((product) => (
+                <li key={product.id}>
+                  <Link
+                    to={`/products/${product.id}`}
+                    onClick={() => setIsSearchOpen(false)}
+                    className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-slate-50"
                   >
-                    <FiShoppingCart size={16} />
-                  </button>
-                </Link>
-              </li>
-            ))}
-          </ul>
+                    <img
+                      src={getImageUrl(product.thumbnail)}
+                      alt={product.name}
+                      className="h-12 w-12 rounded-xl border border-slate-100 object-cover"
+                    />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium text-slate-800">{product.name}</p>
+                      <p className="mt-0.5 text-sm font-medium tabular-nums text-emerald-700">
+                        {formatCurrency(getProductPrice(product))}
+                      </p>
+                    </div>
+                    <span className="text-xs font-semibold text-emerald-700 border border-slate-200 px-3 py-1.5 rounded-xl hover:bg-emerald-700 hover:text-white transition-all">
+                      View
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+            <div className="flex justify-center p-3 border-t border-slate-100 bg-slate-50/50">
+              <Link
+                to={`/products?search=${encodeURIComponent(searchQuery.trim())}`}
+                onClick={() => {
+                  setIsSearchOpen(false);
+                  setSearchSuggestions([]);
+                }}
+                className="inline-flex items-center justify-center rounded-full bg-emerald-700 px-5 py-2 text-xs font-semibold text-white shadow-sm hover:bg-emerald-800 transition-colors"
+              >
+                Xem thêm sản phẩm
+              </Link>
+            </div>
+          </>
         ) : (
           <div className="px-4 py-3 text-sm text-slate-500">
             No matching products found.
@@ -183,17 +184,14 @@ const Navbar = () => {
       <div className="mx-auto max-w-[1440px] px-4 sm:px-6 xl:px-10">
         <div className="flex min-h-20 items-center gap-4 lg:gap-8">
           <Link to="/" className="group flex shrink-0 items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-700 text-xl font-bold text-white shadow-lg shadow-emerald-200 transition-transform duration-300 group-hover:scale-105">
-              G
-            </div>
-            <span className="whitespace-nowrap text-2xl font-medium tracking-tight text-slate-900">
+            <span className="whitespace-nowrap text-2xl font-bold tracking-tight text-slate-900">
               Grocery<span className="text-emerald-700">Store</span>
             </span>
           </Link>
 
           <form
             onSubmit={handleSearch}
-            className="relative hidden w-full max-w-[420px] min-w-0 items-center gap-3 rounded-full border border-slate-200 bg-white px-3 pl-5 shadow-sm transition-all focus-within:border-emerald-300 focus-within:shadow-[0_10px_30px_rgba(16,185,129,0.12)] lg:flex"
+            className="relative hidden w-full max-w-[400px] min-w-0 items-center gap-3 rounded-full border border-slate-200 bg-white px-3 pl-5 shadow-sm transition-all focus-within:border-emerald-300 focus-within:shadow-[0_10px_30px_rgba(16,185,129,0.12)] lg:flex"
           >
             <input
               type="text"
@@ -208,29 +206,44 @@ const Navbar = () => {
             />
             <button
               type="submit"
-              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#047857] text-white transition-colors hover:bg-[#0c4217]"
+              className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#047857] text-white transition-colors hover:bg-[#0c4217]"
               aria-label="Search"
             >
-              <FiSearch size={16} />
+              <FiSearch size={13} />
             </button>
             {renderSuggestions()}
           </form>
+
+          <button
+            type="button"
+            className="hidden h-10 items-center gap-2 rounded-full border border-slate-200 bg-white px-4 text-left text-slate-700 shadow-sm transition-all hover:bg-slate-50 lg:flex"
+          >
+            <FiMapPin className="text-emerald-700 shrink-0" size={16} />
+            <span className="text-xs font-semibold">How do you want your items?</span>
+            <FiChevronDown className="text-slate-400 ml-1" size={14} />
+          </button>
 
           <div className="ml-auto hidden shrink-0 items-center gap-2 lg:flex">
             <Link
               to="/order-history"
               className="flex items-center gap-2 rounded-2xl px-3 py-2 text-slate-500 transition-colors hover:bg-emerald-50 hover:text-emerald-700"
             >
-              <FiPackage size={20} />
-              <span className="text-xs font-medium">Track orders</span>
+              <FaBagShopping size={20} />
+              <div className="flex flex-col text-left">
+                <span className="text-[10px] font-medium leading-tight text-slate-500">Check status</span>
+                <span className="text-xs font-semibold leading-tight">Orders</span>
+              </div>
             </Link>
 
             <Link
               to="/cart"
               className="relative flex items-center gap-2 rounded-2xl px-3 py-2 text-slate-600 transition-colors hover:bg-emerald-50 hover:text-emerald-700"
             >
-              <FiShoppingCart size={21} />
-              <span className="text-xs font-medium">Cart</span>
+              <FaShoppingCart size={21} />
+              <div className="flex flex-col text-left">
+                <span className="text-[10px] font-medium leading-tight text-slate-500">Start shopping</span>
+                <span className="text-xs font-semibold leading-tight">Cart</span>
+              </div>
               {cartCount > 0 ? (
                 <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-500 px-1 text-[11px] font-bold text-white">
                   {cartCount}
@@ -256,11 +269,11 @@ const Navbar = () => {
 
                 {isUserMenuOpen ? (
                   <div className="absolute right-0 top-[calc(100%+10px)] z-50 w-40 rounded-2xl border border-slate-200 bg-white p-2 shadow-xl">
-                    <MenuLink to="/profile" icon={FiUser} label="Account" onClick={() => setIsUserMenuOpen(false)} />
+                    <MenuLink to="/profile" icon={FaUser} label="Account" onClick={() => setIsUserMenuOpen(false)} />
                     {isAdminUser ? (
-                      <MenuLink to="/dashboard" icon={FiGrid} label="Admin" onClick={() => setIsUserMenuOpen(false)} />
+                      <MenuLink to="/dashboard" icon={FaThLarge} label="Admin" onClick={() => setIsUserMenuOpen(false)} />
                     ) : null}
-                    <MenuLink to="/order-history" icon={FiShoppingBag} label="Orders" onClick={() => setIsUserMenuOpen(false)} />
+                    <MenuLink to="/order-history" icon={FaShopify} label="Orders" onClick={() => setIsUserMenuOpen(false)} />
                     <div className="my-2 h-px bg-slate-100" />
                     <button
                       type="button"
@@ -281,8 +294,11 @@ const Navbar = () => {
                 to="/login"
                 className="flex items-center gap-2 rounded-2xl px-3 py-2 text-slate-600 transition-colors hover:bg-emerald-50 hover:text-emerald-700"
               >
-                <FiUser size={20} />
-                <span className="text-xs font-medium">Sign in</span>
+                <FaCircleUser size={20} />
+                <div className="flex flex-col text-left">
+                  <span className="text-[10px] font-medium leading-tight text-slate-500">Sign in</span>
+                  <span className="text-xs font-semibold leading-tight">Account</span>
+                </div>
               </Link>
             )}
           </div>
@@ -374,9 +390,9 @@ const MenuLink = ({ to, icon: Icon, label, onClick }) => (
   <Link
     to={to}
     onClick={onClick}
-    className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-slate-700 transition-colors hover:bg-emerald-50 hover:text-emerald-700"
+    className="group flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-slate-700 transition-colors hover:bg-emerald-50 hover:text-emerald-700"
   >
-    {React.createElement(Icon, { size: 18, className: "text-slate-400" })}
+    {React.createElement(Icon, { size: 18, className: "text-slate-600 group-hover:text-emerald-700 transition-colors" })}
     {label}
   </Link>
 );

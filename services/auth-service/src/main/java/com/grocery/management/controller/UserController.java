@@ -92,6 +92,16 @@ public class UserController {
         }
     }
 
+    @PostMapping("/profile/banner")
+    public ResponseEntity<?> uploadBanner(@RequestParam("image") MultipartFile file) {
+        try {
+            String bannerUrl = userService.uploadBanner(file);
+            return ResponseEntity.ok(bannerUrl);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Lỗi upload ảnh banner: " + e.getMessage());
+        }
+    }
+
     @PutMapping("/{id}/role")
     public ResponseEntity<?> updateRole(@PathVariable @NonNull Long id, @RequestParam Role role) {
         try {

@@ -154,6 +154,15 @@ public class UserService {
         return avatarUrl;
     }
 
+    public String uploadBanner(MultipartFile file) throws IOException {
+        User user = getCurrentUser();
+
+        String bannerUrl = cloudinaryImageService.uploadBannerImage(file);
+        user.setBannerUrl(bannerUrl);
+        userRepository.save(user);
+        return bannerUrl;
+    }
+
     // KHÁCH HÀNG TỰ ĐĂNG KÝ
     @SuppressWarnings("null")
     public User registerUser(User user) {

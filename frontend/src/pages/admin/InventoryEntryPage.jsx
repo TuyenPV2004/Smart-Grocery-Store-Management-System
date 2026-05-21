@@ -10,11 +10,7 @@ import {
   FiX as X,
   FiImage as ImageIcon,
   FiSearch as Search,
-  FiUser as User,
-  FiCalendar as Calendar,
-  FiFileText as FileText,
   FiDownload as Import,
-  FiSmile as Smile,
   FiShuffle as Dices,
   FiCheckCircle as CheckCircle,
   FiArrowLeft as ArrowLeft,
@@ -26,6 +22,8 @@ import {
   FiEdit2 as Pencil,
   FiFile as FileCheck2,
 } from "react-icons/fi";
+import { FaCalendarAlt, FaUserAlt, FaUserEdit, FaClipboardList } from "react-icons/fa";
+import { MdEditDocument, MdDelete } from "react-icons/md";
 import { getImageUrl } from "../../utils/imageUrl";
 import Swal from "sweetalert2";
 import productService from "../../services/productService";
@@ -61,6 +59,19 @@ const createImportCode = () => {
   const localDate = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
   const dateString = localDate.toISOString().slice(2, 10).replace(/-/g, "");
   return "IMP" + dateString + "-" + Math.floor(Math.random() * 1000);
+};
+
+const getUnitLabel = (val) => {
+  const map = {
+    "Thùng": "Carton",
+    "Lốc": "Pack",
+    "Hộp": "Box",
+    "Vỉ": "Blister",
+    "Chai": "Bottle",
+    "Cái": "Piece",
+    "Kg": "Kg"
+  };
+  return map[val] || val;
 };
 
 // Product Check Modal Component
@@ -159,7 +170,7 @@ const ProductCheckModal = ({
           <div className="flex items-center gap-3">
             <div>
               <h2 className="text-2xl font-medium text-slate-900 leading-none">
-                Kiểm tra sản phẩm
+                Check Product
               </h2>
             </div>
           </div>
@@ -175,7 +186,7 @@ const ProductCheckModal = ({
         <div className="px-8 py-6 flex-auto min-h-0 overflow-y-auto custom-scrollbar">
           {isSearching && (
             <div className="bg-slate-50 rounded-2xl p-8 border border-slate-200 text-center text-slate-600 font-medium">
-              Đang kiểm tra sản phẩm
+              Checking product...
             </div>
           )}
 
@@ -186,7 +197,7 @@ const ProductCheckModal = ({
                   <div className="flex items-center gap-3 p-4 bg-emerald-50 rounded-2xl border border-emerald-100">
                     <CheckCircle className="text-emerald-600" size={24} />
                     <h3 className="text-lg font-medium text-slate-900">
-                      Đã tìm thấy sản phẩm phù hợp
+                      Matching product found
                     </h3>
                   </div>
 
@@ -194,7 +205,7 @@ const ProductCheckModal = ({
                   <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm grid grid-cols-2 gap-x-10 gap-y-6">
                     <div className="col-span-2 md:col-span-1">
                       <p className="text-sm text-slate-900 font-medium mb-1">
-                        Tên sản phẩm
+                        Product Name
                       </p>
                       <p className="text-sm font-medium text-slate-900">
                         {searchResult.name}
@@ -202,7 +213,7 @@ const ProductCheckModal = ({
                     </div>
                     <div className="col-span-2 md:col-span-1">
                       <p className="text-sm text-slate-900 font-medium mb-1">
-                        Mã SKU
+                        SKU Code
                       </p>
                       <p className="font-medium text-slate-900">
                         {searchResult.sku}
@@ -210,7 +221,7 @@ const ProductCheckModal = ({
                     </div>
                     <div className="pt-3 border-t border-slate-50">
                       <p className="text-sm text-slate-900 font-medium mb-1">
-                        Thương hiệu
+                        Brand
                       </p>
                       <p className="font-medium text-slate-900">
                         {searchResult.brand || "---"}
@@ -218,7 +229,7 @@ const ProductCheckModal = ({
                     </div>
                     <div className="pt-3 border-t border-slate-50">
                       <p className="text-sm text-slate-900 font-medium mb-1">
-                        Giá nhập
+                        Import Price
                       </p>
                       <p className="font-medium text-slate-600">
                         {searchResult.importPrice?.toLocaleString() || "0"} ₫
@@ -229,7 +240,7 @@ const ProductCheckModal = ({
                         onClick={handleUseProduct}
                         className="flex-[2] px-6 py-3.5 bg-green-600 text-white rounded-2xl hover:bg-green-700 transition-all font-medium shadow-lg shadow-green-100 active:scale-95"
                       >
-                        Sử dụng sản phẩm này
+                        Use this product
                       </button>
                     </div>
                   </div>
@@ -240,20 +251,20 @@ const ProductCheckModal = ({
                     <AlertCircle className="text-amber-600" size={32} />
                   </div>
                   <h3 className="text-lg font-medium text-slate-900">
-                    Không tìm thấy sản phẩm
+                    Product not found
                   </h3>
                   <div className="mt-6 flex gap-3 max-w-md mx-auto">
                     <button
                       onClick={handleClose}
                       className="flex-1 px-6 py-3 text-slate-600 bg-white border border-slate-200 rounded-2xl hover:bg-slate-100 transition-all font-medium text-sm"
                     >
-                      Kiểm tra lại
+                      Check again
                     </button>
                     <button
                       onClick={handleAddNew}
                       className="flex-[2] px-6 py-3 bg-green-600 text-white rounded-2xl hover:bg-green-700 transition-all font-medium"
                     >
-                      Thêm sản phẩm mới
+                      Add new product
                     </button>
                   </div>
                 </div>
@@ -388,11 +399,11 @@ const QuickProductModal = ({
             <div className="flex flex-col">
               <h2 className="text-2xl font-medium text-slate-900 leading-tight tracking-tight">
                 {initialData
-                  ? "Cập nhật sản phẩm nhanh"
-                  : "Thêm sản phẩm nhanh"}
+                  ? "Quick Update Product"
+                  : "Quick Add Product"}
               </h2>
               <p className="text-slate-500 text-sm md:text-base font-medium mt-0.5 leading-relaxed">
-                Điền thông tin sản phẩm để nhập kho ngay lập tức
+                Fill in product details to import into stock immediately
               </p>
             </div>
           </div>
@@ -413,7 +424,7 @@ const QuickProductModal = ({
                 <div className="flex items-center gap-2 mb-6">
                   <div className="w-1.5 h-6 bg-green-500 rounded-full"></div>
                   <h3 className="text-lg font-medium text-slate-900">
-                    Thông tin chi tiết
+                    Detailed Information
                   </h3>
                 </div>
 
@@ -421,7 +432,7 @@ const QuickProductModal = ({
                   {/* Tên sản phẩm */}
                   <div className="group">
                     <label className="block text-[13px] font-medium text-slate-600 mb-2 ml-1">
-                      Tên sản phẩm
+                      Product Name
                     </label>
                     <input
                       value={formData.name}
@@ -430,7 +441,7 @@ const QuickProductModal = ({
                       }
                       disabled={!!initialData}
                       className={`w-full px-5 py-3.5 border border-slate-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-green-50 focus:border-green-400 transition-all font-medium ${initialData ? "bg-slate-100 text-slate-500 cursor-not-allowed" : "bg-slate-50 text-slate-900 focus:bg-white"}`}
-                      placeholder="Ví dụ: Sữa tươi Vinamilk..."
+                      placeholder="e.g. Vinamilk Fresh Milk..."
                     />
                   </div>
                   <div className="grid grid-cols-2 gap-5">
@@ -630,7 +641,7 @@ const QuickProductModal = ({
                 <div className="flex items-center justify-center gap-2 mb-4 text-slate-600">
                   <ImageIcon size={18} />
                   <span className="text-[13px] font-medium">
-                    Hình ảnh minh họa
+                    Illustration Image
                   </span>
                 </div>
 
@@ -650,7 +661,7 @@ const QuickProductModal = ({
                           strokeWidth={1.5}
                           className="mb-2"
                         />
-                        <p className="text-xs font-medium">Không có hình ảnh</p>
+                        <p className="text-xs font-medium">No Image</p>
                       </div>
                     )}
                   </div>
@@ -666,7 +677,7 @@ const QuickProductModal = ({
                     ) : (
                       <div className="text-slate-400 flex flex-col items-center">
                         <Upload size={36} strokeWidth={1.5} className="mb-2" />
-                        <p className="text-xs font-medium">Tải ảnh lên</p>
+                        <p className="text-xs font-medium">Upload image</p>
                       </div>
                     )}
                     <input
@@ -679,7 +690,7 @@ const QuickProductModal = ({
                     {formData.previewUrl && (
                       <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                         <p className="text-white text-xs font-medium">
-                          Thay đổi
+                          Change
                         </p>
                       </div>
                     )}
@@ -687,8 +698,8 @@ const QuickProductModal = ({
                 )}
                 <p className="text-[10px] text-slate-400 mt-3 font-medium">
                   {initialData
-                    ? "Hình ảnh sản phẩm hiện tại"
-                    : "Hỗ trợ: png, jpg, webp"}
+                    ? "Current product image"
+                    : "Supported: png, jpg, webp"}
                 </p>
               </div>
             </div>
@@ -699,7 +710,7 @@ const QuickProductModal = ({
               onClick={handleSubmit}
               className="px-10 py-3 bg-green-600 text-white rounded-2xl hover:bg-green-700 transition-all font-medium text-sm shadow-lg shadow-green-100 active:scale-95 flex items-center gap-2"
             >
-              {initialData ? "Cập nhật dữ liệu" : "Lưu vào phiếu nhập"}
+              {initialData ? "Update Data" : "Save to Import Note"}
             </button>
           </div>
         </div>
@@ -715,8 +726,7 @@ const PreviewModal = ({ isOpen, onClose, onConfirm, data, grandTotal }) => {
       <div className="bg-white rounded-[2rem] w-full max-w-4xl shadow-2xl border border-white/50 max-h-[90vh] overflow-hidden flex flex-col">
         <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
           <h3 className="text-xl font-bold text-slate-800 flex items-center gap-2">
-            <CheckCircle className="text-emerald-600" /> Xác nhận thông tin
-            phiếu nhập
+            <CheckCircle className="text-emerald-600" /> Confirm Import Note Information
           </h3>
           <button
             onClick={onClose}
@@ -729,13 +739,13 @@ const PreviewModal = ({ isOpen, onClose, onConfirm, data, grandTotal }) => {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 bg-slate-50 p-4 rounded-2xl">
             <div>
               <p className="text-xs text-slate-500 font-medium uppercase">
-                Mã phiếu
+                Note Code
               </p>
               <p className="font-bold text-green-600">{data.header.code}</p>
             </div>
             <div>
               <p className="text-xs text-slate-500 font-medium uppercase">
-                Ngày nhập
+                Import Date
               </p>
               <p className="font-medium text-slate-700">
                 {data.header.importDate.replace("T", " ")}
@@ -743,7 +753,7 @@ const PreviewModal = ({ isOpen, onClose, onConfirm, data, grandTotal }) => {
             </div>
             <div>
               <p className="text-xs text-slate-500 font-medium uppercase">
-                Nhân viên
+                Staff
               </p>
               <p className="font-medium text-slate-700">
                 {data.header.staffName}
@@ -751,10 +761,10 @@ const PreviewModal = ({ isOpen, onClose, onConfirm, data, grandTotal }) => {
             </div>
             <div className="col-span-full">
               <p className="text-xs text-slate-500 font-medium uppercase">
-                Ghi chú
+                Note
               </p>
               <p className="font-medium text-slate-700 italic">
-                {data.header.note || "Không có"}
+                {data.header.note || "None"}
               </p>
             </div>
           </div>
@@ -763,25 +773,25 @@ const PreviewModal = ({ isOpen, onClose, onConfirm, data, grandTotal }) => {
               <thead className="bg-slate-50 text-slate-900">
                 <tr>
                   <th className="px-4 py-4 font-medium text-left border-b border-slate-100 first:rounded-tl-2xl">
-                    Tên sản phẩm
+                    Product Name
                   </th>
                   <th className="px-4 py-4 font-medium text-left border-b border-slate-100 whitespace-nowrap">
-                    Mã SKU
+                    SKU Code
                   </th>
                   <th className="px-4 py-4 font-medium text-center border-b border-slate-100 whitespace-nowrap">
-                    Đơn vị
+                    Unit
                   </th>
                   <th className="px-4 py-4 font-medium text-center border-b border-slate-100 whitespace-nowrap">
-                    Số lượng
+                    Quantity
                   </th>
                   <th className="px-4 py-4 font-medium text-center border-b border-slate-100 whitespace-nowrap">
-                    Hệ số
+                    Rate
                   </th>
                   <th className="px-4 py-4 font-medium text-right border-b border-slate-100 whitespace-nowrap">
-                    Đơn giá
+                    Price
                   </th>
                   <th className="px-4 py-4 font-medium text-right border-b border-slate-100 whitespace-nowrap last:rounded-tr-2xl">
-                    Tổng tiền lô
+                    Total Amount
                   </th>
                 </tr>
               </thead>
@@ -819,7 +829,7 @@ const PreviewModal = ({ isOpen, onClose, onConfirm, data, grandTotal }) => {
                       </span>
                     </td>
                     <td className="px-4 py-4 text-center text-slate-600 whitespace-nowrap">
-                      {d.unit}
+                      {getUnitLabel(d.unit)}
                     </td>
                     <td className="px-4 py-4 text-center font-medium text-slate-900 whitespace-nowrap">
                       {d.quantity}
@@ -839,7 +849,7 @@ const PreviewModal = ({ isOpen, onClose, onConfirm, data, grandTotal }) => {
             </table>
           </div>
           <div className="flex justify-end items-center gap-3 pt-2">
-            <span className="text-slate-500 font-medium">Tổng cộng:</span>
+            <span className="text-slate-500 font-medium">Total:</span>
             <span className="text-2xl font-bold text-emerald-600">
               {grandTotal.toLocaleString()} VNĐ
             </span>
@@ -847,7 +857,7 @@ const PreviewModal = ({ isOpen, onClose, onConfirm, data, grandTotal }) => {
         </div>
         <div className="p-6 border-t border-slate-100 bg-white flex justify-between items-center">
           <div className="font-medium text-slate-600">
-            Tổng sản phẩm:{" "}
+            Total Products:{" "}
             <span className="text-green-600 font-bold">
               {data.details.length}
             </span>
@@ -857,13 +867,13 @@ const PreviewModal = ({ isOpen, onClose, onConfirm, data, grandTotal }) => {
               onClick={onClose}
               className="px-6 py-3 bg-slate-100 text-slate-600 rounded-xl font-medium hover:bg-slate-200 transition-colors"
             >
-              Hủy
+              Cancel
             </button>
             <button
               onClick={onConfirm}
               className="px-6 py-3 bg-green-600 text-white rounded-xl font-medium hover:bg-green-700 shadow-lg shadow-green-200 transition-all flex items-center gap-2"
             >
-              <CheckCircle size={20} /> Xác nhận phiếu
+              <CheckCircle size={20} /> Confirm Note
             </button>
           </div>
         </div>
@@ -1296,19 +1306,19 @@ const InventoryEntryPage = () => {
     if (row.isSaved) return;
 
     if (!row.tempData) {
-      toast.info("Chưa có thông tin sản phẩm để lưu!");
+      toast.info("No product information to save!");
       return;
     }
 
     const result = await Swal.fire({
-      title: "Xác nhận lưu?",
-      text: "Bạn có muốn lưu sản phẩm vào Quản lý sản phẩm không?",
+      title: "Confirm Save?",
+      text: "Do you want to save the product to Product Management?",
       icon: "question",
       showCancelButton: true,
       confirmButtonColor: "#22c55e",
       cancelButtonColor: "#94a3b8",
-      confirmButtonText: "Đồng ý",
-      cancelButtonText: "Hủy",
+      confirmButtonText: "Confirm",
+      cancelButtonText: "Cancel",
     });
 
     if (!result.isConfirmed) return;
@@ -1332,10 +1342,10 @@ const InventoryEntryPage = () => {
       newDetails[index].shelfLife = newProduct.shelfLife;
       setDetails(newDetails);
 
-      toast.info("Sản phẩm đã được lưu");
+      toast.info("Product saved successfully");
     } catch (error) {
       toast.error(
-        "Lỗi lưu sản phẩm: " + (error.response?.data?.message || error.message),
+        "Error saving product: " + (error.response?.data?.message || error.message),
       );
     }
   };
@@ -1354,17 +1364,17 @@ const InventoryEntryPage = () => {
       link.click();
       link.remove();
     } catch (error) {
-      toast.error("Lỗi xuất file: " + error.message);
+      toast.error("File export error: " + error.message);
     }
   };
 
   const handlePreSave = () => {
     if (!header.staffId || !isValidStaff) {
-      toast.warning("Vui lòng nhập đúng Mã nhân viên!");
+      toast.warning("Please enter a valid Staff Code!");
       return;
     }
     if (details.length === 0) {
-      toast.warning("Phiếu nhập phải có ít nhất 1 sản phẩm!");
+      toast.warning("Import note must contain at least 1 product!");
       return;
     }
     setPreviewOpen(true);
@@ -1372,14 +1382,14 @@ const InventoryEntryPage = () => {
 
   const handleConfirmSave = async () => {
     const result = await Swal.fire({
-      title: "Xác nhận lưu?",
-      text: "Bạn có muốn lưu phiếu nhập?",
+      title: "Confirm Save?",
+      text: "Do you want to save this import note?",
       icon: "question",
       showCancelButton: true,
       confirmButtonColor: "#22c55e",
       cancelButtonColor: "#94a3b8",
-      confirmButtonText: "Lưu phiếu",
-      cancelButtonText: "Hủy",
+      confirmButtonText: "Save Note",
+      cancelButtonText: "Cancel",
     });
 
     if (!result.isConfirmed) return;
@@ -1449,7 +1459,7 @@ const InventoryEntryPage = () => {
     // Kiểm tra chặn lỗi trước khi gửi
     if (!derivedSupplierId) {
       toast.error(
-        "Lỗi: Không xác định được Nhà cung cấp! Vui lòng chọn Nhà cung cấp ở thông tin chung hoặc kiểm tra lại thông tin sản phẩm.",
+        "Error: Supplier not defined! Please select a supplier in general info or check product details.",
       );
       return;
     }
@@ -1476,12 +1486,12 @@ const InventoryEntryPage = () => {
 
     try {
       await inventoryService.createImportNote(requestData);
-      toast.success("Lưu phiếu thành công!");
+      toast.success("Import note saved successfully!");
       setPreviewOpen(false);
       navigate("/inventory/list");
     } catch (err) {
       toast.error(
-        "Lỗi lưu phiếu: " + (err.response?.data?.message || err.message),
+        "Error saving note: " + (err.response?.data?.message || err.message),
       );
     }
   };
@@ -1494,15 +1504,15 @@ const InventoryEntryPage = () => {
       <div className="flex justify-between items-end mb-6">
         <div>
           <h2 className="text-2xl font-medium text-slate-900 flex items-center gap-3">
-            Nhập kho hàng hóa
+            Stock Inward / Import
           </h2>
           <p className="text-slate-500 mt-2 font-medium text-lg">
-            Tạo phiếu nhập mới và quản lý lô hàng
+            Create a new import note and manage batches
           </p>
         </div>
         <div className="bg-white px-5 py-3 rounded-2xl shadow-sm border border-slate-100 flex flex-col items-end">
-          <span className="text-xs font-bold text-slate-500 mb-1">
-            Mã phiếu nhập kho
+          <span className="text-[16px] font-bold text-slate-500 mb-1">
+            Import Note Code
           </span>
           <div className="text-xl font-medium text-green-600 font-mono tracking-wide">
             {header.code}
@@ -1513,8 +1523,8 @@ const InventoryEntryPage = () => {
       <div className="bg-white p-6 rounded-[2.5rem] shadow-sm border border-slate-100 mb-6">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
           <div className="space-y-2 md:col-span-3">
-            <label className="text-sm font-medium text-slate-500 flex items-center gap-2">
-              <Calendar size={16} className="text-green-500" /> Thời gian nhập
+            <label className="text-base font-medium text-slate-500 flex items-center gap-2">
+              <FaCalendarAlt size={16} className="text-green-500" /> Import Date & Time
             </label>
             <input
               type="datetime-local"
@@ -1524,15 +1534,15 @@ const InventoryEntryPage = () => {
             />
           </div>
           <div className="space-y-2 md:col-span-3">
-            <label className="text-sm font-medium text-slate-500 flex items-center gap-2">
-              <User size={16} className="text-green-500" /> Mã nhân viên
+            <label className="text-base font-medium text-slate-500 flex items-center gap-2">
+              <FaUserAlt size={16} className="text-green-500" /> Staff Code
             </label>
             <div className="relative">
               <input
                 value={header.staffId}
                 onChange={handleStaffIdChange}
-                className={`w-full border font-medium rounded-2xl px-4 py-3 outline-none transition-all ${isValidStaff === true ? "border-emerald-400 bg-emerald-50/50 text-emerald-700" : isValidStaff === false ? "border-red-400 bg-red-50 text-red-700" : "border-slate-200 bg-white focus:border-green-400 focus:ring-2 focus:ring-green-100"}`}
-                placeholder="Nhập mã ID"
+                className={`w-full border font-medium rounded-2xl px-4 py-3 focus:outline-none transition-all ${isValidStaff === true ? "border-emerald-400 bg-emerald-50/50 text-emerald-700" : isValidStaff === false ? "border-red-400 bg-red-50 text-red-700" : "border-slate-200 text-slate-600"}`}
+                placeholder="Enter Staff Code"
               />
               {isValidStaff === true && (
                 <div className="absolute right-4 top-4 w-2 h-2 bg-emerald-500 rounded-full shadow-[0_0_8px_rgba(16,185,129,0.5)]"></div>
@@ -1540,25 +1550,25 @@ const InventoryEntryPage = () => {
             </div>
           </div>
           <div className="space-y-2 md:col-span-3">
-            <label className="text-sm font-medium text-slate-500 flex items-center gap-2">
-              <Smile size={16} className="text-green-500" /> Người thực hiện
+            <label className="text-base font-medium text-slate-500 flex items-center gap-2">
+              <FaUserEdit size={16} className="text-green-500" /> Created By
             </label>
             <input
               value={header.staffName}
               disabled
               className="w-full border border-slate-200 text-slate-600 font-medium rounded-2xl px-4 py-3"
-              placeholder="Tên nhân viên"
+              placeholder="Staff Name"
             />
           </div>
           <div className="space-y-2 md:col-span-3">
-            <label className="text-sm font-medium text-slate-500 flex items-center gap-2">
-              <FileText size={16} className="text-green-500" /> Ghi chú
+            <label className="text-base font-medium text-slate-500 flex items-center gap-2">
+              <FaClipboardList size={16} className="text-green-500" /> Note
             </label>
             <input
               value={header.note}
               onChange={(e) => setHeader({ ...header, note: e.target.value })}
-              className="w-full border border-slate-200 bg-white font-medium text-slate-700 rounded-2xl px-4 py-3 outline-none focus:border-green-400 focus:ring-2 focus:ring-green-100 transition-all"
-              placeholder="Nhập ghi chú cho đợt hàng"
+              className="w-full border border-slate-200 text-slate-600 font-medium rounded-2xl px-4 py-3 focus:outline-none transition-all"
+              placeholder="Enter note for this batch..."
             />
           </div>
         </div>
@@ -1568,62 +1578,60 @@ const InventoryEntryPage = () => {
         <div className="overflow-x-auto">
           <table className="w-full min-w-[1200px]">
             <thead>
-              <tr className="bg-slate-50/50 border-b border-slate-100 text-left">
-                <th className="py-5 px-4 text-sm font-medium text-slate-500 whitespace-nowrap w-60 first:pl-6">
-                  Thông tin sản phẩm
+              <tr className="bg-[#647368] border-b border-slate-100 text-left">
+                <th className="py-5 px-4 !text-base font-medium !text-white !bg-[#647368] whitespace-nowrap w-60 first:pl-6">
+                  Product Details
                 </th>
-                <th className="py-5 px-4 text-sm font-medium text-slate-500 whitespace-nowrap w-40">
-                  Ngày sản xuất
+                <th className="py-5 px-4 !text-base font-medium !text-white !bg-[#647368] whitespace-nowrap w-40">
+                  MFG Date
                 </th>
-                <th className="py-5 px-4 text-sm font-medium text-slate-500 whitespace-nowrap w-40">
-                  Hạn sử dụng
+                <th className="py-5 px-4 !text-base font-medium !text-white !bg-[#647368] whitespace-nowrap w-40">
+                  EXP Date
                 </th>
-                <th className="py-5 px-4 text-sm font-medium text-slate-500 whitespace-nowrap w-40">
-                  Mã batch code
+                <th className="py-5 px-4 !text-base font-medium !text-white !bg-[#647368] whitespace-nowrap w-40">
+                  Batch Code
                 </th>
-                <th className="py-5 px-4 text-sm font-medium text-slate-500 whitespace-nowrap w-32">
-                  Số lượng
+                <th className="py-5 px-4 !text-base font-medium !text-white !bg-[#647368] whitespace-nowrap w-32">
+                  Quantity
                 </th>
-                <th className="py-5 px-4 text-sm font-medium text-slate-500 whitespace-nowrap w-32">
-                  Hệ số
+                <th className="py-5 px-4 !text-base font-medium !text-white !bg-[#647368] whitespace-nowrap w-32">
+                  CVR
                 </th>
-                <th className="py-5 px-4 text-sm font-medium text-slate-500 whitespace-nowrap w-40">
-                  Đơn giá
+                <th className="py-5 px-4 !text-base font-medium !text-white !bg-[#647368] whitespace-nowrap w-40">
+                  Price
                 </th>
-                <th className="py-5 px-4 text-sm font-medium text-slate-500 whitespace-nowrap w-40">
-                  Thành tiền
+                <th className="py-5 px-4 !text-base font-medium !text-white !bg-[#647368] whitespace-nowrap w-40">
+                  Total Amount
                 </th>
-                <th className="py-5 px-2 text-sm font-medium text-slate-500 whitespace-nowrap w-32">
-                  Thao tác
+                <th className="py-5 px-2 !text-base font-medium !text-white !bg-[#647368] whitespace-nowrap w-32">
+                  Actions
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-5">
+            <tbody className="divide-y divide-slate-100">
               {details.map((row, index) => (
                 <tr
                   key={row.id}
-                  className="hover:bg-green-50/30 transition-colors group"
+                  className="hover:!bg-transparent transition-colors group"
                 >
-                  <td className="py-4 px-2 align-top first:pl-6">
+                  <td className="py-4 px-2 align-middle first:pl-6">
                     {!(row.productInfo || row.tempData) ? (
-                      <div className="flex gap-1 mb-3">
-                        <div className="relative">
-                          <input
-                            value={row.sku}
-                            onChange={(e) =>
-                              handleDetailChange(index, "sku", e.target.value)
-                            }
-                            onKeyDown={(e) => {
-                              if (e.key === "Enter") {
+                      <div className="relative">
+                        <input
+                          value={row.sku}
+                          onChange={(e) =>
+                            handleDetailChange(index, "sku", e.target.value)
+                          }
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
                                 e.preventDefault();
                                 handleSkuBlur(index);
-                              }
-                            }}
-                            className={`w-44 h-10 border pl-9 pr-3 py-2 rounded-xl text-sm font-medium outline-none transition-all ${row.isSaved ? "border-emerald-200 bg-emerald-50/30 text-emerald-700" : row.isValidSku === false ? "border-green-200 bg-green-50/30 text-green-700" : "border-slate-200 bg-white focus:border-green-400"}`}
-                            placeholder="Nhập mã SKU"
-                          />
-                          <Search className="absolute left-3 top-2.5 text-slate-400 w-4 h-4" />
-                        </div>
+                            }
+                          }}
+                          className={`w-44 h-10 border pl-9 pr-3 py-2 rounded-xl text-sm font-medium focus:outline-none transition-all shadow-sm ${row.isSaved ? "border-emerald-300 bg-emerald-50/50 text-emerald-800" : row.isValidSku === false ? "border-rose-300 bg-rose-50/50 text-rose-800" : "border-slate-300 text-slate-600"}`}
+                          placeholder="Enter SKU code"
+                        />
+                        <Search className="absolute left-3 top-2.5 text-slate-400 w-4 h-4" />
                       </div>
                     ) : (
                       <div className="flex gap-3 bg-white p-2 rounded-xl border border-slate-100 shadow-sm">
@@ -1655,42 +1663,42 @@ const InventoryEntryPage = () => {
                               : row.tempData.barcode}{" "}
                           </div>
                           <div className="text-xs text-slate-500 truncate mt-0.5">
-                            {row.shelfLife || "---"} | {row.unit || "---"} |{" "}
+                            {row.shelfLife || "---"} | {getUnitLabel(row.unit) || "---"} |{" "}
                             {row.origin || "---"}
                           </div>
                         </div>
                       </div>
                     )}
                   </td>
-                  <td className="py-4 px-2 align-top">
+                  <td className="py-4 px-2 align-middle">
                     <input
                       type="text"
                       value={row.manufacturingDate}
-                      className={`w-32 h-10 bg-white border rounded-xl px-3 py-2 text-sm font-medium text-slate-600 outline-none transition-all text-center ${
+                      className={`w-32 h-10 border rounded-xl px-3 py-2 text-sm font-medium text-center shadow-sm focus:outline-none transition-all ${
                         row.isValidDate === false
-                          ? "border-green-400 shadow-[0_0_12px_rgba(244,63,94,0.4)]"
-                          : "border-slate-200 focus:border-green-400"
+                          ? "border-rose-400 bg-rose-50/30 focus:border-rose-500 focus:ring-2 focus:ring-rose-100"
+                          : "border-slate-300 text-slate-600"
                       }`}
                       placeholder="dd/mm/yyyy"
                       onChange={(e) => handleDateInput(index, e.target.value)}
                     />
                   </td>
-                  <td className="py-4 px-2 align-top">
-                    <div className="w-32 h-10 bg-transparent border border-slate-200 rounded-xl px-3 text-sm font-medium text-slate-600 flex items-center justify-center">
+                  <td className="py-4 px-2 align-middle">
+                    <div className="w-32 h-10 border border-slate-200 rounded-xl px-3 text-sm font-medium text-slate-600 flex items-center justify-center select-none">
                       {formatDateDisplay(row.expiryDate) || "dd/mm/yyyy"}
                     </div>
                   </td>
-                  <td className="py-4 px-2 align-top">
-                    <div className="w-42 h-10 bg-transparent border border-slate-200 rounded-xl px-3 text-sm font-medium text-slate-600 flex items-center justify-center">
-                      {row.batchCode || "Tự động"}
+                  <td className="py-4 px-2 align-middle">
+                    <div className="w-42 h-10 border border-slate-200 rounded-xl px-3 text-sm font-medium text-slate-600 flex items-center justify-center select-none">
+                      {row.batchCode || "Auto"}
                     </div>
                   </td>
-                  <td className="py-4 px-2 align-top">
+                  <td className="py-4 px-2 align-middle">
                     <input
                       type="number"
                       min="1"
                       value={row.quantity}
-                      className="w-24 h-10 bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm font-medium text-center focus:border-green-400 outline-none text-slate-600"
+                      className="w-24 h-10 border border-slate-300 rounded-xl px-3 py-2 text-sm font-medium text-center focus:outline-none text-slate-600 transition-all shadow-sm"
                       onChange={(e) =>
                         handleDetailChange(
                           index,
@@ -1700,12 +1708,12 @@ const InventoryEntryPage = () => {
                       }
                     />
                   </td>
-                  <td className="py-4 px-2 align-top">
+                  <td className="py-4 px-2 align-middle">
                     <input
                       type="number"
                       min={1}
                       value={row.rate}
-                      className="w-24 h-10 bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm text-center font-medium focus:border-green-400 outline-none"
+                      className="w-24 h-10 border border-slate-300 rounded-xl px-3 py-2 text-sm text-center font-medium focus:outline-none text-slate-600 transition-all shadow-sm"
                       onChange={(e) =>
                         handleDetailChange(
                           index,
@@ -1715,25 +1723,25 @@ const InventoryEntryPage = () => {
                       }
                     />
                   </td>
-                  <td className="py-4 px-2 align-top text-center">
-                    <div className="w-32 h-10 bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm text-center font-medium text-slate-600">
+                  <td className="py-4 px-2 align-middle text-center">
+                    <div className="w-32 h-10 border border-slate-200 rounded-xl px-3 py-2 text-sm text-center font-medium text-slate-600 flex items-center justify-center">
                       {row.price ? row.price.toLocaleString() : "0"}
                     </div>
                   </td>
-                  <td className="py-4 px-2 align-top text-center">
-                    <div className="w-36 h-10 bg-white border border-slate-200 rounded-xl px-3 py-2 font-medium text-center text-slate-600 text-sm py-2">
+                  <td className="py-4 px-2 align-middle text-center">
+                    <div className="w-36 h-10 border border-slate-200 rounded-xl px-3 py-2 font-medium text-center text-slate-600 text-sm flex items-center justify-center">
                       {row.total.toLocaleString()}
                     </div>
                   </td>
-                  <td className="py-4 px-1 align-top text-center last:pr-6">
+                  <td className="py-4 px-1 align-middle text-center last:pr-6">
                     <div className="flex items-center justify-center gap-0">
                       <button
                         onClick={() => openEditModal(index)}
                         className="text-green-600 hover:text-green-800 p-2 rounded-xl transition-all"
-                        title="Sửa"
+                        title="Edit"
                         disabled={row.isSaved}
                       >
-                        <ClipboardPenLine size={18} />
+                        <MdEditDocument size={20} />
                       </button>
                       <button
                         onClick={() => {
@@ -1741,9 +1749,9 @@ const InventoryEntryPage = () => {
                           setDetails(newD);
                         }}
                         className="text-red-600 hover:text-red-800 p-2 rounded-xl transition-all"
-                        title="Xóa"
+                        title="Delete"
                       >
-                        <Trash2 size={18} />
+                        <MdDelete size={20} />
                       </button>
                     </div>
                   </td>
@@ -1773,15 +1781,15 @@ const InventoryEntryPage = () => {
             }
             className="flex items-center gap-2 text-sm font-medium text-green-600 hover:text-green-700 hover:bg-green-50 px-5 py-2.5 rounded-2xl transition-all"
           >
-            <Plus size={18} /> Thêm dòng sản phẩm
+            <Plus size={18} /> Add Product Row
           </button>
         </div>
       </div>
 
-      <div className="mt-8 bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 flex flex-col md:flex-row justify-between items-center gap-6">
+      <div className="mt-8 bg-white p-6 rounded-[2.5rem] shadow-sm border border-slate-100 flex flex-col md:flex-row justify-between items-center gap-6">
         <div className="flex items-baseline gap-3 pl-2">
           <span className="text-slate-500 font-medium text-sm">
-            Tổng thanh toán:
+            Grand Total:
           </span>
           <span className="font-medium text-2xl text-slate-800">
             {grandTotal.toLocaleString()}{" "}
@@ -1790,13 +1798,13 @@ const InventoryEntryPage = () => {
         </div>
         <div className="flex gap-3">
           <button className="bg-slate-100 text-slate-600 px-6 py-3 rounded-2xl font-medium hover:bg-slate-200 transition-all text-sm">
-            Hủy bỏ
+            Cancel
           </button>
           <button
             onClick={handlePreSave}
-            className="bg-green-600 text-white px-8 py-3 rounded-2xl font-medium hover:bg-green-700 shadow-lg shadow-green-200 transition-all flex items-center gap-2 text-sm"
+            className="bg-green-600 text-white px-8 py-3 rounded-2xl font-medium hover:bg-green-700 transition-all flex items-center gap-2 text-sm shadow-sm"
           >
-            Lưu phiếu nhập
+            Save Import Note
           </button>
         </div>
       </div>

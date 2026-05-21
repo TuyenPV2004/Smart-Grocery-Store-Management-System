@@ -1,19 +1,25 @@
 import { toast } from "react-toastify";
 import { useCallback, useEffect, useState } from "react";
+import { PhotoProvider, PhotoView } from "react-photo-view";
+import "react-photo-view/dist/react-photo-view.css";
 import { useLocation } from "react-router-dom";
-import ReactPaginate from "react-paginate";
 import productService from "../../services/productService";
 import priceService from "../../services/priceService";
+import AppPagination from "../../components/common/AppPagination";
 import ProductForm from "../../components/ProductForm";
 import HistoryModal from "../../components/HistoryModal";
 import PriceManagementModal from "../../components/PriceManagementModal";
 import ProductImageModal from "../../components/ProductImageModal";
 import { getImageUrl } from "../../utils/imageUrl";
 import AdminTopbar from "../../components/admin/AdminTopbar";
+import { PiPackageFill } from "react-icons/pi";
+import { FaEdit } from "react-icons/fa";
+import { TiWarning } from "react-icons/ti";
+import { RiErrorWarningFill } from "react-icons/ri";
+import { TbCategoryFilled } from "react-icons/tb";
 import {
   FiPlus as Plus,
   FiSearch as Search,
-  FiEdit2 as Edit,
   FiTrash2 as Trash2,
   FiInfo as Info,
   FiArrowUp as ArrowUp,
@@ -36,14 +42,14 @@ import {
 
 const productMetricTone = {
   emerald: {
-    accent: "bg-emerald-50 text-emerald-600",
+    accent: "text-emerald-600",
     border: "border-emerald-100",
   },
-  blue: { accent: "bg-blue-50 text-blue-600", border: "border-blue-100" },
-  amber: { accent: "bg-amber-50 text-amber-600", border: "border-amber-100" },
-  rose: { accent: "bg-rose-50 text-rose-600", border: "border-rose-100" },
+  blue: { accent: "text-blue-600", border: "border-blue-100" },
+  amber: { accent: "text-amber-600", border: "border-amber-100" },
+  rose: { accent: "text-rose-600", border: "border-rose-100" },
   violet: {
-    accent: "bg-violet-50 text-violet-600",
+    accent: "text-violet-600",
     border: "border-violet-100",
   },
 };
@@ -54,12 +60,12 @@ const ProductMetricCard = ({ title, value, icon: Icon, tone }) => (
   >
     <div className="mb-4 flex items-center justify-between gap-3">
       <div className="flex min-w-0 items-center gap-3">
-        <p className="truncate text-sm font-medium text-slate-500">{title}</p>
+        <p className="truncate text-base font-medium text-slate-500">{title}</p>
       </div>
       <div
-        className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full ${productMetricTone[tone].accent}`}
+        className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full ${productMetricTone[tone].accent}`}
       >
-        <Icon size={21} />
+        <Icon size={32} />
       </div>
     </div>
     <p className="truncate text-2xl font-medium text-slate-900">{value}</p>
@@ -511,8 +517,24 @@ const ProductListPage = () => {
   const pageCount = totalPages;
   const currentProducts = products;
 
-  const handlePageClick = (event) => {
-    setCurrentPage(event.selected);
+  const getInventoryFilterCount = (filterId) => {
+    switch (filterId) {
+      case "ALL":
+        return productMetrics.totalProducts;
+      case "IN_STOCK":
+        return Math.max(productMetrics.totalProducts - productMetrics.outOfStock, 0);
+      case "LOW_STOCK":
+        return productMetrics.lowStock;
+      case "OUT_OF_STOCK":
+        return productMetrics.outOfStock;
+      default:
+        return 0;
+    }
+  };
+
+  const handlePageClick = (page) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const handleDeleteClick = (product) => {
@@ -524,13 +546,13 @@ const ProductListPage = () => {
     try {
       const updatedProduct = { ...productToDelete, status: "INACTIVE" };
       await productService.update(productToDelete.id, updatedProduct, null);
-      toast.success("Đã chuyển trạng thái sang ngừng kinh doanh!");
+      toast.success("Changed status to inactive successfully!");
       setDeleteStep(0);
       setProductToDelete(null);
       fetchProducts();
       fetchProductMetrics();
     } catch (error) {
-      toast.error("Lỗi cập nhật: " + (error.response?.data || "Có lỗi xảy ra"));
+      toast.error("Update error: " + (error.response?.data || "An error occurred"));
     }
   };
 
@@ -548,7 +570,7 @@ const ProductListPage = () => {
       fetchProducts();
       fetchProductMetrics();
     } catch (error) {
-      toast.error("Lỗi xóa: " + (error.response?.data || "Có lỗi xảy ra"));
+      toast.error("Delete error: " + (error.response?.data || "An error occurred"));
     }
   };
 
@@ -646,25 +668,25 @@ const ProductListPage = () => {
         <ProductMetricCard
           title="Total Products"
           value={productMetrics.totalProducts}
-          icon={Package}
+          icon={PiPackageFill}
           tone="emerald"
         />
         <ProductMetricCard
           title="Low Stock"
           value={productMetrics.lowStock}
-          icon={AlertTriangle}
+          icon={TiWarning}
           tone="amber"
         />
         <ProductMetricCard
           title="Out of Stock"
           value={productMetrics.outOfStock}
-          icon={Archive}
+          icon={RiErrorWarningFill}
           tone="rose"
         />
         <ProductMetricCard
           title="Top Category"
           value={productMetrics.topCategoryName}
-          icon={Layers}
+          icon={TbCategoryFilled}
           tone="blue"
         />
       </div>
@@ -695,7 +717,7 @@ const ProductListPage = () => {
                         : "bg-slate-100 text-slate-600 hover:bg-slate-200"
                     }`}
                   >
-                    {item.label}
+                    {item.label} {getInventoryFilterCount(item.id)}
                   </button>
                 );
               })}
@@ -740,7 +762,8 @@ const ProductListPage = () => {
           </div>
         </div>
         <div className="overflow-x-auto">
-          <table className="product-inventory-table w-full text-left border-collapse">
+          <PhotoProvider>
+            <table className="product-inventory-table w-full text-left border-collapse">
             <thead>
             <tr className="bg-slate-50/50 border-b border-slate-100">
               <th className="px-6 py-4 text-base font-medium text-slate-900">
@@ -794,15 +817,23 @@ const ProductListPage = () => {
                 >
                   <td className="px-6 py-4">
                     <div className="flex items-center min-w-[200px]">
-                      <img
-                        className="h-10 w-10 rounded-lg object-cover border border-slate-200"
+                      <PhotoView
                         src={
                           p.thumbnail
                             ? getImageUrl(p.thumbnail)
                             : "https://via.placeholder.com/40"
                         }
-                        alt=""
-                      />
+                      >
+                        <img
+                          className="h-10 w-10 rounded-lg object-cover border border-slate-200 cursor-pointer hover:opacity-80 transition-all active:scale-95"
+                          src={
+                            p.thumbnail
+                              ? getImageUrl(p.thumbnail)
+                              : "https://via.placeholder.com/40"
+                          }
+                          alt=""
+                        />
+                      </PhotoView>
                       <div className="ml-3">
                         <div className="text-sm font-medium text-slate-900 leading-tight">
                           {p.name}
@@ -882,6 +913,7 @@ const ProductListPage = () => {
               )}
             </tbody>
           </table>
+          </PhotoProvider>
         </div>
       </div>
 
@@ -904,7 +936,7 @@ const ProductListPage = () => {
             className="flex w-full items-center gap-1.5 rounded-lg px-2 py-2 text-left text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
             title="Edit"
           >
-            <Edit className="text-indigo-600" size={18} />
+            <FaEdit className="text-indigo-600" size={18} />
             <span>Edit</span>
           </button>
           <button
@@ -916,7 +948,7 @@ const ProductListPage = () => {
             title="Manage price"
           >
             <ChartNoAxesCombined className="text-emerald-600" size={18} />
-            <span>Manage price</span>
+            <span>Price Manage</span>
           </button>
           <button
             type="button"
@@ -930,7 +962,7 @@ const ProductListPage = () => {
             title="Manage images"
           >
             <ImageIcon className="text-purple-600" size={18} />
-            <span>Manage images</span>
+            <span>Images Manage</span>
           </button>
           <button
             type="button"
@@ -961,7 +993,7 @@ const ProductListPage = () => {
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 animate-in fade-in zoom-in duration-200">
             <div className="flex justify-between items-start mb-6 gap-3">
               <p className="text-slate-600">
-                Bạn muốn xử lý sản phẩm này như thế nào ?
+                How would you like to handle this product?
               </p>
               <button
                 onClick={handleCloseDeleteModal}
@@ -976,7 +1008,7 @@ const ProductListPage = () => {
                 onClick={handleSoftDelete}
                 className="w-full flex items-center justify-center gap-3 p-3 rounded-xl border border-slate-200 hover:bg-slate-50 hover:border-indigo-300 transition-all group"
               >
-                <div className="bg-gray-100 p-2 rounded-lg group-hover:bg-indigo-50">
+                <div className="p-2 rounded-lg">
                   <Archive
                     className="text-gray-600 group-hover:text-indigo-600"
                     size={20}
@@ -984,10 +1016,10 @@ const ProductListPage = () => {
                 </div>
                 <div className="text-left flex-1">
                   <div className="font-medium text-slate-900">
-                    Chuyển sang ngừng kinh doanh
+                    Set to Inactive
                   </div>
                   <div className="text-xs text-slate-500">
-                    Giữ lại dữ liệu và chuyển trạng thái sản phẩm
+                    Keep data and change product status
                   </div>
                 </div>
               </button>
@@ -996,13 +1028,13 @@ const ProductListPage = () => {
                 onClick={handleHardDeleteRequest}
                 className="w-full flex items-center justify-center gap-3 p-3 rounded-xl border border-slate-200 hover:bg-red-50 hover:border-red-300 transition-all group"
               >
-                <div className="bg-red-50 p-2 rounded-lg group-hover:bg-red-100">
+                <div className="p-2 rounded-lg">
                   <Trash2 className="text-red-600" size={20} />
                 </div>
                 <div className="text-left flex-1">
-                  <div className="font-medium text-red-600">Xóa vĩnh viễn</div>
+                  <div className="font-medium text-red-600">Delete permanently</div>
                   <div className="text-xs text-slate-500">
-                    Xóa vĩnh viễn khỏi hệ thống
+                    Permanently delete from the system
                   </div>
                 </div>
               </button>
@@ -1020,17 +1052,17 @@ const ProductListPage = () => {
             </div>
 
             <h3 className="text-lg font-bold text-slate-900 mb-2">
-              Xác nhận xóa vĩnh viễn?
+              Confirm Permanent Delete?
             </h3>
 
             <p className="text-slate-500 text-sm mb-6">
-              Bạn có chắc chắn muốn xóa vĩnh viễn sản phẩm{" "}
-              <span className="font-bold">{productToDelete.name}</span> không?
+              Are you sure you want to permanently delete the product{" "}
+              <span className="font-bold">{productToDelete.name}</span>?
               <br />
               <br />
               <span className="text-red-500 italic text-xs">
-                *Nếu sản phẩm đã có lịch sử nhập/xuất, hệ thống sẽ tự động
-                chuyển sang trạng thái Ngừng kinh doanh để bảo toàn dữ liệu.*
+                *If the product has import/export history, the system will automatically
+                change its status to Inactive to preserve data integrity.*
               </span>
             </p>
 
@@ -1039,50 +1071,30 @@ const ProductListPage = () => {
                 onClick={handleCloseDeleteModal}
                 className="flex-1 px-4 py-2 bg-slate-100 text-slate-700 font-medium rounded-xl hover:bg-slate-200 transition-colors"
               >
-                Hủy
+                Cancel
               </button>
               <button
                 onClick={handleHardDeleteExecute}
                 className="flex-1 px-4 py-2 bg-red-600 text-white font-medium rounded-xl hover:bg-red-700 transition-colors shadow-lg shadow-red-200"
               >
-                Xác nhận
+                Confirm
               </button>
             </div>
           </div>
         </div>
       )}
 
-      <div className="max-w-[1400px] mx-auto mt-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <p className="text-sm font-medium text-slate-500">
-          Page {Math.min(currentPage + 1, pageCount)}/{pageCount}
-        </p>
-
-        {pageCount > 1 && (
-          <ReactPaginate
-            breakLabel="..."
-            nextLabel=">"
-            onPageChange={handlePageClick}
-            pageRangeDisplayed={3}
-            marginPagesDisplayed={1}
+      {pageCount > 1 ? (
+        <div className="max-w-[1400px] mx-auto">
+          <AppPagination
+            currentPage={Math.min(currentPage, pageCount - 1)}
             pageCount={pageCount}
-            previousLabel="<"
-            forcePage={Math.min(currentPage, pageCount - 1)}
-            renderOnZeroPageCount={null}
-            containerClassName="flex items-center gap-1"
-            pageClassName=""
-            pageLinkClassName="min-w-9 h-9 px-2 flex items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-700 text-sm font-medium hover:bg-slate-50 transition-colors"
-            previousClassName=""
-            previousLinkClassName="min-w-9 h-9 px-2 flex items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-700 text-sm font-medium hover:bg-slate-50 transition-colors"
-            nextClassName=""
-            nextLinkClassName="min-w-9 h-9 px-2 flex items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-700 text-sm font-medium hover:bg-slate-50 transition-colors"
-            breakClassName=""
-            breakLinkClassName="min-w-9 h-9 px-2 flex items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 text-sm font-medium"
-            activeClassName=""
-            activeLinkClassName="!bg-green-600 !text-white !border-green-600"
-            disabledClassName="opacity-40 pointer-events-none"
+            onPageChange={handlePageClick}
+            pageRangeDisplayed={4}
+            marginPagesDisplayed={1}
           />
-        )}
-      </div>
+        </div>
+      ) : null}
 
       <ProductCheckModal
         isOpen={isCheckModalOpen}

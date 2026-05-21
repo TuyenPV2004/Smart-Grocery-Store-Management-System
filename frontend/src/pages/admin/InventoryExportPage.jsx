@@ -18,7 +18,11 @@ import {
   FiShuffle as Dices,
   FiUpload as Upload,
   FiImage as ImageIcon,
+  FiChevronUp as ChevronUp,
 } from "react-icons/fi";
+import { FaCalendarAlt, FaUserAlt, FaUserEdit, FaClipboardList, FaUserTie } from "react-icons/fa";
+import { LuPackageMinus } from "react-icons/lu";
+import { MdDelete } from "react-icons/md";
 import { getImageUrl } from "../../utils/imageUrl";
 import Swal from "sweetalert2";
 import productService from "../../services/productService";
@@ -27,6 +31,28 @@ import userService from "../../services/userService";
 import batchService from "../../services/batchService";
 import supplierService from "../../services/supplierService";
 import BatchSelectionModal from "../../components/BatchSelectionModal";
+
+const GlobalStyles = () => (
+  <style>{`
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+    * {
+      font-family: 'Poppins', sans-serif !important;
+    }
+    input::-webkit-outer-spin-button,
+    input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+    input[type=number] { -moz-appearance: textfield; }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 10px;
+    }
+  `}</style>
+);
 
 // ===== MODAL COMPONENTS =====
 
@@ -123,7 +149,7 @@ const ProductCheckModal = ({
             </div>
             <div>
               <h2 className="text-2xl font-medium text-slate-900 leading-none">
-                Kiểm tra sản phẩm
+                Verify Product
               </h2>
               <p className="text-slate-500 text-sm mt-1.5 font-medium">
                 SKU: {searchKeyword || "---"}
@@ -138,11 +164,11 @@ const ProductCheckModal = ({
           </button>
         </div>
 
-        {/* Body - Results (Cuộn mượt mà bên trong) */}
+        {/* Body - Results */}
         <div className="px-8 py-6 flex-auto min-h-0 overflow-y-auto custom-scrollbar">
           {isSearching && (
             <div className="bg-slate-50 rounded-2xl p-8 border border-slate-200 text-center text-slate-600 font-medium">
-              Đang kiểm tra sản phẩm...
+              Checking product...
             </div>
           )}
 
@@ -153,15 +179,15 @@ const ProductCheckModal = ({
                   <div className="flex items-center gap-3 p-4 bg-emerald-50 rounded-2xl border border-emerald-100">
                     <CheckCircle className="text-emerald-600" size={24} />
                     <h3 className="text-lg font-medium text-slate-900">
-                      Đã tìm thấy sản phẩm!
+                      Product found!
                     </h3>
                   </div>
 
-                  {/* Grid 2 cột cho thông tin chi tiết */}
+                  {/* Grid 2 columns for details */}
                   <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm grid grid-cols-2 gap-x-10 gap-y-6">
                     <div className="col-span-2 md:col-span-1">
                       <p className="text-xs text-slate-500 font-medium uppercase mb-1">
-                        Tên sản phẩm
+                        Product Name
                       </p>
                       <p className="font-medium text-slate-900">
                         {searchResult.name}
@@ -169,7 +195,7 @@ const ProductCheckModal = ({
                     </div>
                     <div className="col-span-2 md:col-span-1">
                       <p className="text-xs text-slate-500 font-medium uppercase mb-1">
-                        Mã SKU
+                        SKU Code
                       </p>
                       <p className="font-medium text-green-600">
                         {searchResult.sku}
@@ -177,7 +203,7 @@ const ProductCheckModal = ({
                     </div>
                     <div className="pt-3 border-t border-slate-50">
                       <p className="text-xs text-slate-500 font-medium uppercase mb-1">
-                        Thương hiệu
+                        Brand
                       </p>
                       <p className="font-medium text-slate-700">
                         {searchResult.brand || "---"}
@@ -185,26 +211,26 @@ const ProductCheckModal = ({
                     </div>
                     <div className="pt-3 border-t border-slate-50">
                       <p className="text-xs text-slate-500 font-medium uppercase mb-1">
-                        Giá nhập
+                        Import Price
                       </p>
                       <p className="font-medium text-emerald-600">
                         {searchResult.importPrice?.toLocaleString() || "0"} ₫
                       </p>
                     </div>
 
-                    {/* Hàng nút bấm dàn ngang: Kiểm tra lại và Sử dụng sản phẩm */}
+                    {/* Button row */}
                     <div className="col-span-2 pt-4 flex gap-3">
                       <button
                         onClick={handleClose}
                         className="flex-1 px-6 py-3.5 text-slate-600 bg-white border border-slate-200 rounded-2xl hover:bg-slate-100 transition-all font-medium text-sm"
                       >
-                        Kiểm tra lại
+                        Verify Again
                       </button>
                       <button
                         onClick={handleUseProduct}
                         className="flex-[2] px-6 py-3.5 bg-green-600 text-white rounded-2xl hover:bg-green-700 transition-all font-medium shadow-lg shadow-green-100 active:scale-95"
                       >
-                        Sử dụng sản phẩm này
+                        Use this product
                       </button>
                     </div>
                   </div>
@@ -215,20 +241,20 @@ const ProductCheckModal = ({
                     <AlertCircle className="text-amber-600" size={32} />
                   </div>
                   <h3 className="text-lg font-medium text-slate-900">
-                    Không tìm thấy sản phẩm
+                    Product not found
                   </h3>
                   <div className="mt-6 flex gap-3 max-w-md mx-auto">
                     <button
                       onClick={handleClose}
                       className="flex-1 px-6 py-3 text-slate-600 bg-white border border-slate-200 rounded-2xl hover:bg-slate-100 transition-all font-medium text-sm"
                     >
-                      Kiểm tra lại
+                      Verify Again
                     </button>
                     <button
                       onClick={handleAddNew}
                       className="flex-[2] px-6 py-3 bg-green-600 text-white rounded-2xl hover:bg-green-700 transition-all font-medium"
                     >
-                      Thêm sản phẩm mới
+                      Add new product
                     </button>
                   </div>
                 </div>
@@ -343,7 +369,7 @@ const QuickProductModal = ({
 
   const handleSubmit = () => {
     if (!formData.name) {
-      toast.warning("Vui lòng nhập tên sản phẩm!");
+      toast.warning("Please enter product name!");
       return;
     }
     onSuccess(formData);
@@ -361,10 +387,10 @@ const QuickProductModal = ({
               <div className="p-2 bg-green-50 rounded-xl text-green-600">
                 <PackagePlus size={24} />
               </div>
-              {initialData ? "Cập nhật sản phẩm nhanh" : "Thêm sản phẩm nhanh"}
+              {initialData ? "Quick Update Product" : "Quick Add Product"}
             </h2>
             <p className="text-slate-500 text-sm mt-1 font-medium">
-              Điền thông tin sản phẩm để xuất kho ngay lập tức
+              Fill in product details to export immediately
             </p>
           </div>
           <button
@@ -382,14 +408,14 @@ const QuickProductModal = ({
                 <div className="flex items-center gap-2 mb-6">
                   <div className="w-1.5 h-6 bg-green-500 rounded-full"></div>
                   <h3 className="text-lg font-medium text-slate-900">
-                    Thông tin chi tiết
+                    Product Details
                   </h3>
                 </div>
 
                 <div className="space-y-5">
                   <div className="group">
                     <label className="block text-[13px] font-medium text-slate-600 mb-2 ml-1">
-                      Tên sản phẩm
+                      Product Name
                     </label>
                     <input
                       value={formData.name}
@@ -398,13 +424,13 @@ const QuickProductModal = ({
                       }
                       disabled={!!initialData}
                       className={`w-full px-5 py-3.5 border border-slate-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-green-50 focus:border-green-400 transition-all font-medium ${initialData ? "bg-slate-100 text-slate-500 cursor-not-allowed" : "bg-slate-50 text-slate-900 focus:bg-white"}`}
-                      placeholder="Nhập tên sản phẩm"
+                      placeholder="Enter product name"
                     />
                   </div>
                   <div className="grid grid-cols-2 gap-5">
                     <div>
                       <label className="block text-[13px] font-medium text-slate-600 mb-2 ml-1">
-                        Thương hiệu
+                        Brand
                       </label>
                       {initialData ? (
                         <input
@@ -438,7 +464,7 @@ const QuickProductModal = ({
                           }}
                           className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl outline-none transition-all font-medium cursor-pointer focus:ring-4 focus:ring-green-50 focus:border-green-400 focus:bg-white text-slate-900"
                         >
-                          <option value="">-- Chọn thương hiệu --</option>
+                          <option value="">-- Select Brand --</option>
                           {suppliers.map((s) => (
                             <option key={s.id} value={s.id}>
                               {s.name} ({s.code})
@@ -449,7 +475,7 @@ const QuickProductModal = ({
                     </div>
                     <div>
                       <label className="block text-[13px] font-medium text-slate-600 mb-2 ml-1">
-                        Mã barcode
+                        Barcode
                       </label>
                       <input
                         value={formData.barcode}
@@ -464,7 +490,7 @@ const QuickProductModal = ({
 
                   <div>
                     <label className="block text-[13px] font-medium text-slate-600 mb-2 ml-1">
-                      Mã SKU
+                      SKU Code
                     </label>
                     <div className="relative">
                       <input
@@ -474,7 +500,7 @@ const QuickProductModal = ({
                         }
                         disabled={!!initialData}
                         className={`w-full pl-5 pr-40 py-3.5 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-green-50 focus:border-green-400 outline-none transition-all font-medium ${initialData ? "bg-slate-100 text-slate-500 cursor-not-allowed" : "bg-slate-50 focus:bg-white"}`}
-                        placeholder="SKU sản phẩm"
+                        placeholder="Product SKU"
                       />
                       {!initialData && (
                         <button
@@ -482,7 +508,7 @@ const QuickProductModal = ({
                           onClick={handleGenerateRandom}
                           className="absolute right-2 top-1.5 bottom-1.5 px-3 bg-white border border-slate-200 rounded-xl text-[11px] font-medium text-green-600 hover:bg-green-50 hover:border-green-200 transition-all flex items-center gap-1"
                         >
-                          <Dices size={14} /> Tạo ngẫu nhiên
+                          <Dices size={14} /> Generate Random
                         </button>
                       )}
                     </div>
@@ -491,7 +517,7 @@ const QuickProductModal = ({
                   <div className="grid grid-cols-2 gap-5">
                     <div>
                       <label className="block text-[13px] font-medium text-slate-600 mb-2 ml-1">
-                        Giá xuất
+                        Export Price
                       </label>
                       <input
                         type="number"
@@ -503,12 +529,12 @@ const QuickProductModal = ({
                           })
                         }
                         className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-green-50 focus:border-green-400 focus:bg-white outline-none transition-all font-medium"
-                        placeholder="Nhập giá trị xuất"
+                        placeholder="Enter export price"
                       />
                     </div>
                     <div>
                       <label className="block text-[13px] font-medium text-slate-600 mb-2 ml-1">
-                        Bảo quản
+                        Shelf Life (days)
                       </label>
                       <input
                         type="number"
@@ -521,7 +547,7 @@ const QuickProductModal = ({
                         }
                         disabled={!!initialData}
                         className={`w-full px-5 py-3.5 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-green-50 focus:border-green-400 outline-none transition-all font-medium ${initialData ? "bg-slate-100 text-slate-500 cursor-not-allowed" : "bg-slate-50 focus:bg-white"}`}
-                        placeholder="Nhập thời gian bảo quản"
+                        placeholder="Enter shelf life"
                       />
                     </div>
                   </div>
@@ -529,7 +555,7 @@ const QuickProductModal = ({
                   <div className="grid grid-cols-2 gap-5">
                     <div>
                       <label className="block text-[13px] font-medium text-slate-600 mb-2 ml-1">
-                        Xuất xứ
+                        Origin
                       </label>
                       <input
                         value={formData.origin}
@@ -538,12 +564,12 @@ const QuickProductModal = ({
                         }
                         disabled={!!initialData}
                         className={`w-full px-5 py-3.5 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-green-50 focus:border-green-400 outline-none transition-all font-medium ${initialData ? "bg-slate-100 text-slate-500 cursor-not-allowed" : "bg-slate-50 focus:bg-white"}`}
-                        placeholder="Nhập xuất xứ"
+                        placeholder="Enter origin"
                       />
                     </div>
                     <div>
                       <label className="block text-[13px] font-medium text-slate-600 mb-2 ml-1">
-                        Đơn vị
+                        Unit
                       </label>
                       {initialData ? (
                         <input
@@ -562,11 +588,11 @@ const QuickProductModal = ({
                             })
                           }
                         >
-                          <option value="Thùng">Thùng</option>
-                          <option value="Lốc">Lốc</option>
-                          <option value="Vỉ">Vỉ</option>
-                          <option value="Chai">Chai</option>
-                          <option value="Cái">Cái</option>
+                          <option value="Thùng">Carton</option>
+                          <option value="Lốc">Pack</option>
+                          <option value="Vỉ">Blister</option>
+                          <option value="Chai">Bottle</option>
+                          <option value="Cái">Piece</option>
                           <option value="Kg">Kg</option>
                         </select>
                       )}
@@ -581,7 +607,7 @@ const QuickProductModal = ({
                 <div className="flex items-center justify-center gap-2 mb-4 text-slate-600">
                   <ImageIcon size={18} />
                   <span className="text-[13px] font-medium">
-                    Hình ảnh minh họa
+                    Product Image
                   </span>
                 </div>
 
@@ -600,7 +626,7 @@ const QuickProductModal = ({
                           strokeWidth={1.5}
                           className="mb-2"
                         />
-                        <p className="text-xs font-medium">Không có hình ảnh</p>
+                        <p className="text-xs font-medium">No image available</p>
                       </div>
                     )}
                   </div>
@@ -615,7 +641,7 @@ const QuickProductModal = ({
                     ) : (
                       <div className="text-slate-400 flex flex-col items-center">
                         <Upload size={36} strokeWidth={1.5} className="mb-2" />
-                        <p className="text-xs font-medium">Tải ảnh lên</p>
+                        <p className="text-xs font-medium">Upload Image</p>
                       </div>
                     )}
                     <input
@@ -628,7 +654,7 @@ const QuickProductModal = ({
                     {formData.previewUrl && (
                       <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                         <p className="text-white text-xs font-medium">
-                          Thay đổi
+                          Change
                         </p>
                       </div>
                     )}
@@ -636,8 +662,8 @@ const QuickProductModal = ({
                 )}
                 <p className="text-[10px] text-slate-400 mt-3 font-medium">
                   {initialData
-                    ? "Hình ảnh sản phẩm hiện tại"
-                    : "Hỗ trợ: png, jpg, webp"}
+                    ? "Current product image"
+                    : "Supported: png, jpg, webp"}
                 </p>
               </div>
             </div>
@@ -646,10 +672,10 @@ const QuickProductModal = ({
           <div className="mt-8 flex justify-end">
             <button
               onClick={handleSubmit}
-              className="px-10 py-3 bg-green-600 text-white rounded-2xl hover:bg-green-700 transition-all font-medium text-sm shadow-lg shadow-green-100 active:scale-95 flex items-center gap-2"
+              className="px-10 py-3 bg-green-600 text-white rounded-2xl hover:bg-green-700 transition-all font-medium text-sm active:scale-95 flex items-center gap-2 shadow-sm"
             >
               <Save size={18} />
-              {initialData ? "Cập nhật dữ liệu" : "Lưu vào phiếu xuất"}
+              {initialData ? "Update Product" : "Save to Export Note"}
             </button>
           </div>
         </div>
@@ -878,7 +904,7 @@ const InventoryExportPage = () => {
     const maxQty = newDetails[index].selectedBatch?.availableQty || 0;
 
     if (qty > maxQty) {
-      toast.warning(`Lô hàng này chỉ còn ${maxQty} sản phẩm!`);
+      toast.warning(`Only ${maxQty} items available in this batch!`);
       newDetails[index].quantity = maxQty;
     } else {
       newDetails[index].quantity = qty;
@@ -918,7 +944,7 @@ const InventoryExportPage = () => {
   // Remove row
   const handleRemoveRow = (index) => {
     if (exportDetails.length === 1) {
-      toast.warning("Phải có ít nhất 1 sản phẩm!");
+      toast.warning("Must have at least 1 product!");
       return;
     }
     setExportDetails(exportDetails.filter((_, i) => i !== index));
@@ -927,12 +953,12 @@ const InventoryExportPage = () => {
   // Submit export note
   const handleSubmit = async () => {
     if (!header.staffId || !isValidStaff) {
-      toast.warning("Vui lòng nhập đúng Mã nhân viên!");
+      toast.warning("Please enter a valid Staff ID!");
       return;
     }
 
     if (!header.customerName && header.exportReason === "Xuất bán") {
-      toast.warning("Vui lòng nhập tên khách hàng!");
+      toast.warning("Please enter customer name!");
       return;
     }
 
@@ -941,20 +967,20 @@ const InventoryExportPage = () => {
     );
     if (validDetails.length === 0) {
       toast.warning(
-        "Vui lòng chọn ít nhất 1 sản phẩm với lô hàng và số lượng hợp lệ!",
+        "Please select at least 1 product with a valid batch and quantity!",
       );
       return;
     }
 
     const result = await Swal.fire({
-      title: "Xác nhận xuất kho?",
-      text: "Bạn có chắc chắn muốn lưu phiếu xuất này?",
+      title: "Confirm export?",
+      text: "Are you sure you want to save this export note?",
       icon: "question",
       showCancelButton: true,
       confirmButtonColor: "#16a34a",
       cancelButtonColor: "#94a3b8",
-      confirmButtonText: "Đồng ý xuất",
-      cancelButtonText: "Hủy bỏ",
+      confirmButtonText: "Confirm",
+      cancelButtonText: "Cancel",
     });
 
     if (!result.isConfirmed) return;
@@ -976,10 +1002,10 @@ const InventoryExportPage = () => {
     try {
       setIsSaving(true);
       await inventoryService.createExport(payload);
-      toast.success("Xuất kho thành công!");
+      toast.success("Inventory exported successfully!");
       navigate("/inventory/list");
     } catch (error) {
-      toast.error(error.response?.data || "Có lỗi xảy ra khi xuất kho");
+      toast.error(error.response?.data || "An error occurred during inventory export");
     } finally {
       setIsSaving(false);
     }
@@ -989,19 +1015,20 @@ const InventoryExportPage = () => {
 
   return (
     <div className="admin-page-shell p-4 md:p-6 text-slate-700">
+      <GlobalStyles />
       {/* Header */}
       <div className="flex justify-between items-end mb-6">
         <div>
           <h2 className="text-2xl font-medium text-slate-900 flex items-center gap-3">
-            Xuất kho hàng hóa
+            Goods Export
           </h2>
           <p className="text-slate-500 mt-2 font-medium text-lg">
-            Chọn lô hàng cụ thể để xuất kho
+            Select specific batches to export
           </p>
         </div>
         <div className="bg-white px-5 py-3 rounded-2xl shadow-sm border border-slate-100 flex flex-col items-end">
-          <span className="text-xs font-bold text-slate-500 mb-1">
-            Mã phiếu xuất kho
+          <span className="text-[16px] font-bold text-slate-500 mb-1">
+            Export Note Code
           </span>
           <div className="text-xl font-medium text-green-600 font-mono tracking-wide">
             {header.code}
@@ -1011,87 +1038,94 @@ const InventoryExportPage = () => {
 
       {/* Info Form */}
       <div className="bg-white p-6 rounded-[2.5rem] shadow-sm border border-slate-100 mb-6">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-slate-500 flex items-center gap-2">
-              <Calendar size={16} className="text-green-500" /> Thời gian xuất
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+          <div className="space-y-2 md:col-span-3">
+            <label className="text-base font-medium text-slate-500 flex items-center gap-2">
+              <FaCalendarAlt size={16} className="text-green-500" /> Export Time
             </label>
             <input
               type="datetime-local"
               value={header.exportDate}
               readOnly
-              className="w-full bg-slate-50 border border-slate-200 text-slate-600 font-medium rounded-2xl px-4 py-3 focus:outline-none"
+              className="w-full border border-slate-200 text-slate-600 font-medium rounded-2xl px-4 py-3 focus:outline-none"
             />
           </div>
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-slate-500 flex items-center gap-2">
-              <User size={16} className="text-green-500" /> Mã nhân viên
+          <div className="space-y-2 md:col-span-3">
+            <label className="text-base font-medium text-slate-500 flex items-center gap-2">
+              <FaUserAlt size={16} className="text-green-500" /> Staff ID
             </label>
             <div className="relative">
               <input
                 value={header.staffId}
                 onChange={handleStaffIdChange}
-                className={`w-full border font-medium rounded-2xl px-4 py-3 outline-none transition-all ${isValidStaff === true ? "border-emerald-400 bg-emerald-50/50 text-emerald-700" : isValidStaff === false ? "border-green-400 bg-green-50/50 text-green-700" : "border-slate-200 bg-white focus:border-green-400 focus:ring-2 focus:ring-green-100"}`}
-                placeholder="Nhập mã ID..."
+                className={`w-full border font-medium rounded-2xl px-4 py-3 focus:outline-none transition-all ${isValidStaff === true ? "border-emerald-400 bg-emerald-50/50 text-emerald-700" : isValidStaff === false ? "border-red-400 bg-red-50 text-red-700" : "border-slate-200 text-slate-600"}`}
+                placeholder="Enter ID..."
               />
               {isValidStaff === true && (
                 <div className="absolute right-4 top-4 w-2 h-2 bg-emerald-500 rounded-full shadow-[0_0_8px_rgba(16,185,129,0.5)]"></div>
               )}
             </div>
           </div>
-          <div className="space-y-2 md:col-span-2">
-            <label className="text-sm font-medium text-slate-500 flex items-center gap-2">
-              <Smile size={16} className="text-green-500" /> Người thực hiện
+          <div className="space-y-2 md:col-span-3">
+            <label className="text-base font-medium text-slate-500 flex items-center gap-2">
+              <FaUserEdit size={16} className="text-green-500" /> Executor
             </label>
             <input
               value={header.staffName}
               disabled
-              className="w-full bg-slate-50 border border-slate-200 text-slate-700 font-medium rounded-2xl px-4 py-3"
-              placeholder="Tên nhân viên"
+              className="w-full border border-slate-200 text-slate-600 font-medium rounded-2xl px-4 py-3"
+              placeholder="Staff Name"
             />
           </div>
 
-          <div className="space-y-2 md:col-span-2">
-            <label className="text-sm font-medium text-slate-500 flex items-center gap-2">
-              Lý do xuất kho
+          <div className="space-y-2 md:col-span-3">
+            <label className="text-base font-medium text-slate-500 flex items-center gap-2">
+              <LuPackageMinus size={16} className="text-green-500" /> Export Reason
             </label>
-            <select
-              value={header.exportReason}
-              onChange={(e) =>
-                setHeader({ ...header, exportReason: e.target.value })
-              }
-              className="w-full border border-slate-200 bg-white font-medium text-slate-700 rounded-2xl px-4 py-3 outline-none focus:border-green-400 focus:ring-2 focus:ring-green-100 transition-all"
-            >
-              <option value="Xuất bán">Xuất bán</option>
-              <option value="Xuất hủy">Xuất hủy</option>
-              <option value="Xuất nội bộ">Xuất nội bộ</option>
-              <option value="Trả hàng">Trả hàng</option>
-            </select>
+            <div className="relative">
+              <select
+                value={header.exportReason}
+                onChange={(e) => {
+                  setHeader({ ...header, exportReason: e.target.value });
+                  e.target.blur();
+                }}
+                className="w-full border border-slate-200 bg-[#ffffff] font-medium text-slate-600 rounded-2xl px-4 py-3 focus:outline-none transition-all appearance-none cursor-pointer peer"
+              >
+                <option value="Xuất bán">Sales</option>
+                <option value="Xuất hủy">Damaged/Expired</option>
+                <option value="Xuất nội bộ">Internal Use</option>
+                <option value="Trả hàng">Return</option>
+              </select>
+              <ChevronUp
+                size={20}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none transition-transform duration-200 peer-focus:rotate-180"
+              />
+            </div>
           </div>
 
-          <div className="space-y-2 md:col-span-2">
-            <label className="text-sm font-medium text-slate-500 flex items-center gap-2">
-              Tên khách hàng
+          <div className="space-y-2 md:col-span-4">
+            <label className="text-base font-medium text-slate-500 flex items-center gap-2">
+              <FaUserTie size={16} className="text-green-500" /> Customer Name
             </label>
             <input
               value={header.customerName}
               onChange={(e) =>
                 setHeader({ ...header, customerName: e.target.value })
               }
-              className="w-full border border-slate-200 bg-white font-medium text-slate-700 rounded-2xl px-4 py-3 outline-none focus:border-green-400 focus:ring-2 focus:ring-green-100 transition-all"
-              placeholder="Nhập tên khách hàng hoặc đối tượng..."
+              className="w-full border border-slate-200 text-slate-600 font-medium rounded-2xl px-4 py-3 focus:outline-none transition-all"
+              placeholder="Enter customer name..."
             />
           </div>
 
-          <div className="space-y-2 md:col-span-4">
-            <label className="text-sm font-medium text-slate-500 flex items-center gap-2">
-              <FileText size={16} className="text-green-500" /> Ghi chú
+          <div className="space-y-2 md:col-span-8">
+            <label className="text-base font-medium text-slate-500 flex items-center gap-2">
+              <FaClipboardList size={16} className="text-green-500" /> Notes
             </label>
             <input
               value={header.note}
               onChange={(e) => setHeader({ ...header, note: e.target.value })}
-              className="w-full border border-slate-200 bg-white font-medium text-slate-700 rounded-2xl px-4 py-3 outline-none focus:border-green-400 focus:ring-2 focus:ring-green-100 transition-all"
-              placeholder="Nhập ghi chú cho phiếu xuất..."
+              className="w-full border border-slate-200 text-slate-600 font-medium rounded-2xl px-4 py-3 focus:outline-none transition-all"
+              placeholder="Enter note for export..."
             />
           </div>
         </div>
@@ -1100,29 +1134,29 @@ const InventoryExportPage = () => {
       {/* Export Details Table */}
       <div className="bg-white rounded-[2.5rem] shadow-sm border border-slate-100 overflow-hidden mb-6">
         <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-slate-50 border-b border-slate-100">
-              <tr>
-                <th className="px-6 py-4 text-left text-sm font-medium text-slate-700 w-80 first:pl-6">
-                  Thông tin sản phẩm
+          <table className="w-full min-w-[1200px]">
+            <thead>
+              <tr className="bg-[#647368] border-b border-slate-100 text-left">
+                <th className="py-5 px-4 !text-base font-medium !text-white !bg-[#647368] whitespace-nowrap w-80 first:pl-6">
+                  Product Info
                 </th>
-                <th className="px-6 py-4 text-left text-sm font-medium text-slate-700">
-                  Lô hàng
+                <th className="py-5 px-4 !text-base font-medium !text-white !bg-[#647368] whitespace-nowrap w-40">
+                  Batch
                 </th>
-                <th className="px-6 py-4 text-center text-sm font-medium text-slate-700">
-                  Tồn kho lô
+                <th className="py-5 px-4 !text-base font-medium !text-white !bg-[#647368] whitespace-nowrap w-32 text-center">
+                  Batch Stock
                 </th>
-                <th className="px-6 py-4 text-center text-sm font-medium text-slate-700">
-                  Số lượng xuất
+                <th className="py-5 px-4 !text-base font-medium !text-white !bg-[#647368] whitespace-nowrap w-32 text-center">
+                  Export Qty
                 </th>
-                <th className="px-6 py-4 text-center text-sm font-medium text-slate-700">
-                  Giá xuất
+                <th className="py-5 px-4 !text-base font-medium !text-white !bg-[#647368] whitespace-nowrap w-40 text-center">
+                  Export Price
                 </th>
-                <th className="px-6 py-4 text-right text-sm font-medium text-slate-700">
-                  Thành tiền
+                <th className="py-5 px-4 !text-base font-medium !text-white !bg-[#647368] whitespace-nowrap w-40 text-center">
+                  Subtotal
                 </th>
-                <th className="px-6 py-4 text-center text-sm font-medium text-slate-700">
-                  Thao tác
+                <th className="py-5 px-2 !text-base font-medium !text-white !bg-[#647368] whitespace-nowrap w-32 text-center last:pr-6">
+                  Action
                 </th>
               </tr>
             </thead>
@@ -1130,11 +1164,11 @@ const InventoryExportPage = () => {
               {exportDetails.map((row, index) => (
                 <tr
                   key={row.id}
-                  className="hover:bg-green-50/30 transition-colors"
+                  className="hover:!bg-transparent transition-colors group"
                 >
-                  <td className="px-6 py-4 first:pl-6 align-top">
+                  <td className="py-4 px-2 align-middle first:pl-6">
                     {!row.productId ? (
-                      <div className="flex items-center gap-2">
+                      <div className="relative">
                         <input
                           type="text"
                           value={row.sku}
@@ -1149,9 +1183,10 @@ const InventoryExportPage = () => {
                               handleSkuBlur(index);
                             }
                           }}
-                          className="w-40 px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 font-medium"
-                          placeholder="Nhập SKU..."
+                          className="w-44 h-10 border border-slate-300 pl-9 pr-3 py-2 rounded-xl text-sm font-medium focus:outline-none text-slate-600 transition-all shadow-sm focus:ring-2 focus:ring-green-500"
+                          placeholder="Enter SKU..."
                         />
+                        <Search className="absolute left-3 top-3 text-slate-400 w-4 h-4" />
                       </div>
                     ) : (
                       <div className="flex gap-3 bg-white p-2 rounded-xl border border-slate-100 shadow-sm">
@@ -1181,24 +1216,24 @@ const InventoryExportPage = () => {
                       </div>
                     )}
                   </td>
-                  <td className="px-6 py-4">
+                  <td className="py-4 px-2 align-middle">
                     {row.selectedBatch ? (
                       <div className="text-xs">
                         <p className="font-mono text-slate-700 font-medium">
                           {row.selectedBatch.batchCode}
                         </p>
                         <p className="text-slate-500 mt-1">
-                          HSD:{" "}
+                          Expiry:{" "}
                           {new Date(
                             row.selectedBatch.expiryDate,
-                          ).toLocaleDateString("vi-VN")}
+                          ).toLocaleDateString("en-US")}
                         </p>
                       </div>
                     ) : (
-                      <span className="text-slate-400 text-sm">Chưa chọn</span>
+                      <span className="text-slate-400 text-sm">Not selected</span>
                     )}
                   </td>
-                  <td className="px-6 py-4 text-center">
+                  <td className="py-4 px-2 align-middle text-center">
                     {row.selectedBatch ? (
                       <span className="px-2 py-1 bg-green-50 text-green-700 rounded font-medium text-sm">
                         {row.selectedBatch.availableQty}
@@ -1207,7 +1242,7 @@ const InventoryExportPage = () => {
                       <span className="text-slate-400">---</span>
                     )}
                   </td>
-                  <td className="px-6 py-4">
+                  <td className="py-4 px-2 align-middle text-center">
                     <input
                       type="number"
                       min="0"
@@ -1217,28 +1252,33 @@ const InventoryExportPage = () => {
                         handleQuantityChange(index, e.target.value)
                       }
                       disabled={!row.selectedBatch}
-                      className="w-24 px-3 py-2 border border-slate-200 rounded-lg text-center focus:outline-none focus:ring-2 focus:ring-green-500 disabled:bg-slate-100 disabled:cursor-not-allowed mx-auto block"
+                      className="w-24 h-10 border border-slate-300 rounded-xl px-3 py-2 text-sm font-medium text-center focus:outline-none text-slate-600 transition-all shadow-sm disabled:bg-slate-100 disabled:cursor-not-allowed mx-auto block"
                     />
                   </td>
-                  <td className="px-6 py-4">
+                  <td className="py-4 px-2 align-middle text-center">
                     <input
                       type="number"
                       min="0"
                       value={row.price}
                       onChange={(e) => handlePriceChange(index, e.target.value)}
-                      className="w-32 px-3 py-2 border border-slate-200 rounded-lg text-right focus:outline-none focus:ring-2 focus:ring-green-500 ml-auto block"
+                      className="w-32 h-10 border border-slate-300 rounded-xl px-3 py-2 text-sm text-center font-medium focus:outline-none text-slate-600 transition-all shadow-sm mx-auto block"
                     />
                   </td>
-                  <td className="px-6 py-4 text-right font-bold text-green-600">
-                    {row.total.toLocaleString()} ₫
+                  <td className="py-4 px-2 align-middle text-center">
+                    <div className="w-36 h-10 border border-slate-200 rounded-xl px-3 py-2 font-semibold text-center text-slate-600 text-sm flex items-center justify-center mx-auto">
+                      {row.total.toLocaleString()} ₫
+                    </div>
                   </td>
-                  <td className="px-6 py-4 text-center">
-                    <button
-                      onClick={() => handleRemoveRow(index)}
-                      className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                    >
-                      <Trash2 size={18} />
-                    </button>
+                  <td className="py-4 px-1 align-middle text-center last:pr-6">
+                    <div className="flex items-center justify-center gap-0">
+                      <button
+                        onClick={() => handleRemoveRow(index)}
+                        className="text-red-600 hover:text-red-800 p-2 rounded-xl transition-all"
+                        title="Delete"
+                      >
+                        <MdDelete size={20} />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -1246,36 +1286,42 @@ const InventoryExportPage = () => {
           </table>
         </div>
 
-        {/* Add Row & Total */}
-        <div className="bg-slate-50 px-6 py-4 border-t border-slate-100 flex justify-between items-center">
+        <div className="p-4 border-t border-slate-100 bg-slate-50/50">
           <button
             onClick={handleAddRow}
-            className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-xl hover:bg-slate-100 transition-all font-medium text-sm text-slate-700"
+            className="flex items-center gap-2 text-sm font-medium text-green-600 hover:text-green-700 hover:bg-green-50 px-5 py-2.5 rounded-2xl transition-all"
           >
-            <Plus size={18} />
-            Thêm dòng
+            <Plus size={18} /> Add Row
           </button>
-          <div className="text-right">
-            <p className="text-sm text-slate-600 mb-1">
-              Tổng giá trị phiếu xuất
-            </p>
-            <p className="text-2xl font-bold text-green-600">
-              {totalAmount.toLocaleString()} ₫
-            </p>
-          </div>
         </div>
       </div>
 
-      {/* Submit Button */}
-      <div className="flex justify-end">
-        <button
-          onClick={handleSubmit}
-          disabled={isSaving || !isValidStaff}
-          className="flex items-center gap-2 px-8 py-4 bg-green-600 text-white rounded-xl hover:bg-green-700 disabled:bg-slate-300 disabled:cursor-not-allowed transition-all shadow-lg shadow-green-200 font-medium text-lg"
-        >
-          <Save size={24} />
-          {isSaving ? "Đang lưu..." : "Hoàn tất xuất kho"}
-        </button>
+      <div className="mt-8 bg-white p-6 rounded-[2.5rem] shadow-sm border border-slate-100 flex flex-col md:flex-row justify-between items-center gap-6">
+        <div className="flex items-baseline gap-3 pl-2">
+          <span className="text-slate-500 font-medium text-sm">
+            Total Export Value:
+          </span>
+          <span className="font-medium text-2xl text-slate-800">
+            {totalAmount.toLocaleString()}{" "}
+            <span className="text-base text-slate-500">VNĐ</span>
+          </span>
+        </div>
+        <div className="flex gap-3">
+          <button
+            onClick={() => navigate("/inventory/list")}
+            className="bg-slate-100 text-slate-600 px-6 py-3 rounded-2xl font-medium hover:bg-slate-200 transition-all text-sm"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleSubmit}
+            disabled={isSaving || !isValidStaff}
+            className="bg-green-600 text-white px-8 py-3 rounded-2xl font-medium hover:bg-green-700 disabled:bg-slate-300 disabled:cursor-not-allowed transition-all flex items-center gap-2 text-sm shadow-sm"
+          >
+            <Save size={18} />
+            {isSaving ? "Saving..." : "Save"}
+          </button>
+        </div>
       </div>
 
       {/* Modals */}
