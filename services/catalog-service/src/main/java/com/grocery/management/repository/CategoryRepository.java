@@ -9,10 +9,14 @@ import java.util.List;
 public interface CategoryRepository extends JpaRepository<Category, Long> {
     // Chỉ lấy danh mục cha (để hiển thị cây)
     List<Category> findByParentIsNull();
+
+    List<Category> findTop5ByHomeFeaturedTrueOrderByHomeDisplayOrderAscIdAsc();
     
     // Kiểm tra trùng tên
     boolean existsByName(String name);
     
     // Kiểm tra có con hay không (để chặn xóa)
     boolean existsByParentId(Long parentId);
+
+    long countByHomeFeaturedTrue();
 }

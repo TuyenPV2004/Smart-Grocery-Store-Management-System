@@ -24,6 +24,16 @@ public class Category {
 
     private String label; // Tên hiển thị trên nhãn (Ví dụ: HOT, NEW)
     private String labelColor;
+    private String color;
+
+    @Column(name = "image_url")
+    private String imageUrl;
+
+    @Column(name = "home_featured")
+    private Boolean homeFeatured = false;
+
+    @Column(name = "home_display_order")
+    private Integer homeDisplayOrder;
 
     @Column(columnDefinition = "TEXT")
     private String description;

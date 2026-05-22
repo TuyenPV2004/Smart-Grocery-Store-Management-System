@@ -196,13 +196,15 @@ const DetailModal = ({ isOpen, onClose, note }) => {
             </div>
           </div>
 
-          <div className="flex items-center justify-between border-t border-slate-100 bg-white p-6">
+          <div className="flex items-center justify-between border-t border-slate-100 bg-emerald-50/70 px-6 py-5">
             <div className="font-medium text-slate-600">
               Total products: <span>{note.details?.length || 0}</span>
             </div>
             <div className="flex items-center gap-3">
-              <span className="text-lg font-medium text-slate-600">Final amount:</span>
-              <span className="text-lg font-medium text-slate-600">{formatMoney(note.finalAmount)}</span>
+              <span className="text-sm font-medium text-emerald-800">Final amount:</span>
+              <span className="text-2xl font-medium leading-none tabular-nums text-emerald-800">
+                {formatMoney(note.finalAmount)}
+              </span>
             </div>
           </div>
         </div>

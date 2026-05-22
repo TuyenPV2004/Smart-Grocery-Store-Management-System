@@ -16,6 +16,7 @@ import productService from "../../services/productService";
 import categoryService from "../../services/categoryService";
 import { fetchStockLookup, hydrateProductsStock } from "../../services/stockAvailabilityService";
 import ProductCard from "../../components/common/ProductCard";
+import { getImageUrl } from "../../utils/imageUrl";
 
 const HERO_FEATURES = [
   {
@@ -55,45 +56,8 @@ const HOME_INFO_STRIP = [
   },
 ];
 
-const CATEGORY_PRESETS = [
-  {
-    key: "vegetables",
-    title: "Vegetables",
-    categoryName: "Rau củ quả",
-    match: ["rau", "cu", "nam", "trai cay", "hoa qua", "vegetable"],
-    color: "#DDEFD8",
-    imageSrc: "/category-images/vegetables.png",
-  },
-  {
-    key: "frozen",
-    title: "Frozen",
-    match: ["dong lanh", "frozen", "ice cream", "yogurt", "kem"],
-    color: "#F8DCE6",
-    imageSrc: "/category-images/neapolitan-ice-cream.png",
-  },
-  {
-    key: "bakery",
-    title: "Bakery",
-    categoryName: "Mì gói",
-    match: ["bakery", "bread", "banh", "cake", "pastry"],
-    color: "#F3E6C8",
-    imageSrc: "/category-images/noodles.png",
-  },
-  {
-    key: "dairy",
-    title: "Dairy",
-    match: ["sua", "milk", "dairy", "cheese", "butter"],
-    color: "#DDEAFB",
-    imageSrc: "/category-images/milk.png",
-  },
-  {
-    key: "meat-seafood",
-    title: "Meat & Seafood",
-    match: ["thit", "trung", "hai san", "seafood", "meat"],
-    color: "#DFF2E8",
-    imageSrc: "/category-images/meat.png",
-  },
-];
+
+const HOME_CATEGORY_COLORS = ["#DDEFD8", "#F8DCE6", "#F3E6C8", "#DDEAFB", "#DFF2E8"];
 
 const RELATED_POST_IMAGES = [
   "https://cdn.tgdd.vn//News/1443302//cach-chon-sua-cong-thuc-phu-hop-cho-tre-3-845x479.jpg",
@@ -109,50 +73,21 @@ const RELATED_POST_URLS = [
   "https://www.avakids.com/me-va-be/cach-lam-kem-sua-chua-1508028",
 ];
 
-const normalizeText = (value = "") =>
-  String(value)
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase();
-
-const flattenCategories = (categories = []) =>
-  categories.flatMap((category) => [
-    category,
-    ...flattenCategories(category.children || []),
-  ]);
-
-const findPresetCategory = (preset, categories) => {
-  const categoryList = flattenCategories(categories);
-  const exactName = normalizeText(preset.categoryName);
-  if (exactName) {
-    const exactMatch = categoryList.find((category) => normalizeText(category.name) === exactName);
-    if (exactMatch) return exactMatch;
-  }
-
-  const matchTerms = [preset.title, ...(preset.match || [])].map(normalizeText);
-
-  return categoryList.find((category) => {
-    const categoryName = normalizeText(category.name);
-    return matchTerms.some((term) => categoryName.includes(term) || term.includes(categoryName));
-  });
-};
 
 const HomePage = () => {
   const [products, setProducts] = useState([]);
-  const [categories, setCategories] = useState([]);
+  const [homeCategories, setHomeCategories] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const popularCategories = CATEGORY_PRESETS.map((preset) => {
-    const matchedCategory = findPresetCategory(preset, categories);
-
-    return {
-      id: matchedCategory?.id || `preset-${preset.key}`,
-      name: preset.title,
-      color: preset.color,
-      imageSrc: preset.imageSrc,
-      link: matchedCategory?.id ? `/products?category=${matchedCategory.id}` : "/products",
-    };
-  });
+  const popularCategories = homeCategories
+    .slice(0, 5)
+    .map((category, index) => ({
+        id: category.id,
+        name: category.name,
+        color: category.color || category.labelColor || HOME_CATEGORY_COLORS[index % HOME_CATEGORY_COLORS.length],
+        imageSrc: getImageUrl(category.imageUrl),
+        link: `/products?category=${category.id}`,
+      }));
 
   const relatedPosts = popularCategories.slice(0, 4).map((category, index) => ({
     id: `post-${category.id}-${index}`,
@@ -191,8 +126,8 @@ const HomePage = () => {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await categoryService.getTree();
-        setCategories(Array.isArray(response.data) ? response.data : []);
+        const homeResponse = await categoryService.getHomeFeatured();
+        setHomeCategories(Array.isArray(homeResponse.data) ? homeResponse.data : []);
       } catch (error) {
         console.error("Error fetching categories:", error);
       }
@@ -252,39 +187,22 @@ const HomePage = () => {
                 <p className="mt-5 max-w-lg text-base leading-8 text-white/82 sm:text-lg">
                   Buy vegetables, meat, fish, milk, and daily essentials in one neat basket, delivered fast at your chosen time slot.
                 </p>
-                <div className="mt-8 flex flex-wrap gap-3">
-                  <Link
-                    to="/products"
-                    className="inline-flex items-center gap-2 rounded-2xl bg-white px-6 py-3.5 text-sm font-medium text-emerald-800 shadow-lg transition-all hover:bg-emerald-50 active:scale-95"
-                  >
-                    Mua sắm ngay
-                    <FiArrowRight size={18} />
-                  </Link>
-                  <Link
-                    to="/promotions"
-                    className="inline-flex items-center rounded-2xl border border-white/35 px-6 py-3.5 text-sm font-medium text-white transition-all hover:bg-white/10"
-                  >
-                    Xem khuyến mãi
-                  </Link>
-                </div>
               </div>
 
-              <div className="grid max-w-md grid-cols-3 gap-3 text-white">
-                {[
-                  ["2h", "Giao nhanh"],
-                  ["98%", "Hài lòng"],
-                  ["500+", "Mặt hàng"],
-                ].map(([value, label]) => (
-                  <div
-                    key={label}
-                    className="rounded-2xl border border-white/15 bg-white/12 p-4 backdrop-blur-md"
-                  >
-                    <p className="text-2xl font-medium">{value}</p>
-                    <p className="mt-1 text-xs font-medium text-white/70">
-                      {label}
-                    </p>
-                  </div>
-                ))}
+              <div className="flex flex-wrap gap-3">
+                <Link
+                  to="/products"
+                  className="inline-flex items-center gap-2 rounded-2xl bg-white px-6 py-3.5 text-sm font-medium text-emerald-800 shadow-lg transition-all hover:bg-emerald-50 active:scale-95"
+                >
+                  Shop Now
+                  <FiArrowRight size={18} />
+                </Link>
+                <Link
+                  to="/promotions"
+                  className="inline-flex items-center rounded-2xl border border-white/35 px-6 py-3.5 text-sm font-medium text-white transition-all hover:bg-white/10"
+                >
+                  View Promotions
+                </Link>
               </div>
             </div>
 
@@ -425,11 +343,13 @@ const HomePage = () => {
                         <div className="absolute inset-x-5 top-4 h-20 rounded-full bg-white/35 blur-2xl" />
                         <div className="relative flex h-full items-center justify-center p-4">
                           <div className="absolute bottom-4 h-16 w-[74%] rounded-full bg-black/10 blur-xl transition-transform duration-500 group-hover:scale-110" />
-                          <img
-                            src={category.imageSrc}
-                            alt={category.name}
-                            className="relative z-10 h-[84%] w-[84%] object-contain drop-shadow-[0_18px_24px_rgba(15,23,42,0.14)] transition-transform duration-500 group-hover:scale-[1.06]"
-                          />
+                          {category.imageSrc ? (
+                            <img
+                              src={category.imageSrc}
+                              alt={category.name}
+                              className="relative z-10 h-[84%] w-[84%] object-contain drop-shadow-[0_18px_24px_rgba(15,23,42,0.14)] transition-transform duration-500 group-hover:scale-[1.06]"
+                            />
+                          ) : null}
                         </div>
                       </div>
 

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import moment from "moment";
 import { toast } from "react-toastify";
 import Swal from "sweetalert2";
-import { FiInfo, FiMoreHorizontal, FiSearch, FiTag, FiTrash2, FiX } from "react-icons/fi";
+import { FiInfo, FiLoader, FiMoreHorizontal, FiSearch, FiTag, FiTrash2, FiX } from "react-icons/fi";
 import { FaEdit, FaTicketAlt } from "react-icons/fa";
 import voucherService from "../../services/voucherService";
 import AdminTopbar from "../../components/admin/AdminTopbar";
@@ -401,7 +401,14 @@ const VouchersPage = () => {
           className="max-w-3xl"
           footer={
             <Button type="submit" form="voucher-form" disabled={loading} className="w-full sm:w-auto">
-              {loading ? "Saving..." : formData.id ? "Save Changes" : "Create Voucher"}
+              {loading ? (
+                <>
+                  <FiLoader className="h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                formData.id ? "Save Changes" : "Create Voucher"
+              )}
             </Button>
           }
         >

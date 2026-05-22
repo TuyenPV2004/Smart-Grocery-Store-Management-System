@@ -175,6 +175,8 @@ services:
       - CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME}
       - CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY}
       - CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET}
+      - CATALOG_MULTIPART_MAX_FILE_SIZE=20MB
+      - CATALOG_MULTIPART_MAX_REQUEST_SIZE=20MB
     depends_on:
       config-server:
         condition: service_started

@@ -4,6 +4,7 @@ import { toast } from "react-toastify";
 import Swal from "sweetalert2";
 import {
   FiInfo,
+  FiLoader,
   FiMoreHorizontal,
   FiImage,
   FiPower,
@@ -57,6 +58,7 @@ const SupplierPage = () => {
   const [selectedId, setSelectedId] = useState(null);
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [actionMenu, setActionMenu] = useState(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   const fetchSuppliers = async () => {
     try {
@@ -96,7 +98,10 @@ const SupplierPage = () => {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+    if (isSaving) return;
+
     try {
+      setIsSaving(true);
       if (isEditing) {
         await supplierService.update(selectedId, formData, logoFile);
         toast.success("Supplier updated.");
@@ -108,6 +113,8 @@ const SupplierPage = () => {
       closeModal();
     } catch (error) {
       toast.error(error.response?.data || "Unable to save supplier.");
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -522,8 +529,15 @@ const SupplierPage = () => {
               className="max-w-3xl"
               footer={
                 <>
-                  <Button type="submit" form="supplier-form">
-                    Save Supplier
+                  <Button type="submit" form="supplier-form" disabled={isSaving}>
+                    {isSaving ? (
+                      <>
+                        <FiLoader className="h-4 w-4 animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      "Save Supplier"
+                    )}
                   </Button>
                 </>
               }

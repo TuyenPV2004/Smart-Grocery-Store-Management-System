@@ -18,6 +18,7 @@ public class CloudinaryImageService {
     private static final String PRODUCT_FOLDER = "grocery/products";
     private static final String AVATAR_FOLDER = "grocery/users/avatars";
     private static final String SUPPLIER_LOGO_FOLDER = "grocery/suppliers/logos";
+    private static final String CATEGORY_IMAGE_FOLDER = "grocery/categories";
 
     private final Cloudinary cloudinary;
 
@@ -39,6 +40,13 @@ public class CloudinaryImageService {
         Map<?, ?> uploadResult = cloudinary.uploader().upload(
                 file.getBytes(),
                 ObjectUtils.asMap("folder", SUPPLIER_LOGO_FOLDER, "resource_type", "image"));
+        return uploadResult.get("secure_url").toString();
+    }
+
+    public String uploadCategoryImage(MultipartFile file) throws IOException {
+        Map<?, ?> uploadResult = cloudinary.uploader().upload(
+                file.getBytes(),
+                ObjectUtils.asMap("folder", CATEGORY_IMAGE_FOLDER, "resource_type", "image"));
         return uploadResult.get("secure_url").toString();
     }
 

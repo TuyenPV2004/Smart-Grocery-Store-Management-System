@@ -8,9 +8,9 @@ import {
   ChartNoAxesCombined,
   AlertCircle,
   ArrowRight,
+  Loader2,
 } from "lucide-react";
 import priceService from "../services/priceService";
-import { getImageUrl } from "../utils/imageUrl";
 import { GiPriceTag } from "react-icons/gi";
 
 const PriceManagementModal = ({ isOpen, onClose, product, onPriceUpdated }) => {
@@ -184,9 +184,16 @@ const PriceManagementModal = ({ isOpen, onClose, product, onPriceUpdated }) => {
                 <button
                   onClick={handleUpdateImportPrice}
                   disabled={isSavingImport}
-                  className="w-full py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all font-medium shadow-lg shadow-blue-100 active:scale-[0.98] disabled:opacity-50"
+                  className="flex w-full items-center justify-center gap-2 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all font-medium shadow-lg shadow-blue-100 active:scale-[0.98] disabled:opacity-50"
                 >
-                  {isSavingImport ? "Saving..." : "Update Import Price"}
+                  {isSavingImport ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    "Update Import Price"
+                  )}
                 </button>
               </div>
             </div>
@@ -236,9 +243,16 @@ const PriceManagementModal = ({ isOpen, onClose, product, onPriceUpdated }) => {
                 <button
                   onClick={handleUpdateSellPrice}
                   disabled={isSavingSell}
-                  className="w-full py-3 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-all font-medium shadow-lg shadow-emerald-100 active:scale-[0.98] disabled:opacity-50"
+                  className="flex w-full items-center justify-center gap-2 py-3 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-all font-medium shadow-lg shadow-emerald-100 active:scale-[0.98] disabled:opacity-50"
                 >
-                  {isSavingSell ? "Saving..." : "Update Selling Price"}
+                  {isSavingSell ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    "Update Selling Price"
+                  )}
                 </button>
               </div>
             </div>

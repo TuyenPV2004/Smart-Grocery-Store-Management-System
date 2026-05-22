@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import moment from "moment";
 import { toast } from "react-toastify";
 import Swal from "sweetalert2";
-import { FiInfo, FiMoreHorizontal, FiSearch, FiTag, FiTrash2, FiX } from "react-icons/fi";
+import { FiInfo, FiLoader, FiMoreHorizontal, FiSearch, FiTag, FiTrash2, FiX } from "react-icons/fi";
 import { FaEdit, FaBullhorn } from "react-icons/fa";
 import promotionService from "../../services/promotionService";
 import productService from "../../services/productService";
@@ -410,7 +410,14 @@ const PromotionsPage = () => {
           className="max-w-3xl"
           footer={
             <Button type="submit" form="promotion-form" disabled={loading} className="w-full sm:w-auto">
-              {loading ? "Saving..." : formData.id ? "Save Changes" : "Create Promotion"}
+              {loading ? (
+                <>
+                  <FiLoader className="h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                formData.id ? "Save Changes" : "Create Promotion"
+              )}
             </Button>
           }
         >

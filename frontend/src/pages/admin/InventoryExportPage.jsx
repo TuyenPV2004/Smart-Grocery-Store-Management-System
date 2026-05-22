@@ -19,6 +19,7 @@ import {
   FiUpload as Upload,
   FiImage as ImageIcon,
   FiChevronUp as ChevronUp,
+  FiLoader as Loader,
 } from "react-icons/fi";
 import { FaCalendarAlt, FaUserAlt, FaUserEdit, FaClipboardList, FaUserTie } from "react-icons/fa";
 import { LuPackageMinus } from "react-icons/lu";
@@ -1318,7 +1319,7 @@ const InventoryExportPage = () => {
             disabled={isSaving || !isValidStaff}
             className="bg-green-600 text-white px-8 py-3 rounded-2xl font-medium hover:bg-green-700 disabled:bg-slate-300 disabled:cursor-not-allowed transition-all flex items-center gap-2 text-sm shadow-sm"
           >
-            <Save size={18} />
+            {isSaving ? <Loader className="h-[18px] w-[18px] animate-spin" /> : <Save size={18} />}
             {isSaving ? "Saving..." : "Save"}
           </button>
         </div>

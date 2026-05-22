@@ -21,6 +21,7 @@ import {
   FiChevronUp as ChevronUp,
   FiEdit2 as Pencil,
   FiFile as FileCheck2,
+  FiLoader as Loader,
 } from "react-icons/fi";
 import { FaCalendarAlt, FaUserAlt, FaUserEdit, FaClipboardList } from "react-icons/fa";
 import { MdEditDocument, MdDelete } from "react-icons/md";
@@ -719,7 +720,7 @@ const QuickProductModal = ({
   );
 };
 
-const PreviewModal = ({ isOpen, onClose, onConfirm, data, grandTotal }) => {
+const PreviewModal = ({ isOpen, onClose, onConfirm, data, grandTotal, isSaving }) => {
   if (!isOpen) return null;
   return (
     <div className="fixed inset-0 bg-slate-900/50 flex justify-center items-center z-[70] backdrop-blur-sm p-4">
@@ -871,9 +872,11 @@ const PreviewModal = ({ isOpen, onClose, onConfirm, data, grandTotal }) => {
             </button>
             <button
               onClick={onConfirm}
-              className="px-6 py-3 bg-green-600 text-white rounded-xl font-medium hover:bg-green-700 shadow-lg shadow-green-200 transition-all flex items-center gap-2"
+              disabled={isSaving}
+              className="px-6 py-3 bg-green-600 text-white rounded-xl font-medium hover:bg-green-700 shadow-lg shadow-green-200 transition-all flex items-center gap-2 disabled:cursor-not-allowed disabled:opacity-70"
             >
-              <CheckCircle size={20} /> Confirm Note
+              {isSaving ? <Loader className="h-5 w-5 animate-spin" /> : <CheckCircle size={20} />}
+              {isSaving ? "Saving..." : "Confirm Note"}
             </button>
           </div>
         </div>
@@ -925,6 +928,7 @@ const InventoryEntryPage = () => {
   const [isValidStaff, setIsValidStaff] = useState(null);
   const [editingData, setEditingData] = useState(null);
   const [checkSku, setCheckSku] = useState("");
+  const [isSavingNote, setIsSavingNote] = useState(false);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -1381,6 +1385,8 @@ const InventoryEntryPage = () => {
   };
 
   const handleConfirmSave = async () => {
+    if (isSavingNote) return;
+
     const result = await Swal.fire({
       title: "Confirm Save?",
       text: "Do you want to save this import note?",
@@ -1485,6 +1491,7 @@ const InventoryEntryPage = () => {
     };
 
     try {
+      setIsSavingNote(true);
       await inventoryService.createImportNote(requestData);
       toast.success("Import note saved successfully!");
       setPreviewOpen(false);
@@ -1493,6 +1500,8 @@ const InventoryEntryPage = () => {
       toast.error(
         "Error saving note: " + (err.response?.data?.message || err.message),
       );
+    } finally {
+      setIsSavingNote(false);
     }
   };
 
@@ -1833,6 +1842,7 @@ const InventoryEntryPage = () => {
         onConfirm={handleConfirmSave}
         data={{ header, details }}
         grandTotal={grandTotal}
+        isSaving={isSavingNote}
       />
     </div>
   );

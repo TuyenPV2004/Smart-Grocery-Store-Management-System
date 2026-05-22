@@ -2,7 +2,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useEffect, useRef, useState } from "react";
-import { X, Upload, Image as ImageIcon, ChevronUp } from "lucide-react";
+import { X, Upload, Image as ImageIcon, ChevronUp, Loader2 } from "lucide-react";
 import { LuPackagePlus } from "react-icons/lu";
 import supplierService from "../services/supplierService";
 import categoryService from "../services/categoryService";
@@ -42,7 +42,7 @@ const ProductForm = ({ existingProduct, onClose, onSuccess }) => {
     handleSubmit,
     setValue,
     watch,
-    formState: { errors },
+    formState: { errors, isSubmitting },
   } = useForm({
     resolver: zodResolver(productSchema),
     defaultValues: existingProduct
@@ -683,9 +683,17 @@ const ProductForm = ({ existingProduct, onClose, onSuccess }) => {
           <div className="pt-8 flex justify-end">
             <button
               type="submit"
-              className="px-10 py-3 bg-green-600 text-white rounded-full hover:bg-green-600 transition-all font-medium text-sm shadow-lg shadow-green-100 active:scale-95"
+              disabled={isSubmitting}
+              className="inline-flex items-center gap-2 px-10 py-3 bg-green-600 text-white rounded-full hover:bg-green-600 transition-all font-medium text-sm shadow-lg shadow-green-100 active:scale-95 disabled:cursor-not-allowed disabled:opacity-70"
             >
-              Save Product Data
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                "Save Product Data"
+              )}
             </button>
           </div>
         </form>

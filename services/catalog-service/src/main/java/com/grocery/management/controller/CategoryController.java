@@ -1,12 +1,15 @@
 package com.grocery.management.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.grocery.management.entity.Category;
 import com.grocery.management.service.CategoryService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import com.grocery.management.entity.CategoryHistory;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/api/categories")
@@ -24,7 +27,12 @@ public class CategoryController {
         return ResponseEntity.ok(categoryService.getAllCategories());
     }
 
-    @PostMapping
+    @GetMapping("/home-featured")
+    public ResponseEntity<List<Category>> getHomeFeatured() {
+        return ResponseEntity.ok(categoryService.getHomeFeaturedCategories());
+    }
+
+    @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> create(@RequestBody Category category) {
         try {
             return ResponseEntity.ok(categoryService.createCategory(category));
@@ -33,13 +41,41 @@ public class CategoryController {
         }
     }
 
-    @PutMapping("/{id}")
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<?> create(
+            @RequestParam("category") String categoryJson,
+            @RequestParam(value = "image", required = false) MultipartFile image) {
+        try {
+            Category category = new ObjectMapper().readValue(categoryJson, Category.class);
+            return ResponseEntity.ok(categoryService.createCategory(category, image));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @PutMapping(value = "/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> update(@PathVariable Long id, @RequestBody Category category) {
         try {
             if (id == null) {
                 return ResponseEntity.badRequest().body("ID cannot be null");
             }
             return ResponseEntity.ok(categoryService.updateCategory(id, category));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<?> update(
+            @PathVariable Long id,
+            @RequestParam("category") String categoryJson,
+            @RequestParam(value = "image", required = false) MultipartFile image) {
+        try {
+            if (id == null) {
+                return ResponseEntity.badRequest().body("ID cannot be null");
+            }
+            Category category = new ObjectMapper().readValue(categoryJson, Category.class);
+            return ResponseEntity.ok(categoryService.updateCategory(id, category, image));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
