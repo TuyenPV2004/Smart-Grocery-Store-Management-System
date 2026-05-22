@@ -51,3 +51,4 @@ backend/user-photos/
 
 docs/
 scripts/
+.codex-build/

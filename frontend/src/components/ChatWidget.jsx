@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { MessageCircle, SendHorizonal, X } from "lucide-react";
+import { MessageCircle, X } from "lucide-react";
+import { IoIosSend } from "react-icons/io";
 import { toast } from "react-toastify";
 import { useAuth } from "../context/useAuth";
 import chatService from "../services/chatService";
@@ -320,23 +321,23 @@ const ChatWidget = () => {
           </div>
 
           <div className="border-t border-slate-100 bg-white px-4 py-3">
-            <div className="flex items-end gap-2">
+            <div className="relative flex items-center rounded-2xl border !border-black bg-white focus-within:!border-black focus-within:!shadow-none focus-within:!ring-0 focus-within:!ring-transparent">
               <textarea
                 rows={1}
                 value={draft}
                 onChange={(event) => setDraft(event.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder="Nhập tin nhắn"
-                className="max-h-28 min-h-[44px] flex-1 resize-none rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 outline-none transition-all focus:border-green-400 focus:bg-white"
+                className="max-h-28 min-h-[44px] flex-1 resize-none bg-transparent pl-4 pr-12 py-3 text-sm text-slate-700 outline-none focus:!shadow-none focus:!ring-0 focus:!ring-transparent border-0 focus:border-transparent focus:outline-none"
               />
               <button
                 type="button"
                 onClick={handleSendMessage}
-                className="flex h-11 w-11 items-center justify-center rounded-2xl bg-green-600 text-white transition-all hover:bg-green-700 disabled:opacity-50"
+                className="absolute right-3 flex h-8 w-8 items-center justify-center text-green-600 hover:text-green-700 disabled:opacity-30 transition-colors focus:outline-none focus:ring-0"
                 disabled={!draft.trim()}
                 aria-label="Gửi tin nhắn"
               >
-                <SendHorizonal size={18} />
+                <IoIosSend size={22} />
               </button>
             </div>
           </div>

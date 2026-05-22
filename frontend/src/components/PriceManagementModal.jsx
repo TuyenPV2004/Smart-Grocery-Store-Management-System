@@ -277,14 +277,14 @@ const PriceManagementModal = ({ isOpen, onClose, product, onPriceUpdated }) => {
             ) : (
               <div className="border border-slate-200 rounded-xl overflow-hidden">
                 <table className="w-full text-sm">
-                  <thead className="bg-slate-50 text-slate-600 font-medium">
+                  <thead className="bg-[#647368] text-white font-medium">
                     <tr>
-                      <th className="px-4 py-3 text-left text-[14px]">Time</th>
-                      <th className="px-4 py-3 text-center text-[14px]">Price Type</th>
-                      <th className="px-4 py-3 text-right text-[14px]">Old Price</th>
-                      <th className="px-4 py-3 text-right text-[14px]">New Price</th>
-                      <th className="px-4 py-3 text-center text-[14px]">Difference</th>
-                      <th className="px-4 py-3 text-left text-[14px]">Modified By</th>
+                      <th className="px-4 py-3 text-left text-[14px] text-white">Time</th>
+                      <th className="px-4 py-3 text-center text-[14px] text-white">Price Type</th>
+                      <th className="px-4 py-3 text-right text-[14px] text-white">Old Price</th>
+                      <th className="px-4 py-3 text-right text-[14px] text-white">New Price</th>
+                      <th className="px-4 py-3 text-center text-[14px] text-white">Difference</th>
+                      <th className="px-4 py-3 text-left text-[14px] text-white">Modified By</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">

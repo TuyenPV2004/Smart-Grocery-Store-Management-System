@@ -548,23 +548,23 @@ const OrderManagementPage = () => {
                     <h3 className="mb-3 text-sm font-medium text-slate-800">Products</h3>
                     <div className="overflow-x-auto rounded-2xl border border-slate-100">
                       <table className="w-full min-w-[680px] text-sm">
-                        <thead className="bg-slate-50">
+                        <thead className="bg-[#647368] text-white">
                           <tr>
-                            <th className="px-4 py-3 text-left font-medium text-slate-800">
+                            <th className="px-4 py-3 text-left font-medium text-white">
                               Product
                             </th>
-                            <th className="px-4 py-3 text-center font-medium text-slate-800">
-                              Qty
+                            <th className="px-4 py-3 text-center font-medium text-white">
+                              Quantity
                             </th>
-                            <th className="px-4 py-3 text-right font-medium text-slate-800">
+                            <th className="px-4 py-3 text-right font-medium text-white">
                               Unit price
                             </th>
                             {showDetailDiscountColumn ? (
-                              <th className="px-4 py-3 text-right font-medium text-slate-800">
+                              <th className="px-4 py-3 text-right font-medium text-white">
                                 Discount
                               </th>
                             ) : null}
-                            <th className="px-4 py-3 text-right font-medium text-slate-800">
+                            <th className="px-4 py-3 text-right font-medium text-white">
                               Line total
                             </th>
                           </tr>

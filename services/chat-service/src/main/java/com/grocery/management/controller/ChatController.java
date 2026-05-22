@@ -129,18 +129,22 @@ public class ChatController {
     private CurrentChatUser currentUser(Authentication authentication) {
         String username = authentication.getName();
         String displayName = username;
-        if (authentication instanceof JwtAuthenticationToken jwtAuthentication) {
-            Object nameClaim = jwtAuthentication.getTokenAttributes().get("name");
-            Object fullNameClaim = jwtAuthentication.getTokenAttributes().get("full_name");
-            Object preferredUsername = jwtAuthentication.getTokenAttributes().get("preferred_username");
-            displayName = firstNonBlank(fullNameClaim, nameClaim, preferredUsername, username);
-        }
-
         String role = authentication.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .filter(authority -> "ADMIN".equals(authority) || "STAFF".equals(authority) || "CUSTOMER".equals(authority))
                 .findFirst()
                 .orElse("CUSTOMER");
+
+        if (authentication instanceof JwtAuthenticationToken jwtAuthentication) {
+            Object nameClaim = jwtAuthentication.getTokenAttributes().get("name");
+            Object fullNameClaim = jwtAuthentication.getTokenAttributes().get("full_name");
+            Object preferredUsername = jwtAuthentication.getTokenAttributes().get("preferred_username");
+
+            displayName = "CUSTOMER".equals(role)
+                    ? firstNonBlank(preferredUsername, username, fullNameClaim, nameClaim)
+                    : firstNonBlank(fullNameClaim, nameClaim, preferredUsername, username);
+        }
+
         return new CurrentChatUser(username, displayName, role);
     }
 

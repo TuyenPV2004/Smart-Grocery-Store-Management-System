@@ -12,7 +12,7 @@ import {
 import { BiSolidCategoryAlt } from "react-icons/bi";
 import { PiPackageFill } from "react-icons/pi";
 import { FaTruckFast } from "react-icons/fa6";
-import { MdInventory, MdDiscount } from "react-icons/md";
+import { MdInventory, MdDiscount, MdRateReview } from "react-icons/md";
 import { FaLayerGroup, FaClipboardList } from "react-icons/fa";
 import { IoLogoWechat } from "react-icons/io5";
 import { HiUserGroup, HiTicket } from "react-icons/hi2";
@@ -90,6 +90,13 @@ const Sidebar = ({ isCollapsed, onToggle }) => {
       path: "/support/chat",
       label: "Support Chat",
       icon: IoLogoWechat,
+      roles: ["ADMIN", "STAFF"],
+    },
+    {
+      id: "feedback",
+      path: "/feedback",
+      label: "FeedBack",
+      icon: MdRateReview,
       roles: ["ADMIN", "STAFF"],
     },
     {

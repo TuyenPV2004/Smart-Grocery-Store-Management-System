@@ -13,23 +13,28 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 public class ChatService {
 
+    private static final String DEFAULT_GREETING = "Xin ch\u00e0o qu\u00fd kh\u00e1ch!\nNh\u00e2n vi\u00ean c\u1ee7a ch\u00fang t\u00f4i s\u1ebd h\u1ed7 tr\u1ee3 b\u1ea1n s\u1edbm nh\u1ea5t c\u00f3 th\u1ec3.";
+    private static final String LEGACY_ASCII_GREETING = "Xin chao quy khach!\nNhan vien cua chung toi se ho tro ban som nhat co the.";
+
     private final ChatConversationRepository chatConversationRepository;
     private final ChatMessageRepository chatMessageRepository;
 
     @Transactional
     public synchronized String ensureConversation(String customerKey, String displayName, String role) {
+        String normalizedDisplayName = normalizeCustomerDisplayName(displayName);
         ChatConversation conversation = chatConversationRepository.findByCustomerKey(customerKey)
-                .orElseGet(() -> createConversation(customerKey, displayName, role));
+                .orElseGet(() -> createConversation(customerKey, normalizedDisplayName, role));
 
         boolean dirty = false;
-        if (!displayName.equals(conversation.getCustomerDisplayName())) {
-            conversation.setCustomerDisplayName(displayName);
+        if (!Objects.equals(normalizedDisplayName, conversation.getCustomerDisplayName())) {
+            conversation.setCustomerDisplayName(normalizedDisplayName);
             dirty = true;
         }
         if (!role.equals(conversation.getCustomerRole())) {
@@ -219,7 +224,7 @@ public class ChatService {
                 "system:grocery",
                 "G",
                 "STAFF",
-                "Xin ch\u00e0o qu\u00fd kh\u00e1ch!\nNh\u00e2n vi\u00ean c\u1ee7a ch\u00fang t\u00f4i s\u1ebd h\u1ed7 tr\u1ee3 b\u1ea1n s\u1edbn nh\u1ea5t c\u00f3 th\u1ec3."
+                DEFAULT_GREETING
         );
         updateConversationMetadata(savedConversation, systemMessage.getContent(), systemMessage.getSenderRole());
         return chatConversationRepository.save(savedConversation);
@@ -294,13 +299,13 @@ public class ChatService {
         return new ChatConversationSummaryDTO(
                 conversation.getId(),
                 conversation.getCustomerKey(),
-                conversation.getCustomerDisplayName(),
+                normalizeCustomerDisplayName(conversation.getCustomerDisplayName()),
                 conversation.getCustomerRole(),
                 conversation.isCustomerOnline(),
                 conversation.getAssignedStaffKey(),
                 conversation.getAssignedStaffDisplayName(),
                 conversation.isResolved(),
-                conversation.getLastMessage(),
+                normalizeMessageContent(conversation.getLastMessage()),
                 conversation.getLastSenderRole(),
                 conversation.getUpdatedAt()
         );
@@ -311,11 +316,38 @@ public class ChatService {
                 message.getId(),
                 message.getConversation().getId(),
                 message.getSenderKey(),
-                message.getSenderDisplayName(),
+                normalizeSenderDisplayName(message.getSenderDisplayName(), message.getSenderRole()),
                 message.getSenderRole(),
-                message.getContent(),
+                normalizeMessageContent(message.getContent()),
                 message.getCreatedAt()
         );
+    }
+
+    private String normalizeMessageContent(String content) {
+        if (LEGACY_ASCII_GREETING.equals(content)) {
+            return DEFAULT_GREETING;
+        }
+        return content;
+    }
+
+    private String normalizeSenderDisplayName(String displayName, String role) {
+        if ("CUSTOMER".equals(role) || "GUEST".equals(role)) {
+            return normalizeCustomerDisplayName(displayName);
+        }
+        return displayName;
+    }
+
+    private String normalizeCustomerDisplayName(String displayName) {
+        if (displayName == null || displayName.isBlank()) {
+            return displayName;
+        }
+
+        String normalized = displayName.trim().replaceAll("\\s+", " ");
+        String[] parts = normalized.split(" ");
+        if (parts.length == 2 && parts[0].toLowerCase(Locale.ROOT).endsWith(parts[1].toLowerCase(Locale.ROOT))) {
+            return parts[0];
+        }
+        return normalized;
     }
 
     private String toConversationId(String customerKey) {

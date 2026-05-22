@@ -33,12 +33,13 @@ export const fetchStockLookup = async () => {
 
 export const hydrateProductStock = (product, lookup) => {
   const stockItem = resolveStockItem(product, lookup);
-  const stockQuantity = Number(stockItem?.totalQuantity ?? product?.stockQuantity ?? 0);
+  const hasStockQuantity = stockItem?.totalQuantity != null || product?.stockQuantity != null;
+  const stockQuantity = hasStockQuantity ? Number(stockItem?.totalQuantity ?? product?.stockQuantity) : undefined;
 
   return {
     ...product,
     stockQuantity,
-    stockStatus: stockItem?.status || product?.stockStatus || product?.status || (stockQuantity > 0 ? "NORMAL" : "OUT_OF_STOCK"),
+    stockStatus: stockItem?.status || product?.stockStatus || product?.status || (hasStockQuantity && stockQuantity <= 0 ? "OUT_OF_STOCK" : "NORMAL"),
     status: stockQuantity > 0 && product?.status === "OUT_OF_STOCK" ? "ACTIVE" : product?.status,
     nearestExpiryDate: stockItem?.nearestExpiryDate || product?.nearestExpiryDate,
   };

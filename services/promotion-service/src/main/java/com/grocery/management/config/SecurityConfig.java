@@ -38,6 +38,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/vouchers/active").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/promotions/**").permitAll()
                         .requestMatchers("/api/vouchers/validate", "/api/vouchers/*/commit-usage").permitAll()
                         .requestMatchers("/api/vouchers/**", "/api/promotions/**").hasAnyAuthority("ADMIN", "STAFF")
                         .anyRequest().authenticated())

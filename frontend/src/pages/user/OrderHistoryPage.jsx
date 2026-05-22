@@ -383,11 +383,11 @@ const OrderDetailModal = ({ order, getStatusMeta, cancellingOrderId, onCancelOrd
               {cancellingOrderId === order.id ? "Cancelling..." : "Cancel order"}
             </Button>
           ) : null}
-          <div className="ml-auto text-right">
-            <p className="text-xs text-slate-500">Payment total</p>
-            <p className="text-xl font-medium tabular-nums text-slate-900">
+          <div className="ml-auto flex items-baseline gap-2 text-right">
+            <span className="text-sm text-slate-500">Payment total</span>
+            <span className="text-xl font-medium tabular-nums text-slate-900">
               {formatCurrency(order.finalAmount)}
-            </p>
+            </span>
           </div>
         </>
       }
@@ -401,7 +401,7 @@ const OrderDetailModal = ({ order, getStatusMeta, cancellingOrderId, onCancelOrd
 
         <div className="overflow-hidden rounded-2xl border border-slate-100">
           <table className="w-full text-sm">
-            <thead className="bg-slate-50 text-slate-500">
+            <thead className="bg-[#647368] text-white">
               <tr>
                 <th className="px-3 py-3 text-left">Product</th>
                 <th className="px-3 py-3 text-center">Quantity</th>

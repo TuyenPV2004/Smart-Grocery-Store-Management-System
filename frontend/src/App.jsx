@@ -30,6 +30,7 @@ import OrderHistoryPage from "./pages/user/OrderHistoryPage";
 import VNPayReturnPage from "./pages/user/VNPayReturnPage";
 import ChatWidget from "./components/ChatWidget";
 import CustomerChatPage from "./pages/admin/CustomerChatPage";
+import FeedbackPage from "./pages/admin/FeedbackPage";
 
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -76,6 +77,7 @@ function App() {
               />
               <Route path="/orders" element={<OrderManagementPage />} />
               <Route path="/support/chat" element={<CustomerChatPage />} />
+              <Route path="/feedback" element={<FeedbackPage />} />
             </Route>
           </Route>
           <Route element={<ProtectedRoute allowedRoles={["ADMIN"]} />}>

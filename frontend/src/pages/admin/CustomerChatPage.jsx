@@ -6,10 +6,10 @@ import {
   FiUnlock as LockOpen,
   FiMessageCircle as MessageCircle,
   FiSearch as Search,
-  FiSend as SendHorizonal,
   FiTrash2 as Trash2,
   FiUserCheck as UserCheck,
 } from "react-icons/fi";
+import { IoIosSend } from "react-icons/io";
 import Swal from "sweetalert2";
 import { toast } from "react-toastify";
 import { useAuth } from "../../context/useAuth";
@@ -612,14 +612,14 @@ const CustomerChatPage = () => {
                 value={keyword}
                 onChange={(event) => setKeyword(event.target.value)}
                 placeholder="Search by customer or staff member..."
-                className="w-full rounded-2xl border border-slate-200 bg-slate-50 py-2.5 pl-10 pr-4 text-sm text-slate-700 outline-none transition-all focus:border-green-400 focus:bg-white"
+                className="w-full rounded-2xl border border-slate-200 bg-slate-50 py-2.5 pl-10 pr-4 text-sm text-slate-700 outline-none transition-all focus:!border-black focus:bg-white focus:!shadow-none focus:!ring-0"
               />
             </div>
 
             <select
               value={scope}
               onChange={(event) => setScope(event.target.value)}
-              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-slate-700 outline-none transition-all focus:border-green-400 focus:bg-white"
+              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-slate-700 outline-none transition-all focus:!border-black focus:bg-white focus:!shadow-none focus:!ring-0"
             >
               <option value="ALL">All conversations</option>
               <option value="UNASSIGNED">Unassigned</option>
@@ -880,7 +880,7 @@ const CustomerChatPage = () => {
           </div>
 
           <div className="border-t border-slate-100 bg-white px-6 py-4">
-            <div className="flex items-end gap-3">
+            <div className="relative flex items-center rounded-2xl border !border-black bg-white focus-within:!border-black focus-within:!shadow-none focus-within:!ring-0 focus-within:!ring-transparent">
               <textarea
                 rows={1}
                 value={draft}
@@ -888,15 +888,16 @@ const CustomerChatPage = () => {
                 onKeyDown={handleKeyDown}
                 placeholder="Type a message..."
                 disabled={!selectedConversationId || !canReply}
-                className="min-h-[48px] flex-1 resize-none rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 outline-none transition-all focus:border-green-400 focus:bg-white disabled:cursor-not-allowed disabled:opacity-60"
+                className="min-h-[48px] flex-1 resize-none bg-transparent pl-4 pr-14 py-3.5 text-sm text-slate-700 outline-none focus:!shadow-none focus:!ring-0 focus:!ring-transparent border-0 focus:border-transparent focus:outline-none disabled:cursor-not-allowed disabled:opacity-60"
               />
               <button
                 type="button"
                 onClick={handleSendMessage}
                 disabled={!draft.trim() || !selectedConversationId || !canReply}
-                className="flex h-12 w-12 items-center justify-center rounded-2xl bg-green-600 text-white transition-all hover:bg-green-700 disabled:opacity-50"
+                className="absolute right-3 flex h-9 w-9 items-center justify-center text-green-600 hover:text-green-700 disabled:opacity-30 transition-colors focus:outline-none focus:ring-0"
+                aria-label="Send message"
               >
-                <SendHorizonal size={18} />
+                <IoIosSend size={22} />
               </button>
             </div>
           </div>

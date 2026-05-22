@@ -11,7 +11,8 @@ import {
   FiShield,
   FiTruck,
 } from "react-icons/fi";
-import { FaHome, FaShoppingCart } from "react-icons/fa";
+import { IoIosSend } from "react-icons/io";
+import { FaHome, FaShoppingCart, FaStar } from "react-icons/fa";
 import ImageGallery from "react-image-gallery";
 import "react-image-gallery/styles/image-gallery.css";
 import ProductCard from "../../components/common/ProductCard";
@@ -19,6 +20,7 @@ import { Button, EmptyState, PageContainer, PageHeader, PageShell, StatusBadge, 
 import { useAuth } from "../../context/useAuth";
 import { useCart } from "../../context/useCart";
 import productService from "../../services/productService";
+import reviewService from "../../services/reviewService";
 import { fetchStockLookup, hydrateProductStock, hydrateProductsStock } from "../../services/stockAvailabilityService";
 import { getImageUrl } from "../../utils/imageUrl";
 
@@ -63,6 +65,19 @@ const ProductDetailPage = () => {
   const [loading, setLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
   const [allProducts, setAllProducts] = useState([]);
+  const [reviews, setReviews] = useState([]);
+  const [canReview, setCanReview] = useState(false);
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewComment, setReviewComment] = useState("");
+  const [reviewLoading, setReviewLoading] = useState(false);
+  const [replyDrafts, setReplyDrafts] = useState({});
+  const [replyLoadingId, setReplyLoadingId] = useState(null);
+  const [activeAdminReplyId, setActiveAdminReplyId] = useState(null);
+  const [activeUserReplyId, setActiveUserReplyId] = useState(null);
+  const [userReplyDrafts, setUserReplyDrafts] = useState({});
+  const [userReplyLoadingId, setUserReplyLoadingId] = useState(null);
+
+  const isAdminUser = user?.role === "ADMIN" || user?.role === "STAFF" || user?.roles?.some((role) => role === "ADMIN" || role === "STAFF");
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -85,6 +100,39 @@ const ProductDetailPage = () => {
 
     if (id) fetchProduct();
   }, [id]);
+
+  const fetchReviews = async () => {
+    try {
+      const res = await reviewService.getByProduct(id);
+      setReviews(Array.isArray(res.data) ? res.data : []);
+    } catch (error) {
+      console.error("Error fetching product reviews:", error);
+      setReviews([]);
+    }
+  };
+
+  useEffect(() => {
+    if (!id) return;
+    fetchReviews();
+  }, [id]);
+
+  useEffect(() => {
+    const fetchEligibility = async () => {
+      if (!id || !user || isAdminUser) {
+        setCanReview(false);
+        return;
+      }
+
+      try {
+        const res = await reviewService.getEligibility(id);
+        setCanReview(Boolean(res.data?.canReview));
+      } catch {
+        setCanReview(false);
+      }
+    };
+
+    fetchEligibility();
+  }, [id, user, isAdminUser]);
 
   const galleryItems = useMemo(() => {
     if (!product) return [];
@@ -121,8 +169,18 @@ const ProductDetailPage = () => {
     return (scored.length ? scored : allProducts.filter((candidate) => Number(candidate.id) !== currentId)).slice(0, 10);
   }, [product, allProducts]);
 
+  const reviewTree = useMemo(() => {
+    const byParent = new Map();
+    reviews.forEach((review) => {
+      const parentKey = review.parentReviewId ? String(review.parentReviewId) : "root";
+      byParent.set(parentKey, [...(byParent.get(parentKey) || []), review]);
+    });
+    return { roots: byParent.get("root") || [], byParent };
+  }, [reviews]);
+
+  const hasStockQuantity = product?.stockQuantity !== null && product?.stockQuantity !== undefined;
   const stockQuantity = Number(product?.stockQuantity || 0);
-  const isOutOfStock = product?.status === "OUT_OF_STOCK" || stockQuantity <= 0;
+  const isOutOfStock = product?.status === "OUT_OF_STOCK" || (hasStockQuantity && stockQuantity <= 0);
 
   const handleAddToCart = () => {
     if (!user) {
@@ -136,7 +194,7 @@ const ProductDetailPage = () => {
       return;
     }
 
-    if (quantity > stockQuantity) {
+    if (hasStockQuantity && quantity > stockQuantity) {
       toast.warning(`Only ${stockQuantity} item(s) available.`);
       return;
     }
@@ -147,6 +205,76 @@ const ProductDetailPage = () => {
     }
   };
 
+  const handleSubmitReview = async (event) => {
+    event.preventDefault();
+    if (!reviewComment.trim()) {
+      toast.warning("Please enter your comment.");
+      return;
+    }
+
+    setReviewLoading(true);
+    try {
+      await reviewService.create(id, {
+        rating: reviewRating,
+        comment: reviewComment.trim(),
+      });
+      toast.success("Review submitted.");
+      setReviewComment("");
+      setReviewRating(5);
+      fetchReviews();
+    } catch (error) {
+      toast.error(error.response?.data || error.message || "Unable to submit review.");
+    } finally {
+      setReviewLoading(false);
+    }
+  };
+
+  const handleReply = async (reviewId) => {
+    const reply = replyDrafts[reviewId]?.trim();
+    if (!reply) {
+      toast.warning("Please enter a reply.");
+      return;
+    }
+
+    setReplyLoadingId(reviewId);
+    try {
+      await reviewService.reply(reviewId, { reply });
+      toast.success("Reply saved.");
+      setReplyDrafts((prev) => ({ ...prev, [reviewId]: "" }));
+      setActiveAdminReplyId(null);
+      fetchReviews();
+    } catch (error) {
+      toast.error(error.response?.data || error.message || "Unable to save reply.");
+    } finally {
+      setReplyLoadingId(null);
+    }
+  };
+
+  const handleSubmitUserReply = async (review) => {
+    const reply = userReplyDrafts[review.id]?.trim();
+    if (!reply) {
+      toast.warning("Vui lòng nhập nội dung trả lời.");
+      return;
+    }
+
+    setUserReplyLoadingId(review.id);
+    try {
+      await reviewService.create(id, {
+        parentReviewId: review.id,
+        rating: review.rating || 5,
+        comment: reply,
+      });
+      toast.success("Đã gửi trả lời.");
+      setUserReplyDrafts((prev) => ({ ...prev, [review.id]: "" }));
+      setActiveUserReplyId(null);
+      fetchReviews();
+    } catch (error) {
+      toast.error(error.response?.data || error.message || "Unable to submit reply.");
+    } finally {
+      setUserReplyLoadingId(null);
+    }
+  };
+
   const formatCurrency = (amount) =>
     new Intl.NumberFormat("vi-VN", {
       style: "currency",
@@ -154,6 +282,70 @@ const ProductDetailPage = () => {
     }).format(Number(amount || 0));
 
   const breadcrumbProductName = product?.name ? `${product.name.slice(0, 30)}...` : "Product";
+  const renderReviewReplies = (parentId, depth = 0) => {
+    const replies = reviewTree.byParent.get(String(parentId)) || [];
+    if (!replies.length) return null;
+
+    return (
+      <div className="mt-4 space-y-3 border-l-2 border-emerald-100 pl-4">
+        {replies.map((reply) => (
+          <div key={reply.id} className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="font-medium text-slate-900">{reply.customerName || reply.username}</p>
+                <div className="mt-1 flex gap-0.5 text-amber-400">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <FaStar key={star} className={star <= reply.rating ? "text-amber-400" : "text-slate-200"} />
+                  ))}
+                </div>
+              </div>
+              <span className="shrink-0 text-xs font-medium text-slate-400">
+                {reply.createdAt ? new Date(reply.createdAt).toLocaleDateString("vi-VN") : ""}
+              </span>
+            </div>
+            <p className="mt-3 leading-7 text-slate-600">{reply.comment}</p>
+
+            {canReview && !isAdminUser ? (
+              <div className="mt-3">
+                <button
+                  type="button"
+                  onClick={() => setActiveUserReplyId((current) => (current === reply.id ? null : reply.id))}
+                  className="text-sm font-semibold text-emerald-700 transition-colors hover:text-emerald-900"
+                >
+                  Trả lời
+                </button>
+
+                {activeUserReplyId === reply.id ? (
+                  <div className="mt-3 relative flex items-center rounded-2xl border !border-black bg-white focus-within:!border-black focus-within:!shadow-none focus-within:!ring-0 focus-within:!ring-transparent">
+                    <textarea
+                      value={userReplyDrafts[reply.id] || ""}
+                      onChange={(event) =>
+                        setUserReplyDrafts((prev) => ({ ...prev, [reply.id]: event.target.value }))
+                      }
+                      rows={2}
+                      className="min-h-[44px] flex-1 resize-none bg-transparent pl-4 pr-12 py-3 text-sm text-slate-800 placeholder:text-slate-400/80 outline-none focus:!shadow-none focus:!ring-0 focus:!ring-transparent border-0 focus:border-transparent focus:outline-none"
+                      placeholder="Nhập trả lời của bạn..."
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handleSubmitUserReply(reply)}
+                      disabled={userReplyLoadingId === reply.id}
+                      className="absolute right-3 flex h-8 w-8 items-center justify-center text-green-600 hover:text-green-700 disabled:opacity-30 transition-colors focus:outline-none focus:ring-0"
+                      aria-label="Send reply"
+                    >
+                      {userReplyLoadingId === reply.id ? <FiLoader className="h-4 w-4 animate-spin" /> : <IoIosSend size={22} />}
+                    </button>
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
+
+            {depth < 4 ? renderReviewReplies(reply.id, depth + 1) : null}
+          </div>
+        ))}
+      </div>
+    );
+  };
 
   if (loading) {
     return (
@@ -278,7 +470,7 @@ const ProductDetailPage = () => {
                   type="button"
                   onClick={() => setQuantity((prev) => prev + 1)}
                   className="flex h-12 w-12 items-center justify-center text-slate-600 transition-colors hover:text-emerald-700"
-                  disabled={isOutOfStock || quantity >= stockQuantity}
+                  disabled={isOutOfStock || (hasStockQuantity && quantity >= stockQuantity)}
                   aria-label="Increase quantity"
                 >
                   <FiPlus size={18} />
@@ -325,6 +517,195 @@ const ProductDetailPage = () => {
             </div>
           ) : (
             <SurfaceCard className="text-slate-500">No related products available.</SurfaceCard>
+          )}
+        </section>
+
+        <section className="mt-12">
+          <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <h2 className="text-2xl font-medium text-slate-900">Product reviews</h2>
+              <p className="mt-2 text-sm font-medium text-slate-500">
+                Feedback from customers who bought this product.
+              </p>
+            </div>
+            {reviews.length ? (
+              <div className="flex items-center gap-2 rounded-full bg-amber-50 px-4 py-2 text-sm font-semibold text-amber-700">
+                <FaStar className="text-amber-500" />
+                {(reviews.reduce((sum, review) => sum + Number(review.rating || 0), 0) / reviews.length).toFixed(1)}
+                <span className="text-slate-500">({reviews.length})</span>
+              </div>
+            ) : null}
+          </div>
+
+          {canReview ? (
+            <SurfaceCard className="mb-6">
+              <form onSubmit={handleSubmitReview} className="space-y-4">
+                <div>
+                  <p className="mb-2 text-sm font-medium text-slate-700">Your rating</p>
+                  <div className="flex gap-1">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <button
+                        key={star}
+                        type="button"
+                        onClick={() => setReviewRating(star)}
+                        className={`text-2xl transition-colors ${star <= reviewRating ? "text-amber-400" : "text-slate-200 hover:text-amber-300"}`}
+                        aria-label={`${star} star`}
+                      >
+                        <FaStar />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <label className="block space-y-2">
+                  <span className="text-sm font-medium text-slate-700">Comment</span>
+                  <div className="relative flex rounded-2xl border !border-black bg-white focus-within:!border-black focus-within:!shadow-none focus-within:!ring-0 focus-within:!ring-transparent">
+                    <textarea
+                      value={reviewComment}
+                      onChange={(event) => setReviewComment(event.target.value)}
+                      rows={4}
+                      className="w-full resize-none bg-transparent pl-4 pr-12 py-3 text-sm text-slate-800 outline-none focus:!shadow-none focus:!ring-0 focus:!ring-transparent border-0 focus:border-transparent focus:outline-none"
+                      placeholder="Share your experience with this product..."
+                    />
+                    <button
+                      type="submit"
+                      disabled={reviewLoading}
+                      className="absolute right-3 bottom-3 flex h-8 w-8 items-center justify-center text-green-600 hover:text-green-700 disabled:opacity-30 transition-colors focus:outline-none focus:ring-0"
+                      aria-label="Submit review"
+                    >
+                      {reviewLoading ? <FiLoader className="h-4 w-4 animate-spin" /> : <IoIosSend size={22} />}
+                    </button>
+                  </div>
+                </label>
+              </form>
+            </SurfaceCard>
+          ) : !user ? (
+            <SurfaceCard className="mb-6 text-sm font-medium text-slate-500">
+              Please sign in to review products you have purchased.
+            </SurfaceCard>
+          ) : null}
+
+          {reviews.length ? (
+            <div className="space-y-4">
+              {reviewTree.roots.map((review) => {
+                return (
+                <SurfaceCard key={review.id}>
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                      <p className="font-medium text-slate-900">{review.customerName || review.username}</p>
+                      <div className="mt-1 flex gap-0.5 text-amber-400">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <FaStar key={star} className={star <= review.rating ? "text-amber-400" : "text-slate-200"} />
+                        ))}
+                      </div>
+                    </div>
+                    <span className="text-xs font-medium text-slate-400">
+                      {review.createdAt ? new Date(review.createdAt).toLocaleDateString("vi-VN") : ""}
+                    </span>
+                  </div>
+                  <p className="mt-4 leading-7 text-slate-600">{review.comment}</p>
+
+                  {review.adminReply ? (
+                    <div className="relative mt-6 rounded-2xl border border-emerald-100 bg-emerald-50 p-4 before:absolute before:-top-2 before:left-8 before:h-4 before:w-4 before:rotate-45 before:border-l before:border-t before:border-emerald-100 before:bg-emerald-50 before:content-['']">
+                      <div className="mb-2 flex items-center justify-between gap-3">
+                        <div className="text-left">
+                          <p className="text-sm font-semibold text-emerald-900">
+                            {review.repliedBy || "Administrator"}
+                            <span className="ml-2 rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-emerald-700">
+                              Admin
+                            </span>
+                          </p>
+                        </div>
+                        {review.repliedAt ? (
+                          <p className="shrink-0 text-xs font-medium text-emerald-700/70">
+                            {new Date(review.repliedAt).toLocaleDateString("vi-VN")}
+                          </p>
+                        ) : null}
+                      </div>
+                      <p className="mt-2 text-sm leading-6 text-emerald-900/80">{review.adminReply}</p>
+                    </div>
+                  ) : null}
+
+                  {canReview && !isAdminUser ? (
+                    <div className="mt-3">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setActiveUserReplyId((current) => (current === review.id ? null : review.id))
+                        }
+                        className="text-sm font-semibold text-emerald-700 transition-colors hover:text-emerald-900"
+                      >
+                        Trả lời
+                      </button>
+
+                      {activeUserReplyId === review.id ? (
+                        <div className="mt-3 relative flex items-center rounded-2xl border !border-black bg-white focus-within:!border-black focus-within:!shadow-none focus-within:!ring-0 focus-within:!ring-transparent">
+                          <textarea
+                            value={userReplyDrafts[review.id] || ""}
+                            onChange={(event) =>
+                              setUserReplyDrafts((prev) => ({ ...prev, [review.id]: event.target.value }))
+                            }
+                            rows={2}
+                            className="min-h-[44px] flex-1 resize-none bg-transparent pl-4 pr-12 py-3 text-sm text-slate-800 placeholder:text-slate-400/80 outline-none focus:!shadow-none focus:!ring-0 focus:!ring-transparent border-0 focus:border-transparent focus:outline-none"
+                            placeholder="Nhập trả lời của bạn..."
+                          />
+                          <button
+                            type="button"
+                            onClick={() => handleSubmitUserReply(review)}
+                            disabled={userReplyLoadingId === review.id}
+                            className="absolute right-3 flex h-8 w-8 items-center justify-center text-green-600 hover:text-green-700 disabled:opacity-30 transition-colors focus:outline-none focus:ring-0"
+                            aria-label="Send reply"
+                          >
+                            {userReplyLoadingId === review.id ? <FiLoader className="h-4 w-4 animate-spin" /> : <IoIosSend size={22} />}
+                          </button>
+                        </div>
+                      ) : null}
+                    </div>
+                  ) : null}
+
+                  {renderReviewReplies(review.id)}
+
+                  {isAdminUser ? (
+                    <div className="mt-3">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setActiveAdminReplyId((current) => (current === review.id ? null : review.id))
+                        }
+                        className="text-sm font-semibold text-emerald-700 transition-colors hover:text-emerald-900"
+                      >
+                        Trả lời
+                      </button>
+
+                      {activeAdminReplyId === review.id ? (
+                        <div className="mt-3 relative flex items-center rounded-2xl border !border-black bg-white focus-within:!border-black focus-within:!shadow-none focus-within:!ring-0 focus-within:!ring-transparent">
+                          <textarea
+                            value={replyDrafts[review.id] ?? review.adminReply ?? ""}
+                            onChange={(event) =>
+                              setReplyDrafts((prev) => ({ ...prev, [review.id]: event.target.value }))
+                            }
+                            rows={2}
+                            className="min-h-[44px] flex-1 resize-none bg-transparent pl-4 pr-12 py-3 text-sm text-slate-800 placeholder:text-slate-400/80 outline-none focus:!shadow-none focus:!ring-0 focus:!ring-transparent border-0 focus:border-transparent focus:outline-none"
+                            placeholder="Reply to this review..."
+                          />
+                          <button
+                            type="button"
+                            onClick={() => handleReply(review.id)}
+                            disabled={replyLoadingId === review.id}
+                            className="absolute right-3 flex h-8 w-8 items-center justify-center text-green-600 hover:text-green-700 disabled:opacity-30 transition-colors focus:outline-none focus:ring-0"
+                            aria-label="Reply to review"
+                          >
+                            {replyLoadingId === review.id ? <FiLoader className="h-4 w-4 animate-spin" /> : <IoIosSend size={22} />}
+                          </button>
+                        </div>
+                      ) : null}
+                    </div>
+                  ) : null}
+                </SurfaceCard>
+              );
+              })}
+            </div>
+          ) : (
+            <SurfaceCard className="text-slate-500">No reviews yet.</SurfaceCard>
           )}
         </section>
 

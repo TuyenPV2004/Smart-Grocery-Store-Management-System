@@ -1,22 +1,29 @@
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   FiArrowLeft,
   FiArrowRight,
   FiAward,
   FiClock,
   FiCreditCard,
+  FiEye,
   FiHeadphones,
   FiShield,
   FiShoppingBag,
   FiStar,
   FiTruck,
 } from "react-icons/fi";
+import { FaShoppingCart } from "react-icons/fa";
+import { toast } from "react-toastify";
 import productService from "../../services/productService";
 import categoryService from "../../services/categoryService";
+import promotionService from "../../services/promotionService";
 import { fetchStockLookup, hydrateProductsStock } from "../../services/stockAvailabilityService";
 import ProductCard from "../../components/common/ProductCard";
 import { getImageUrl } from "../../utils/imageUrl";
+import { StatusBadge } from "../../components/ui";
+import { useAuth } from "../../context/useAuth";
+import { useCart } from "../../context/useCart";
 
 const HERO_FEATURES = [
   {
@@ -73,9 +80,57 @@ const RELATED_POST_URLS = [
   "https://www.avakids.com/me-va-be/cach-lam-kem-sua-chua-1508028",
 ];
 
+const formatCurrency = (amount) =>
+  new Intl.NumberFormat("vi-VN", {
+    style: "currency",
+    currency: "VND",
+  }).format(amount || 0);
+
+const getDiscountedPrice = (product, promotion) => {
+  const price = Number(product.sellPrice || 0);
+  const discountValue = Number(promotion?.discountValue || 0);
+  if (!promotion) {
+    return price;
+  }
+
+  if (promotion.discountType === "PERCENTAGE") {
+    return Math.max(price - (price * discountValue) / 100, 0);
+  }
+
+  return Math.max(price - discountValue, 0);
+};
+
+const getDiscountLabel = (promotion) => {
+  if (!promotion) {
+    return "";
+  }
+
+  if (promotion.discountType === "PERCENTAGE") {
+    return `-${promotion.discountValue}%`;
+  }
+
+  return `-${formatCurrency(promotion.discountValue)}`;
+};
+
+const isPromotionActive = (promotion) => {
+  if (promotion.status !== "ACTIVE") {
+    return false;
+  }
+
+  const now = Date.now();
+  const startTime = promotion.startDate ? new Date(promotion.startDate).getTime() : Number.NEGATIVE_INFINITY;
+  const endTime = promotion.endDate ? new Date(promotion.endDate).getTime() : Number.POSITIVE_INFINITY;
+  return startTime <= now && now <= endTime;
+};
 
 const HomePage = () => {
+  const { user } = useAuth();
+  const { addToCart } = useCart();
+  const navigate = useNavigate();
   const [products, setProducts] = useState([]);
+  const [flashSaleProducts, setFlashSaleProducts] = useState([]);
+  const [flashSaleCampaignName, setFlashSaleCampaignName] = useState("");
+  const [promotionsLoading, setPromotionsLoading] = useState(true);
   const [homeCategories, setHomeCategories] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -91,24 +146,33 @@ const HomePage = () => {
 
   const relatedPosts = popularCategories.slice(0, 4).map((category, index) => ({
     id: `post-${category.id}-${index}`,
-    badge: ["Mẹo mua sắm", "Bảo quản", "Gợi ý món ăn", "Ưu đãi"][index],
+    badge: ["Shopping tips", "Storage", "Meal ideas", "Offers"][index],
     title: [
-      `Cách chọn ${category.name}`,
-      `Bảo quản ${category.name} đúng cách`,
-      `Thực đơn nhanh với ${category.name}`,
-      `Mua ${category.name} tiết kiệm hơn`,
+      `How to choose ${category.name}`,
+      `How to store ${category.name} properly`,
+      `Quick recipes with ${category.name}`,
+      `Save money on ${category.name}`,
     ][index],
-    description:
-      "Gợi ý hữu ích giúp bạn chọn thực phẩm tươi, bảo quản tốt hơn và chuẩn bị bữa ăn tiện lợi cho gia đình.",
+    description: [
+      "Simple cues for checking freshness, color, texture, and packaging before you buy.",
+      "Storage habits that help preserve flavor and reduce waste after your delivery arrives.",
+      "Build quick weekday meals from fresh ingredients and pantry basics.",
+      "Combine essentials and promotions to control your grocery budget without reducing quality."
+    ][index],
     imageSrc: RELATED_POST_IMAGES[index] || category.imageSrc,
     link: RELATED_POST_URLS[index] || category.link,
   }));
+
+  const flashSaleProductIds = new Set(flashSaleProducts.map((product) => product.id));
+  const suggestedProducts = products
+    .filter((product) => !flashSaleProductIds.has(product.id))
+    .slice(0, 20);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         const [productsRes, stockLookup] = await Promise.all([
-          productService.getAll({ pageSize: 15 }),
+          productService.getAll({ pageSize: 40 }),
           fetchStockLookup(),
         ]);
         const productList = productsRes.data?.content || productsRes.data || [];
@@ -124,6 +188,47 @@ const HomePage = () => {
   }, []);
 
   useEffect(() => {
+    const fetchPromotions = async () => {
+      setPromotionsLoading(true);
+      try {
+        const promotionsRes = await promotionService.getAll();
+        const promotionList = Array.isArray(promotionsRes.data) ? promotionsRes.data : [];
+        const activeCampaign = promotionList
+          .filter(isPromotionActive)
+          .find((promotion) => (promotion.products || []).length > 0);
+        const saleProducts = [];
+        const usedProductIds = new Set();
+        setFlashSaleCampaignName(activeCampaign?.name || "");
+
+        if (activeCampaign) {
+          [activeCampaign].forEach((promotion) => {
+            (promotion.products || []).forEach((product) => {
+              if (product?.id && !usedProductIds.has(product.id) && saleProducts.length < 5) {
+                usedProductIds.add(product.id);
+                saleProducts.push({
+                  ...product,
+                  promotion,
+                  discountedPrice: getDiscountedPrice(product, promotion),
+                  discountLabel: getDiscountLabel(promotion),
+                });
+              }
+            });
+          });
+        }
+        setFlashSaleProducts(saleProducts);
+      } catch (error) {
+        console.error("Error fetching promotions:", error);
+        setFlashSaleCampaignName("");
+        setFlashSaleProducts([]);
+      } finally {
+        setPromotionsLoading(false);
+      }
+    };
+
+    fetchPromotions();
+  }, []);
+
+  useEffect(() => {
     const fetchCategories = async () => {
       try {
         const homeResponse = await categoryService.getHomeFeatured();
@@ -135,6 +240,23 @@ const HomePage = () => {
 
     fetchCategories();
   }, []);
+
+  const handleFlashSaleAddToCart = (event, product) => {
+    event.preventDefault();
+    event.stopPropagation();
+
+    if (!user) {
+      toast.warning("Please sign in to add products to your cart.");
+      navigate("/login");
+      return;
+    }
+
+    addToCart({
+      ...product,
+      status: "ACTIVE",
+      activePromotion: product.promotion,
+    });
+  };
 
   return (
     <div className="font-poppins min-h-screen app-page-bg">
@@ -212,7 +334,7 @@ const HomePage = () => {
                   <div className="flex items-start justify-between gap-4">
                     <div>
                       <p className="text-sm font-semibold text-white/78">
-                        Đánh giá khách hàng
+                        Customer Reviews
                       </p>
                       <div className="mt-3 flex gap-1 text-amber-300">
                         {Array.from({ length: 5 }).map((_, index) => (
@@ -261,12 +383,6 @@ const HomePage = () => {
                     </span>
                   </div>
 
-                  <Link
-                    to="/products"
-                    className="mt-5 flex w-full items-center justify-center rounded-2xl bg-white py-3 text-sm font-medium text-emerald-800 transition-colors hover:bg-emerald-50"
-                  >
-                    Khám phá cửa hàng
-                  </Link>
                 </div>
 
                 <div className="mt-auto rounded-[1.5rem] border border-white/20 bg-emerald-900/80 p-5 text-center text-white shadow-xl backdrop-blur-md">
@@ -308,6 +424,97 @@ const HomePage = () => {
 
       <div className="mx-auto w-full max-w-[1600px] px-4 space-y-12 pb-12 pt-8 sm:px-6 lg:px-10">
         <div className="space-y-6 md:space-y-8">
+          {(promotionsLoading || flashSaleProducts.length > 0) && (
+            <section>
+              <div className="mb-8 flex items-end justify-between gap-6">
+                <div>
+                  {flashSaleCampaignName ? (
+                    <h2 className="text-3xl font-medium text-slate-900">
+                      {flashSaleCampaignName}
+                    </h2>
+                  ) : (
+                    <div className="h-9 w-44 rounded-xl bg-white/70 animate-pulse" />
+                  )}
+                </div>
+                <Link
+                  to="/promotions"
+                  className="shrink-0 text-green-600 font-semibold hover:text-green-700 flex items-center gap-1.5 group"
+                >
+                  View All
+                  <FiArrowRight
+                    size={18}
+                    className="transition-transform duration-300 group-hover:translate-x-1"
+                  />
+                </Link>
+              </div>
+
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
+                {flashSaleProducts.map((product) => (
+                  <Link
+                    key={product.id}
+                    to={`/products/${product.id}`}
+                    className="group relative flex h-full flex-col overflow-hidden rounded-[1.35rem] border border-amber-100 bg-white shadow-[0_14px_34px_rgba(245,158,11,0.14)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_22px_55px_rgba(245,158,11,0.18)]"
+                  >
+                    <span className="absolute right-3 top-3 z-20 rounded-full bg-amber-500 px-2.5 py-1 text-[11px] font-bold text-white shadow-sm">
+                      {product.discountLabel}
+                    </span>
+                    <div className="relative aspect-[1.08/1] overflow-hidden bg-amber-50">
+                      <div className="absolute inset-x-5 top-5 h-20 rounded-full bg-white/70 blur-2xl" />
+                      <img
+                        src={getImageUrl(product.thumbnail, "https://via.placeholder.com/300x300?text=No+Image")}
+                        alt={product.name}
+                        loading="lazy"
+                        className="relative z-10 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      />
+                      <div className="absolute inset-0 z-30 flex items-center justify-center bg-amber-950/10 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+                        <span
+                          className="flex h-11 w-11 items-center justify-center rounded-full bg-white text-amber-700 shadow-lg transition-all hover:scale-105 hover:bg-amber-600 hover:text-white"
+                          title="View details"
+                          aria-label="View product details"
+                        >
+                          <FiEye size={18} />
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex flex-1 flex-col p-4">
+                      <h3 className="mb-3 line-clamp-2 min-h-[40px] text-[15px] font-medium leading-snug text-slate-900 group-hover:text-amber-700">
+                        {product.name}
+                      </h3>
+                      <div className="mt-auto flex items-end justify-between gap-3 border-t border-amber-100 pt-3">
+                        <div className="min-w-0">
+                          <p className="text-lg font-semibold tabular-nums text-amber-700">
+                            {formatCurrency(product.discountedPrice)}
+                          </p>
+                          <p className="text-xs tabular-nums text-slate-400 line-through">
+                            {formatCurrency(product.sellPrice)}
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={(event) => handleFlashSaleAddToCart(event, product)}
+                          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-amber-200 bg-transparent text-orange-600 transition-all hover:border-orange-600 hover:bg-orange-600 hover:text-white active:scale-95"
+                          title="Add to cart"
+                          aria-label="Add to cart"
+                        >
+                          <FaShoppingCart size={18} />
+                        </button>
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+                {promotionsLoading &&
+                  Array(5)
+                    .fill(0)
+                    .map((_, i) => (
+                      <div
+                        key={i}
+                        className="h-[330px] rounded-[1.35rem] bg-white animate-pulse"
+                      />
+                    ))}
+              </div>
+            </section>
+          )}
+
           <section>
             <div className="flex items-end justify-between gap-6 mb-8">
               <div>
@@ -394,8 +601,8 @@ const HomePage = () => {
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
               {products.length > 0
-                ? products.slice(0, 15).map((product) => (
-                    <ProductCard key={product.id} product={product} />
+                ? suggestedProducts.map((product) => (
+                    <ProductCard key={product.id} product={product} showComparePrice={false} />
                   ))
                 : !loading && (
                     <div className="col-span-full text-center py-20 bg-white rounded-3xl border border-dashed border-slate-300">
@@ -403,7 +610,7 @@ const HomePage = () => {
                     </div>
                   )}
               {loading &&
-                Array(15)
+                Array(20)
                   .fill(0)
                   .map((_, i) => (
                     <div
@@ -475,30 +682,31 @@ const HomePage = () => {
           </div>
         </section>
 
-        <section>
-          <div className="flex items-end justify-between gap-6 mb-8">
+        <section className="mt-14">
+          <div className="mb-8 flex items-end justify-between gap-6">
             <div>
-              <h2 className="text-3xl font-medium text-slate-900 mb-2">
-                Related Posts
-              </h2>
+              <h2 className="text-2xl font-medium text-slate-900">Related articles</h2>
+              <p className="mt-2 text-sm font-medium text-slate-500">
+                Useful guides for choosing, storing, and cooking fresh groceries.
+              </p>
             </div>
             <Link
               to="/products"
-              className="shrink-0 text-green-600 font-semibold hover:text-green-700 flex items-center gap-1.5 group"
+              className="group flex shrink-0 items-center gap-1.5 text-sm font-semibold text-emerald-700 hover:text-emerald-800"
             >
-              View All
+              View products
               <FiArrowRight
-                size={18}
-                className="transition-transform duration-300 group-hover:translate-x-1"
+                size={16}
+                className="transition-transform group-hover:translate-x-1"
               />
             </Link>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
             {relatedPosts.map((post) => (
               <article
                 key={post.id}
-                className="group h-full bg-white rounded-3xl border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden"
+                className="group h-full overflow-hidden rounded-[1.5rem] border border-white/75 bg-white/90 shadow-[0_14px_34px_rgba(15,23,42,0.07)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_22px_55px_rgba(15,23,42,0.12)]"
               >
                 <a href={post.link} target="_blank" rel="noopener noreferrer">
                   <div className="h-48 overflow-hidden">
@@ -510,16 +718,16 @@ const HomePage = () => {
                   </div>
                 </a>
 
-                <div className="p-5 flex min-h-[230px] flex-col">
-                  <span className="w-fit rounded-md bg-emerald-50 text-emerald-700 px-1 py-0.5 text-[11px] font-semibold leading-none mb-3">
+                <div className="flex min-h-[220px] flex-col p-5">
+                  <StatusBadge tone="emerald" className="mb-3 w-fit">
                     {post.badge}
-                  </span>
+                  </StatusBadge>
 
-                  <h3 className="text-lg font-medium text-slate-900 leading-snug mb-2 line-clamp-2">
+                  <h3 className="line-clamp-2 text-lg font-medium leading-snug text-slate-900">
                     {post.title}
                   </h3>
 
-                  <p className="text-sm text-slate-500 leading-relaxed mb-4 line-clamp-3">
+                  <p className="mt-3 line-clamp-3 text-sm leading-6 text-slate-500">
                     {post.description}
                   </p>
 
@@ -527,9 +735,9 @@ const HomePage = () => {
                     href={post.link}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="mt-auto text-green-600 font-semibold text-sm hover:text-green-700 flex items-center gap-1"
+                    className="mt-auto inline-flex items-center gap-1 text-sm font-semibold text-emerald-700 hover:text-emerald-800"
                   >
-                    Đọc thêm
+                    Read more
                   </a>
                 </div>
               </article>

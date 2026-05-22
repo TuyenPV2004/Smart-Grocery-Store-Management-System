@@ -95,4 +95,18 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
             GROUP BY d.productId
             """)
     List<Object[]> findRevenueByProductIdSince(@Param("startDate") LocalDateTime startDate);
+
+    @Query("""
+            SELECT CASE WHEN COUNT(o) > 0 THEN true ELSE false END
+            FROM Order o
+            JOIN o.details d
+            WHERE o.status = 'COMPLETED'
+              AND d.productId = :productId
+              AND (o.username = :username OR (o.username IS NULL AND o.userId = :userId))
+            """)
+    boolean existsCompletedPurchaseForProduct(
+            @Param("productId") Long productId,
+            @Param("username") String username,
+            @Param("userId") Long userId
+    );
 }

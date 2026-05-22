@@ -7,7 +7,7 @@ import { useAuth } from "../../context/useAuth";
 import { useCart } from "../../context/useCart";
 import { getImageUrl } from "../../utils/imageUrl";
 
-const ProductCard = ({ product }) => {
+const ProductCard = ({ product, showComparePrice = true }) => {
   const { addToCart } = useCart();
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -18,8 +18,9 @@ const ProductCard = ({ product }) => {
       currency: "VND",
     }).format(amount || 0);
 
+  const hasStockQuantity = product.stockQuantity !== null && product.stockQuantity !== undefined;
   const stockQuantity = Number(product.stockQuantity || 0);
-  const isOutOfStock = product.status === "OUT_OF_STOCK" || stockQuantity <= 0;
+  const isOutOfStock = product.status === "OUT_OF_STOCK" || (hasStockQuantity && stockQuantity <= 0);
   let discountedPrice = product.sellPrice || 0;
   let hasDiscount = false;
   let discountDisplay = "";
@@ -112,11 +113,11 @@ const ProductCard = ({ product }) => {
             <p className="text-lg font-medium tabular-nums text-emerald-700">
               {formatCurrency(discountedPrice)}
             </p>
-            {hasDiscount ? (
+            {showComparePrice && hasDiscount ? (
               <p className="text-xs tabular-nums text-slate-400 line-through">
                 {formatCurrency(product.sellPrice)}
               </p>
-            ) : product.importPrice > 0 ? (
+            ) : showComparePrice && product.importPrice > 0 ? (
               <p className="text-xs tabular-nums text-slate-400 line-through">
                 {formatCurrency(product.sellPrice * 1.2)}
               </p>
